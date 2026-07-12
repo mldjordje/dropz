@@ -1,8 +1,6 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { Bloom, ChromaticAberration, EffectComposer, Vignette } from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
@@ -90,14 +88,15 @@ const fieldFragment = `
     float veins = pow(1.0 - abs(f * 2.0 - 1.0), 3.0);
     col += accent * veins * (0.12 + speed * 0.5);
 
-    // Soft neon bloom under the cursor.
-    col += NEON * exp(-curDist * curDist * 6.0) * (0.18 + speed * 0.5);
+    // Soft neon bloom under the cursor (compensates for removed post-fx bloom).
+    col += NEON * exp(-curDist * curDist * 6.0) * (0.28 + speed * 0.6);
+    col *= 1.12;
 
     // Vignette keeps edges dark and focus central.
     float vignette = smoothstep(1.3, 0.2, length(p));
     density = (density + veins * 0.5) * vignette;
 
-    float alpha = clamp(density * (0.85 + speed * 0.25), 0.0, 0.95);
+    float alpha = clamp(density * (0.9 + speed * 0.25), 0.0, 0.95);
     gl_FragColor = vec4(col, alpha);
   }
 `;
@@ -159,13 +158,13 @@ const cloudFragment = `
   void main() {
     vec2 uv = gl_PointCoord - .5;
     float core = smoothstep(.5, .06, length(uv));
-    float halo = smoothstep(.5, .12, length(uv)) * .32;
+    float halo = smoothstep(.5, .12, length(uv)) * .42;
     float tunnel = smoothstep(.12, .42, uProgress) * (1.0 - smoothstep(.58, .78, uProgress));
     float finale = smoothstep(.82, 1.0, uProgress);
     float speed = clamp(uVelocity * .026, 0.0, 1.0);
     vec3 ink = mix(vec3(.34, .06, .92), vec3(.86, .67, 1.0), vLight);
     ink = mix(ink, vec3(.96, .88, 1.0), finale * .48);
-    float alpha = (core + halo) * (.18 + tunnel * .32 + speed * .18 + finale * .18);
+    float alpha = (core + halo) * (.26 + tunnel * .4 + speed * .22 + finale * .26);
     gl_FragColor = vec4(ink, alpha);
   }
 `;
@@ -233,7 +232,6 @@ function makeTargets(count: number) {
 export function InkWorld({ progress, pointer, velocity }: InkWorldProps) {
   const fieldMaterial = useRef<THREE.ShaderMaterial>(null);
   const cloudMaterial = useRef<THREE.ShaderMaterial>(null);
-  const aberration = useRef<{ offset: THREE.Vector2 }>(null);
   const targets = useMemo(() => makeTargets(3400), []);
   const pointerTarget = useMemo(() => new THREE.Vector2(), []);
 
@@ -248,10 +246,6 @@ export function InkWorld({ progress, pointer, velocity }: InkWorldProps) {
     });
     if (fieldMaterial.current) {
       fieldMaterial.current.uniforms.uResolution.value.set(state.size.width, state.size.height);
-    }
-    if (aberration.current) {
-      const amount = Math.min(velocity * 0.0001, 0.0035);
-      aberration.current.offset.set(amount, amount);
     }
   });
 
@@ -289,11 +283,6 @@ export function InkWorld({ progress, pointer, velocity }: InkWorldProps) {
           uniforms={{ uTime: { value: 0 }, uProgress: { value: 0 }, uVelocity: { value: 0 }, uPointer: { value: new THREE.Vector2() } }}
         />
       </points>
-      <EffectComposer>
-        <Bloom mipmapBlur luminanceThreshold={0.12} luminanceSmoothing={0.5} intensity={0.9} radius={0.72} />
-        <ChromaticAberration ref={aberration} blendFunction={BlendFunction.NORMAL} offset={new THREE.Vector2(0, 0)} radialModulation modulationOffset={0.35} />
-        <Vignette eskil={false} offset={0.24} darkness={0.72} />
-      </EffectComposer>
     </>
   );
 }

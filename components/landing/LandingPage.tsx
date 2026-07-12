@@ -2,7 +2,6 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
 import { useEffect, useRef, useState } from "react";
 import { Craft } from "./Craft";
@@ -63,14 +62,13 @@ export function LandingPage() {
   // Kinetic type: hero chars fly up on reveal, section titles focus-pull in on scroll.
   useEffect(() => {
     if (!ready) return;
-    gsap.registerPlugin(SplitText, ScrollTrigger);
+    gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
-      const title = document.querySelector(".hero-v2__title");
-      let split: SplitText | null = null;
-      if (title) {
-        split = new SplitText(title, { type: "chars" });
-        gsap.from(split.chars, { yPercent: 130, autoAlpha: 0, stagger: 0.045, duration: 0.95, ease: "power4.out", delay: 0.1 });
-      }
+      // Hero headline reveal — animate the two gradient-clipped line spans directly.
+      // (Do NOT SplitText this: char spans lose the background-clip fill and render invisible.)
+      // immediateRender:false => if the tween never runs (e.g. a throttled tab), the text
+      // stays at its natural VISIBLE state instead of being trapped at autoAlpha:0.
+      gsap.from(".hero-v2__title span", { yPercent: 120, autoAlpha: 0, stagger: 0.12, duration: 1.0, ease: "power4.out", delay: 0.15, immediateRender: false });
 
       gsap.utils.toArray<HTMLElement>([".work-v2__copy h2", ".craft__title", ".finale__line"]).forEach((element) => {
         gsap.from(element, {
@@ -78,6 +76,7 @@ export function LandingPage() {
           filter: "blur(22px)",
           duration: 1.1,
           ease: "power3.out",
+          immediateRender: false,
           scrollTrigger: { trigger: element, start: "top 82%" },
         });
       });
@@ -97,13 +96,11 @@ export function LandingPage() {
       });
 
       // Choreographed beats inside the pinned conversion stage.
-      gsap.from(".branch--left", { xPercent: -8, autoAlpha: 0, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: ".paths-v2", start: "top 60%" } });
-      gsap.from(".branch--right", { xPercent: 8, autoAlpha: 0, duration: 0.9, ease: "power3.out", scrollTrigger: { trigger: ".paths-v2", start: "top 60%" } });
+      gsap.from(".branch--left", { xPercent: -8, autoAlpha: 0, duration: 0.9, ease: "power3.out", immediateRender: false, scrollTrigger: { trigger: ".paths-v2", start: "top 60%" } });
+      gsap.from(".branch--right", { xPercent: 8, autoAlpha: 0, duration: 0.9, ease: "power3.out", immediateRender: false, scrollTrigger: { trigger: ".paths-v2", start: "top 60%" } });
 
       // Preloader just unlocked scroll and changed layout height — recompute trigger positions.
       ScrollTrigger.refresh();
-
-      return () => split?.revert();
     });
     return () => ctx.revert();
   }, [ready]);

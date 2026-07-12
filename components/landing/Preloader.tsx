@@ -3,12 +3,12 @@
 import gsap from "gsap";
 import { useEffect, useRef, useState } from "react";
 
-// Cinematic intro: counter 0->100 while the dropz ink line draws itself,
+// Cinematic intro: the dropz logo glows in while a counter runs 0->100,
 // then the black curtain lifts to reveal the hero.
 export function Preloader({ onDone }: { onDone: () => void }) {
   const root = useRef<HTMLDivElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
+  const logoRef = useRef<HTMLImageElement>(null);
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -49,8 +49,8 @@ export function Preloader({ onDone }: { onDone: () => void }) {
         if (countRef.current) countRef.current.textContent = String(Math.round(counter.v)).padStart(3, "0");
       },
     }, 0);
-    if (pathRef.current) {
-      tl.fromTo(pathRef.current, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 2.1, ease: "power1.inOut" }, 0);
+    if (logoRef.current) {
+      tl.fromTo(logoRef.current, { autoAlpha: 0, scale: 0.86, filter: "blur(12px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 1.3, ease: "power2.out" }, 0);
     }
     tl.to(".preloader__inner", { autoAlpha: 0, duration: 0.5, ease: "power2.in" }, 2.0);
     tl.to(root.current, { yPercent: -100, duration: 1.0, ease: "power4.inOut" }, 2.3);
@@ -67,17 +67,9 @@ export function Preloader({ onDone }: { onDone: () => void }) {
   return (
     <div className="preloader" ref={root} aria-hidden="true">
       <div className="preloader__inner">
-        <svg className="preloader__mark" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
-          <path
-            ref={pathRef}
-            pathLength={1}
-            d="M780 -40 C760 140 495 145 530 300 C565 455 755 410 650 555 C545 700 310 570 365 760 C405 895 650 825 530 1050"
-          />
-        </svg>
-        <div className="preloader__meta">
-          <span>Dropz Tattoo</span>
-          <span className="preloader__count" ref={countRef}>000</span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="preloader__logo" ref={logoRef} src="/media/logo.jpg" alt="Dropz Tattoo" />
+        <span className="preloader__count" ref={countRef}>000</span>
       </div>
     </div>
   );
