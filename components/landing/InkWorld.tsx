@@ -52,6 +52,8 @@ const fieldFragment = `
     // Aspect-correct centered coordinates so the ink doesn't stretch on wide screens.
     vec2 p = vUv - 0.5;
     p.x *= uResolution.x / max(uResolution.y, 1.0);
+    p += uPointer * 0.04;             // parallax pan with the cursor
+    p *= 1.0 - uProgress * 0.06;      // gentle dolly-in as the page scrolls
 
     float t = uTime * 0.06 + uProgress * 0.8;
     float speed = clamp(uVelocity * 0.03, 0.0, 1.5);
@@ -135,6 +137,12 @@ const cloudVertex = `
     position.xy += normalize(wake + .0001) * push;
     position.xy += vec2(sin(uTime + aSeed * 32.0), cos(uTime * .8 + aSeed * 27.0)) * (.003 + speed * .014);
     position.z += breathe * (.018 + speed * .05);
+
+    // Perspective parallax + scroll dolly: particles shift by their depth as the
+    // cursor moves (fake camera pan) and drift toward the viewer down the page.
+    position.xy += uPointer * position.z * .16;
+    position.z += p * .12;
+    position.xy *= 1.0 + p * .05;
 
     gl_Position = vec4(position, 1.0);
     gl_PointSize = aSize * (1.0 + speed * 1.8) * (1.0 + .28 * breathe);
