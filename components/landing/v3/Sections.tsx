@@ -105,6 +105,49 @@ export function CraftV3({ index, title, body }: { index: string; title: string; 
   );
 }
 
+// ---------- Process ----------
+
+type Step = { readonly title: string; readonly body: string };
+
+export function ProcessV3({ index, title, steps }: { index: string; title: string; steps: readonly Step[] }) {
+  return (
+    <section className="v3-process" id="process">
+      <span className="v3-index">{index}</span>
+      <h2 className="v3-process__title v3-blur-title">{title}</h2>
+      <ol className="v3-process__grid">
+        {steps.map((step, i) => (
+          <li key={step.title} className="v3-step">
+            <span className="v3-step__num">{String(i + 1).padStart(2, "0")}</span>
+            <strong>{step.title}</strong>
+            <p>{step.body}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+// ---------- Voices ----------
+
+type Voice = { readonly quote: string; readonly author: string };
+
+export function VoicesV3({ index, title, voices }: { index: string; title: string; voices: readonly Voice[] }) {
+  return (
+    <section className="v3-voices" id="voices">
+      <span className="v3-index">{index}</span>
+      <h2 className="v3-voices__title v3-blur-title">{title}</h2>
+      <div className="v3-voices__grid">
+        {voices.map((voice) => (
+          <blockquote key={voice.author} className="v3-quote">
+            <p>“{voice.quote}”</p>
+            <cite>{voice.author}</cite>
+          </blockquote>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ---------- Paths ----------
 
 type PathsProps = {
@@ -126,11 +169,11 @@ export function PathsV3(props: PathsProps) {
       <span className="v3-index v3-paths__index">{props.index}</span>
       <h2 className="v3-paths__title v3-blur-title">{props.title}</h2>
       <div className="v3-paths__split">
-        <Link href="/booking" className="v3-path" data-magnetic onPointerEnter={push} onPointerDown={push}>
+        <a href="#booking" className="v3-path" data-magnetic onPointerEnter={push} onPointerDown={push}>
           <small>{props.consultMeta}</small>
           <strong>{props.consult}</strong>
           <span>{props.consultAction} <ArrowUpRight size={15} strokeWidth={1.6} /></span>
-        </Link>
+        </a>
         <i className="v3-paths__divider" aria-hidden="true" />
         <Link href="/upit" className="v3-path" data-magnetic onPointerEnter={push} onPointerDown={push}>
           <small>{props.inquiryMeta}</small>
@@ -142,20 +185,42 @@ export function PathsV3(props: PathsProps) {
   );
 }
 
+// ---------- Booking ----------
+
+type BookingProps = {
+  index: string;
+  title: string;
+  body: string;
+  children: React.ReactNode; // the form (client state lives in BookingForm)
+};
+
+export function BookingV3({ index, title, body, children }: BookingProps) {
+  return (
+    <section className="v3-booking" id="booking">
+      <header className="v3-booking__head">
+        <span className="v3-index">{index}</span>
+        <h2 className="v3-booking__title v3-blur-title">{title}</h2>
+        <p className="v3-booking__body">{body}</p>
+      </header>
+      <div className="v3-booking__panel">{children}</div>
+    </section>
+  );
+}
+
 // ---------- Finale ----------
 
 export function FinaleV3({ title, action }: { title: string; action: string }) {
   return (
-    <section className="v3-finale" id="booking">
+    <section className="v3-finale" id="finale">
       <div className="v3-finale__stage">
         <p className="v3-finale__line">{title}</p>
         {/* crisp wordmark snaps in as the ink resolves; black jpg background drops out via screen blend */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="v3-finale__logo" src="/media/logo.jpg" alt="Dropz Tattoo" loading="lazy" />
-        <Link className="v3-finale__cta" data-magnetic href="/booking">
+        <a className="v3-finale__cta" data-magnetic href="#booking">
           <span>{action}</span>
           <ArrowUpRight size={16} strokeWidth={1.5} />
-        </Link>
+        </a>
         <footer className="v3-finale__footer">
           <span>Niš, Srbija</span>
           <span>Uto–Sub · 11–19h</span>

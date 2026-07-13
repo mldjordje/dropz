@@ -1,6 +1,19 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { BookingForm } from "@/components/booking/BookingForm";
+import { copy } from "@/components/landing/content";
 
 export default function BookingPage() {
-  return <main className="route-shell"><Link className="route-back" href="/"><ArrowLeft /> Nazad</Link><div className="route-index">01 / Konsultacija</div><h1>15 minuta.<br />Bez obaveze.</h1><p>Ispricaj nam ideju, mesto i velicinu. Zajedno biramo najbolji sledeci korak.</p><a className="route-contact" href="mailto:studio@dropz.tattoo">Zatrazi termin <ArrowUpRight /></a></main>;
+  const t = copy.sr;
+  return (
+    <main className="route-shell">
+      <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
+      <div className="route-index">{t.bookingIndex}</div>
+      <h1>Rezervisi<br />svoje mesto.</h1>
+      <p>{t.bookingBody}</p>
+      <div className="route-booking">
+        <BookingForm labels={t.bookingForm} locale="sr" />
+      </div>
+    </main>
+  );
 }

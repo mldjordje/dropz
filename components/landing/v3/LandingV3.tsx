@@ -9,13 +9,14 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FluidEngine } from "@/lib/fluid/engine";
+import { BookingForm } from "../../booking/BookingForm";
 import { copy, Locale } from "../content";
 import { Navigation } from "../Navigation";
 import { Preloader } from "../Preloader";
 import { CursorV3 } from "./CursorV3";
 import { FluidStage } from "./FluidStage";
 import { buildLogoMask } from "./logoMask";
-import { CraftV3, FinaleV3, HeroV3, PathsV3, WorkV3 } from "./Sections";
+import { BookingV3, CraftV3, FinaleV3, HeroV3, PathsV3, ProcessV3, VoicesV3, WorkV3 } from "./Sections";
 
 export function LandingV3() {
   const [locale, setLocale] = useState<Locale>("sr");
@@ -54,7 +55,8 @@ export function LandingV3() {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const lenis = reduce ? null : new Lenis({ lerp: 0.09, smoothWheel: true });
+    // low lerp = heavy, cinematic glide (was .09 — read as too fast)
+    const lenis = reduce ? null : new Lenis({ lerp: 0.06, smoothWheel: true });
     let raf = 0;
     const loop = (time: number) => {
       lenis?.raf(time);
@@ -186,6 +188,35 @@ export function LandingV3() {
           immediateRender: false,
           scrollTrigger: { trigger: ".v3-paths__split", start: "top 86%" },
         });
+
+        gsap.from(".v3-step", {
+          autoAlpha: 0,
+          y: 54,
+          duration: 0.95,
+          stagger: 0.12,
+          ease: "power3.out",
+          immediateRender: false,
+          scrollTrigger: { trigger: ".v3-process__grid", start: "top 88%" },
+        });
+
+        gsap.from(".v3-quote", {
+          autoAlpha: 0,
+          y: 50,
+          duration: 0.95,
+          stagger: 0.15,
+          ease: "power3.out",
+          immediateRender: false,
+          scrollTrigger: { trigger: ".v3-voices__grid", start: "top 88%" },
+        });
+
+        gsap.from(".v3-booking__panel", {
+          autoAlpha: 0,
+          y: 70,
+          duration: 1.15,
+          ease: "power3.out",
+          immediateRender: false,
+          scrollTrigger: { trigger: ".v3-booking", start: "top 78%" },
+        });
       }
 
       // pinned scrub stages drive their own --p (also under reduced motion —
@@ -205,8 +236,9 @@ export function LandingV3() {
         });
       });
 
-      // chapter changes pump a row of colored ink into the field
-      [".v3-work", ".v3-craft", ".v3-paths", ".v3-finale"].forEach((selector) => {
+      // chapter changes pump a row of colored ink into the field (soft rise,
+      // matching the slower scroll injection)
+      [".v3-work", ".v3-craft", ".v3-process", ".v3-voices", ".v3-paths", ".v3-booking", ".v3-finale"].forEach((selector) => {
         ScrollTrigger.create({
           trigger: selector,
           start: "top 75%",
@@ -217,10 +249,10 @@ export function LandingV3() {
               engine.splat({
                 x: 0.2 + i * 0.2,
                 y: 0.25 + Math.random() * 0.2,
-                dx: (Math.random() - 0.5) * 500,
-                dy: 500 + Math.random() * 400,
+                dx: (Math.random() - 0.5) * 260,
+                dy: 260 + Math.random() * 220,
                 color: engine.chapterColor(0.15),
-                radius: 0.005,
+                radius: 0.0058,
               });
             }
           },
@@ -242,6 +274,8 @@ export function LandingV3() {
         <HeroV3 subline={text.heroSubline} scrollCue={text.scroll} />
         <WorkV3 index={text.workIndex} title={text.workTitle} body={text.workBody} />
         <CraftV3 index={text.craftIndex} title={text.craftTitle} body={text.craftBody} />
+        <ProcessV3 index={text.processIndex} title={text.processTitle} steps={text.processSteps} />
+        <VoicesV3 index={text.voicesIndex} title={text.voicesTitle} voices={text.voices} />
         <PathsV3
           index={text.pathsIndex}
           title={text.pathsTitle}
@@ -253,6 +287,9 @@ export function LandingV3() {
           inquiryAction={text.inquiryAction}
           onInkPush={pushInk}
         />
+        <BookingV3 index={text.bookingIndex} title={text.bookingTitle} body={text.bookingBody}>
+          <BookingForm labels={text.bookingForm} locale={locale} />
+        </BookingV3>
         <FinaleV3 title={text.finale} action={text.finalAction} />
       </div>
     </main>

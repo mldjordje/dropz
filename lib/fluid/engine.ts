@@ -524,14 +524,16 @@ export class FluidEngine {
 
   /** Autonomous inputs: idle drift, scroll needle-path injection. */
   private drive(now: number, dt: number) {
-    // scroll -> rhythmic dye along a sinuous vertical "needle path"
+    // scroll -> rhythmic dye along a sinuous vertical "needle path".
+    // Tuned cinematic: long accumulator tail, low velocities, wide soft blooms —
+    // the ink should billow and drift with the scroll, not shoot.
     const scroll = this.scrollAccum;
-    this.scrollAccum *= 0.72;
+    this.scrollAccum *= 0.86;
     const mag = Math.abs(scroll);
     if (mag > 1.5) {
-      this.needlePhase += dt * 4 + mag * 0.0015;
-      const surge = Math.min(mag / 60, 2.2);
-      const count = mag > 40 ? 3 : mag > 12 ? 2 : 1;
+      this.needlePhase += dt * 1.7 + mag * 0.0006;
+      const surge = Math.min(mag / 120, 1.1);
+      const count = mag > 90 ? 2 : 1;
       for (let i = 0; i < count; i++) {
         const yPos = 0.82 - ((this.needlePhase * 0.13 + i * 0.31) % 0.66);
         const x = 0.5 + Math.sin(this.needlePhase * 1.7 + i * 2.1) * 0.22;
@@ -539,10 +541,10 @@ export class FluidEngine {
         this.pendingSplats.push({
           x,
           y: yPos,
-          dx: Math.sin(this.needlePhase * 3.1 + i) * 220 * surge,
-          dy: dir * (420 + 520 * surge),
+          dx: Math.sin(this.needlePhase * 2.2 + i) * 110 * surge,
+          dy: dir * (190 + 230 * surge),
           color: this.chapterColor(),
-          radius: this.baseSplatRadius * (1 + surge * 0.9),
+          radius: this.baseSplatRadius * (1.35 + surge * 0.75),
         });
       }
     }
