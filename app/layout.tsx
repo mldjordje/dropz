@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const display = Anton({ weight: "400", subsets: ["latin"], variable: "--font-display", display: "swap" });
-const body = Space_Grotesk({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+const display = Anton({ weight: "400", subsets: ["latin", "latin-ext"], variable: "--font-display", display: "swap" });
+const body = Space_Grotesk({ subsets: ["latin", "latin-ext"], variable: "--font-body", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Dropz Tattoo | Niš",
