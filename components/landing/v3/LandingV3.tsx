@@ -24,7 +24,6 @@ export function LandingV3() {
   const [locale, setLocale] = useState<Locale>("sr");
   const [ready, setReady] = useState(false);
   const engineRef = useRef<FluidEngine | null>(null);
-  const needleRef = useRef<HTMLDivElement>(null);
   const finaleProgress = useRef(0);
   const text = copy[locale];
 
@@ -61,11 +60,6 @@ export function LandingV3() {
     // low lerp = heavy, cinematic glide (was .09 — read as too fast)
     const lenis = reduce ? null : new Lenis({ lerp: 0.06, smoothWheel: true });
     let raf = 0;
-    // needle tracer state: previous path point + smoothed glow (0..1)
-    let lastY = window.scrollY;
-    let glow = 0;
-    let px = 0.5;
-    let py = 0.86;
     const loop = (time: number) => {
       lenis?.raf(time);
       ScrollTrigger.update();
@@ -78,38 +72,6 @@ export function LandingV3() {
         // needle tracer: a glowing needle-point sweeps a descending S-path as
         // you scroll, injecting a thin ink trail into the fluid — the needle
         // literally "draws" the page. Glow + ink flow scale with scroll speed.
-        if (!reduce) {
-          const vel = window.scrollY - lastY;
-          lastY = window.scrollY;
-          const nx = 0.5 + Math.sin(p * Math.PI * 5.2) * 0.36;
-          const ny = 0.86 - p * 0.6 + Math.cos(p * Math.PI * 3.1) * 0.07;
-          const speed = Math.min(Math.abs(vel) / 24, 1);
-          glow += (speed - glow) * (speed > glow ? 0.35 : 0.05); // fast attack, slow release
-          if (speed > 0.02) {
-            for (let i = 1; i <= 3; i++) {
-              const t = i / 3;
-              engine.splat({
-                x: px + (nx - px) * t,
-                y: py + (ny - py) * t,
-                dx: (nx - px) * 5200,
-                dy: (ny - py) * 5200,
-                color: engine.chapterColor(0.12),
-                radius: 0.0032 * (0.7 + speed * 0.9),
-              });
-            }
-          }
-          const el = needleRef.current;
-          if (el) {
-            const ang = Math.atan2(py - ny, nx - px) * (180 / Math.PI);
-            el.style.transform = `translate3d(${nx * window.innerWidth}px, ${(1 - ny) * window.innerHeight}px, 0)`;
-            el.style.opacity = glow.toFixed(3);
-            const streak = el.firstElementChild as HTMLElement | null;
-            if (streak) streak.style.transform = `rotate(${ang}deg) scaleX(${(0.4 + glow).toFixed(3)})`;
-          }
-          px = nx;
-          py = ny;
-        }
-
         // ignite envelope: builds through the finale scrub, flickers 2-3 beats,
         // then locks to a steady neon hold
         const fp = finaleProgress.current;
@@ -312,7 +274,6 @@ export function LandingV3() {
     <main className="v3-shell">
       {!ready && <Preloader onDone={() => setReady(true)} />}
       <FluidStage onEngine={handleEngine} />
-      <div ref={needleRef} className="v3-needle" aria-hidden="true"><i /></div>
       <CursorV3 />
       <Navigation locale={locale} setLocale={setLocale} labels={text.nav} />
       <VoltmeterV3 />
