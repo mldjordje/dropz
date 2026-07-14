@@ -6,12 +6,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Phone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 // ---------- Hero ----------
 
-export function HeroV3({ subline, scrollCue }: { subline: string; scrollCue: string }) {
+type HeroProps = {
+  subline: string;
+  scrollCue: string;
+  bookLabel: string;
+  callLabel: string;
+};
+
+export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) {
   return (
     <section className="v3-hero" id="top">
       <p className="v3-hero__meta">
@@ -23,6 +30,27 @@ export function HeroV3({ subline, scrollCue }: { subline: string; scrollCue: str
         <span className="v3-line"><i>ENERGY.</i></span>
       </h1>
       <p className="v3-hero__sub">{subline}</p>
+      <div className="v3-hero__actions">
+        {/* primary: rotating conic border + ink fill rising on hover */}
+        <a href="#booking" className="v3-cta v3-cta--book" data-magnetic>
+          <span className="v3-cta__frame" aria-hidden="true" />
+          <span className="v3-cta__ink" aria-hidden="true" />
+          <span className="v3-cta__label">
+            <i>{bookLabel}</i>
+            <i aria-hidden="true">{bookLabel}</i>
+          </span>
+          <ArrowUpRight className="v3-cta__icon" size={15} strokeWidth={1.6} />
+        </a>
+        {/* secondary: ghost with live pulsing dot */}
+        <a href="tel:0601453087" className="v3-cta v3-cta--call" data-magnetic>
+          <span className="v3-cta__pulse" aria-hidden="true" />
+          <span className="v3-cta__label">
+            <i>{callLabel}</i>
+            <i aria-hidden="true">{callLabel}</i>
+          </span>
+          <Phone className="v3-cta__icon" size={13} strokeWidth={1.6} />
+        </a>
+      </div>
       <div className="v3-hero__cue" aria-hidden="true">
         <i />
         <span>{scrollCue}</span>
@@ -55,7 +83,7 @@ const POSITIONS = [
   { cls: "v3-piece--f", speed: -0.8 },
 ] as const;
 
-const marqueeTerms = ["Blackwork", "Fine line", "Ornamental", "Lettering", "Custom", "Cover-up", "Ignorant", "Dotwork"];
+const marqueeTerms = ["Realizam", "Hiperrealizam", "Portreti", "Black&Grey", "Fine line", "Custom", "Cover-up", "Chicano", "Japanese", "American Traditional"];
 
 type ApiCategory = { id: number; name: string; slug: string };
 type ApiWork = { id: number; title: string; image_url: string; category_id: number | null };
@@ -333,7 +361,8 @@ export function FinaleV3({ title, action }: { title: string; action: string }) {
         <footer className="v3-finale__footer">
           <span>Niš, Srbija</span>
           <span>Uto–Sub · 11–19h</span>
-          <a href="https://www.instagram.com/dropztattoo" target="_blank" rel="noreferrer">Instagram</a>
+          <a href="tel:0601453087">060 1453087</a>
+          <a href="https://www.instagram.com/dropz.tattoo/" target="_blank" rel="noreferrer">Instagram</a>
           <span>© Dropz Tattoo</span>
         </footer>
       </div>

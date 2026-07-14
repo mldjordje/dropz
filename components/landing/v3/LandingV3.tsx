@@ -102,7 +102,7 @@ export function LandingV3() {
           delay: 0.1,
           immediateRender: false,
         });
-        gsap.from(".v3-hero__sub, .v3-hero__cue, .v3-hero__meta", {
+        gsap.from(".v3-hero__sub, .v3-hero__actions .v3-cta, .v3-hero__cue, .v3-hero__meta", {
           autoAlpha: 0,
           y: 26,
           duration: 1.0,
@@ -271,7 +271,7 @@ export function LandingV3() {
       <CursorV3 />
       <Navigation locale={locale} setLocale={setLocale} labels={text.nav} />
       <div className="v3-content">
-        <HeroV3 subline={text.heroSubline} scrollCue={text.scroll} />
+        <HeroV3 subline={text.heroSubline} scrollCue={text.scroll} bookLabel={text.heroBook} callLabel={text.heroCall} />
         <WorkV3 index={text.workIndex} title={text.workTitle} body={text.workBody} allLabel={text.workAll} />
         <CraftV3 index={text.craftIndex} title={text.craftTitle} body={text.craftBody} />
         <ProcessV3 index={text.processIndex} title={text.processTitle} steps={text.processSteps} />

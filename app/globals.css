@@ -89,6 +89,32 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 .v3-hero__cue i{width:88px;height:1px;background:linear-gradient(90deg,var(--neon),transparent);animation:v3cue 2.2s cubic-bezier(.65,0,.35,1) infinite}
 @keyframes v3cue{0%{transform:scaleX(.2);transform-origin:left;opacity:.4}55%{transform:scaleX(1);opacity:1}100%{transform:scaleX(.2);transform-origin:left;opacity:.4}}
 
+/* hero CTA pair — primary "ink" button (rotating conic border + ink fill) and ghost call button */
+.v3-hero__actions{position:absolute;left:var(--gutter);top:66vh;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.v3-cta{position:relative;display:inline-flex;align-items:center;gap:14px;padding:17px 26px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--white);isolation:isolate;overflow:hidden;cursor:pointer}
+.v3-cta__label{position:relative;display:block;overflow:hidden;line-height:1.4;z-index:2}
+.v3-cta__label i{display:block;font-style:normal;transition:transform .55s cubic-bezier(.76,0,.24,1)}
+.v3-cta__label i+i{position:absolute;top:100%;left:0;color:#fff}
+.v3-cta:hover .v3-cta__label i{transform:translateY(-100%)}
+.v3-cta__icon{position:relative;z-index:2;color:var(--neon);transition:transform .45s cubic-bezier(.76,0,.24,1),color .45s}
+.v3-cta:hover .v3-cta__icon{transform:translate(2px,-2px) rotate(8deg);color:#fff}
+/* primary: conic gradient sweep masked to a 1px frame */
+.v3-cta--book{background:rgba(10,4,18,.55);backdrop-filter:blur(5px)}
+.v3-cta__frame{position:absolute;inset:0;z-index:1;padding:1px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;overflow:hidden}
+.v3-cta__frame::before{content:"";position:absolute;inset:-120%;background:conic-gradient(from 0deg,transparent 0 62%,var(--neon) 78%,#fff 84%,var(--neon) 90%,transparent 98%);animation:v3ctaspin 3.6s linear infinite}
+/* ink fill rises from below on hover */
+.v3-cta__ink{position:absolute;inset:0;z-index:0;background:radial-gradient(140% 160% at 50% 130%,var(--violet) 0%,rgba(113,48,255,.55) 45%,rgba(113,48,255,.12) 75%,transparent 100%);transform:translateY(102%);transition:transform .6s cubic-bezier(.76,0,.24,1)}
+.v3-cta--book:hover .v3-cta__ink{transform:translateY(0)}
+.v3-cta--book:hover{box-shadow:0 0 34px rgba(113,48,255,.45),0 0 90px rgba(113,48,255,.2)}
+.v3-cta--book{transition:box-shadow .5s}
+/* secondary: ghost + live pulse dot */
+.v3-cta--call{border:1px solid rgba(243,239,250,.22);transition:border-color .4s,box-shadow .5s,background .4s}
+.v3-cta--call:hover{border-color:var(--neon);background:rgba(113,48,255,.08);box-shadow:0 0 26px rgba(166,114,255,.25)}
+.v3-cta__pulse{position:relative;z-index:2;width:6px;height:6px;border-radius:50%;background:var(--neon);box-shadow:0 0 10px var(--neon)}
+.v3-cta__pulse::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--neon);opacity:0;animation:v3ctapulse 2s cubic-bezier(.2,.6,.35,1) infinite}
+@keyframes v3ctaspin{to{transform:rotate(1turn)}}
+@keyframes v3ctapulse{0%{transform:scale(.4);opacity:.9}70%{transform:scale(1.9);opacity:0}100%{transform:scale(1.9);opacity:0}}
+
 /* work */
 .v3-work{position:relative;padding:16vh 0 20vh}
 .v3-work__head{display:grid;grid-template-columns:1fr min(380px,36vw);align-items:end;gap:24px;padding:0 var(--gutter);margin-bottom:8vh}
@@ -219,7 +245,9 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 @media(max-width:900px){
   .v3-hero{height:118vh;min-height:680px}
   .v3-hero__title{top:26vh;font-size:19vw}
-  .v3-hero__sub{top:60vh;right:var(--gutter);font-size:13px}
+  .v3-hero__sub{top:56vh;right:var(--gutter);font-size:13px}
+  .v3-hero__actions{top:auto;bottom:33vh;right:var(--gutter);gap:12px}
+  .v3-cta{flex:1 1 auto;justify-content:space-between;padding:15px 20px}
   .v3-hero__cue{bottom:26vh}
   .v3-work__head{grid-template-columns:1fr}
   .v3-work__grid{gap:0 14px}
@@ -257,4 +285,7 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
   .v3-marquee__track{animation:none}
   .v3-hero__cue i{animation:none}
   .v3-craft__line,.v3-craft__video{transform:none!important}
+  .v3-cta__frame::before,.v3-cta__pulse::after{animation:none}
+  .v3-cta__frame::before{background:conic-gradient(from 0deg,var(--neon),var(--neon))}
+  .v3-cta__label i,.v3-cta__ink,.v3-cta__icon{transition:none}
 }
