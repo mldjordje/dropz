@@ -15,6 +15,8 @@ import { Navigation } from "../Navigation";
 import { Preloader } from "../Preloader";
 import { CursorV3 } from "./CursorV3";
 import { FluidStage } from "./FluidStage";
+import { InkLineV3 } from "./InkLineV3";
+import { VoltmeterV3 } from "./VoltmeterV3";
 import { buildLogoMask } from "./logoMask";
 import { BookingV3, CraftV3, FinaleV3, HeroV3, PathsV3, ProcessV3, VoicesV3, WorkV3 } from "./Sections";
 
@@ -313,7 +315,9 @@ export function LandingV3() {
       <div ref={needleRef} className="v3-needle" aria-hidden="true"><i /></div>
       <CursorV3 />
       <Navigation locale={locale} setLocale={setLocale} labels={text.nav} />
+      <VoltmeterV3 />
       <div className="v3-content">
+        <InkLineV3 ready={ready} />
         <HeroV3 subline={text.heroSubline} scrollCue={text.scroll} bookLabel={text.heroBook} callLabel={text.heroCall} />
         <WorkV3 index={text.workIndex} title={text.workTitle} body={text.workBody} allLabel={text.workAll} />
         <CraftV3 index={text.craftIndex} title={text.craftTitle} body={text.craftBody} />
