@@ -70,6 +70,11 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
   radial-gradient(30vw 30vw at 68% 60%,rgba(166,114,255,.42),transparent 62%),
   radial-gradient(16vw 16vw at 55% 45%,rgba(243,239,250,.28),transparent 60%),#000}
 .v3-content{position:relative;z-index:1;font-family:var(--font-body,var(--ui))}
+/* needle tracer — glowing needle-point that draws ink through the scene while scrolling */
+.v3-needle{position:fixed;z-index:0;top:0;left:0;width:0;height:0;pointer-events:none;opacity:0;will-change:transform,opacity}
+.v3-needle::after{content:"";position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 10px #fff,0 0 26px var(--neon),0 0 60px var(--violet)}
+.v3-needle i{position:absolute;left:-34px;top:-1px;width:68px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(166,114,255,.85),#fff 52%,rgba(166,114,255,.85),transparent);box-shadow:0 0 12px var(--neon),0 0 34px rgba(113,48,255,.6)}
+@media(prefers-reduced-motion:reduce){.v3-needle{display:none}}
 .v3-index{color:var(--neon);font-size:10px;letter-spacing:.22em;text-transform:uppercase}
 
 /* cursor */
@@ -90,7 +95,7 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 @keyframes v3cue{0%{transform:scaleX(.2);transform-origin:left;opacity:.4}55%{transform:scaleX(1);opacity:1}100%{transform:scaleX(.2);transform-origin:left;opacity:.4}}
 
 /* hero CTA pair — primary "ink" button (rotating conic border + ink fill) and ghost call button */
-.v3-hero__actions{position:absolute;left:var(--gutter);top:66vh;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.v3-hero__actions{position:absolute;left:var(--gutter);top:calc(24vh + min(26.1vw,505px) + 34px);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .v3-cta{position:relative;display:inline-flex;align-items:center;gap:14px;padding:17px 26px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--white);isolation:isolate;overflow:hidden;cursor:pointer}
 .v3-cta__label{position:relative;display:block;overflow:hidden;line-height:1.4;z-index:2}
 .v3-cta__label i{display:block;font-style:normal;transition:transform .55s cubic-bezier(.76,0,.24,1)}
