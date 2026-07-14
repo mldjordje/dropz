@@ -9,7 +9,7 @@ export default function BookingPage() {
     <main className="route-shell">
       <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
       <div className="route-index">{t.bookingIndex}</div>
-      <h1>Rezervisi<br />svoje mesto.</h1>
+      <h1>Rezerviši<br />svoje mesto.</h1>
       <p>{t.bookingBody}</p>
       <div className="route-booking">
         <BookingForm labels={t.bookingForm} locale="sr" />

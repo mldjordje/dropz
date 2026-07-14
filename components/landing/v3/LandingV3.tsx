@@ -272,7 +272,7 @@ export function LandingV3() {
       <Navigation locale={locale} setLocale={setLocale} labels={text.nav} />
       <div className="v3-content">
         <HeroV3 subline={text.heroSubline} scrollCue={text.scroll} />
-        <WorkV3 index={text.workIndex} title={text.workTitle} body={text.workBody} />
+        <WorkV3 index={text.workIndex} title={text.workTitle} body={text.workBody} allLabel={text.workAll} />
         <CraftV3 index={text.craftIndex} title={text.craftTitle} body={text.craftBody} />
         <ProcessV3 index={text.processIndex} title={text.processTitle} steps={text.processSteps} />
         <VoicesV3 index={text.voicesIndex} title={text.voicesTitle} voices={text.voices} />

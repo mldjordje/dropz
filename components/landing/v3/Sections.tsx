@@ -7,6 +7,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 // ---------- Hero ----------
 
@@ -32,6 +33,8 @@ export function HeroV3({ subline, scrollCue }: { subline: string; scrollCue: str
 
 // ---------- Work ----------
 
+// Static fallback gallery — used whenever the DB has no portfolio works yet
+// (or is unreachable), so the section never looks broken.
 const pieces = [
   { src: "/media/DSC04808.jpeg", alt: "Blackwork tattoo detail", cap: "001 — Blackwork", cls: "v3-piece--a", speed: 0.4 },
   { src: "/media/IMG_2288.jpeg", alt: "Custom tattoo composition", cap: "002 — Composition", cls: "v3-piece--b", speed: -0.6 },
@@ -41,10 +44,93 @@ const pieces = [
   { src: "/media/IMG_4676.jpeg", alt: "Fine line detail", cap: "006 — Detail", cls: "v3-piece--f", speed: -0.8 },
 ] as const;
 
+// Positional layout classes cycle for DB-sourced works so the scattered
+// editorial grid still holds regardless of how many pieces the admin adds.
+const POSITIONS = [
+  { cls: "v3-piece--a", speed: 0.4 },
+  { cls: "v3-piece--b", speed: -0.6 },
+  { cls: "v3-piece--c", speed: 0.8 },
+  { cls: "v3-piece--d", speed: -0.4 },
+  { cls: "v3-piece--e", speed: 0.6 },
+  { cls: "v3-piece--f", speed: -0.8 },
+] as const;
+
 const marqueeTerms = ["Blackwork", "Fine line", "Ornamental", "Lettering", "Custom", "Cover-up", "Ignorant", "Dotwork"];
 
-export function WorkV3({ index, title, body }: { index: string; title: string; body: string }) {
+type ApiCategory = { id: number; name: string; slug: string };
+type ApiWork = { id: number; title: string; image_url: string; category_id: number | null };
+
+type GalleryItem = {
+  key: string;
+  src: string;
+  alt: string;
+  cap: string;
+  cls: string;
+  speed: number;
+  categoryId: number | null;
+};
+
+const ALL_FILTER = "all";
+
+export function WorkV3({ index, title, body, allLabel }: { index: string; title: string; body: string; allLabel: string }) {
   const track = [...marqueeTerms, ...marqueeTerms];
+  const [categories, setCategories] = useState<ApiCategory[]>([]);
+  const [dbWorks, setDbWorks] = useState<ApiWork[] | null>(null);
+  const [activeFilter, setActiveFilter] = useState<number | typeof ALL_FILTER>(ALL_FILTER);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/portfolio", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !data.ok) return;
+        if (Array.isArray(data.works) && data.works.length > 0) {
+          setDbWorks(data.works);
+          setCategories(Array.isArray(data.categories) ? data.categories : []);
+        }
+      })
+      .catch(() => {
+        // network/DB unreachable — keep the static fallback gallery
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const items: GalleryItem[] = useMemo(() => {
+    if (dbWorks && dbWorks.length > 0) {
+      return dbWorks.map((w, i) => {
+        const pos = POSITIONS[i % POSITIONS.length];
+        return {
+          key: `db-${w.id}`,
+          src: w.image_url,
+          alt: w.title,
+          cap: w.title,
+          cls: pos.cls,
+          speed: pos.speed,
+          categoryId: w.category_id,
+        };
+      });
+    }
+    return pieces.map((p) => ({
+      key: p.src,
+      src: p.src,
+      alt: p.alt,
+      cap: p.cap,
+      cls: p.cls,
+      speed: p.speed,
+      categoryId: null,
+    }));
+  }, [dbWorks]);
+
+  // Only offer chips for categories that actually have a work attached.
+  const usableCategories = useMemo(
+    () => categories.filter((c) => (dbWorks ?? []).some((w) => w.category_id === c.id)),
+    [categories, dbWorks],
+  );
+
+  const visibleItems = activeFilter === ALL_FILTER ? items : items.filter((it) => it.categoryId === activeFilter);
+
   return (
     <section className="v3-work" id="work">
       <header className="v3-work__head">
@@ -59,11 +145,34 @@ export function WorkV3({ index, title, body }: { index: string; title: string; b
           ))}
         </div>
       </div>
+      {usableCategories.length > 0 && (
+        <div className="v3-work__filters" role="group" aria-label={allLabel}>
+          <button
+            type="button"
+            className="v3-filter"
+            aria-pressed={activeFilter === ALL_FILTER}
+            onClick={() => setActiveFilter(ALL_FILTER)}
+          >
+            {allLabel}
+          </button>
+          {usableCategories.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className="v3-filter"
+              aria-pressed={activeFilter === c.id}
+              onClick={() => setActiveFilter(c.id)}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="v3-work__grid">
-        {pieces.map((piece) => (
-          <figure key={piece.src} className={`v3-piece ${piece.cls}`} data-speed={piece.speed}>
+        {visibleItems.map((piece) => (
+          <figure key={piece.key} className={`v3-piece ${piece.cls}`} data-speed={piece.speed}>
             <div className="v3-piece__mask">
-              <Image src={piece.src} alt={piece.alt} fill sizes="(max-width: 700px) 92vw, 44vw" quality={70} />
+              <Image src={piece.src} alt={piece.alt} fill sizes="(max-width: 700px) 92vw, 44vw" quality={70} unoptimized={piece.key.startsWith("db-")} />
             </div>
             <figcaption>{piece.cap}</figcaption>
           </figure>

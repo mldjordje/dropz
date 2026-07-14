@@ -1,25 +1,25 @@
 "use client";
 
-// Booking form with inline calendar + time slots. No deps, no backend:
-// submit composes a structured mailto so the studio gets a ready request.
-// Studio hours: Tue-Sat 11-19h -> Sundays/Mondays disabled, hourly slots.
+// Booking form with inline calendar + time slots.
+// Bookings are free consultations only; deposit (if any) is agreed and paid in person.
+// Submits to /api/bookings (Neon DB); falls back to mailto if the API fails.
+// Open days + slots are driven entirely by the availability API (no hardcoded schedule).
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Locale } from "../landing/content";
 
 export type BookingFormLabels = {
   name: string;
   contact: string;
-  type: string;
-  typeConsult: string;
-  typeSession: string;
+  consultNotice: string;
   note: string;
   notePlaceholder: string;
   date: string;
   time: string;
   pickDate: string;
   closed: string;
+  noSlots: string;
   submit: string;
   missing: string;
   success: string;
@@ -29,8 +29,6 @@ export type BookingFormLabels = {
 };
 
 const STUDIO_EMAIL = "studio@dropz.tattoo";
-const SLOTS = ["11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"] as const;
-const CLOSED_WEEKDAYS = [0, 1]; // Sun, Mon
 const MAX_MONTHS_AHEAD = 2;
 
 const INTL_TAG: Record<Locale, string> = { sr: "sr-Latn-RS", en: "en-GB", de: "de-DE" };
@@ -52,12 +50,54 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
   const [monthOffset, setMonthOffset] = useState(0);
   const [selected, setSelected] = useState<Date | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
-  const [kind, setKind] = useState<"consult" | "session">("consult");
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState(false);
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [slots, setSlots] = useState<string[]>([]);
+  const [taken, setTaken] = useState<string[]>([]);
+  const [openDays, setOpenDays] = useState<Record<string, string[]>>({});
+
+  // which days are open this month, so the calendar can enable/disable them
+  useEffect(() => {
+    let cancelled = false;
+    const base = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+    const monthKey = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}`;
+    fetch(`/api/bookings/availability?month=${monthKey}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled && d.ok) setOpenDays(d.days);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monthOffset]);
+
+  // available + already-booked slots for the selected day
+  useEffect(() => {
+    if (!selected) {
+      setSlots([]);
+      setTaken([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/bookings?date=${isoKey(selected)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled && d.ok) {
+          setSlots(d.slots);
+          setTaken(d.taken);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selected]);
 
   const monthStart = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
 
@@ -82,7 +122,7 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
     return out;
   }, [monthStart]);
 
-  const dayDisabled = (d: Date) => d <= today || CLOSED_WEEKDAYS.includes(d.getDay());
+  const dayDisabled = (d: Date) => d <= today || !openDays[isoKey(d)];
 
   const pickDay = (d: Date) => {
     setSelected(d);
@@ -90,24 +130,54 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
     setError(false);
   };
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !contact.trim() || !selected || !slot) {
-      setError(true);
-      return;
-    }
-    const kindLabel = kind === "consult" ? labels.typeConsult : labels.typeSession;
+  const mailtoFallback = () => {
+    if (!selected || !slot) return;
     const dateLabel = new Intl.DateTimeFormat(tag, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(selected);
     const subject = `Booking — ${name.trim()} — ${isoKey(selected)} ${slot}`;
     const body = [
       `${labels.name}: ${name.trim()}`,
       `${labels.contact}: ${contact.trim()}`,
-      `${labels.type}: ${kindLabel}`,
       `${labels.date}: ${dateLabel}`,
       `${labels.time}: ${slot}`,
       note.trim() ? `${labels.note}: ${note.trim()}` : "",
     ].filter(Boolean).join("\n");
     window.location.href = `mailto:${STUDIO_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !contact.trim() || !selected || !slot) {
+      setError(true);
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          contact: contact.trim(),
+          note: note.trim(),
+          date: isoKey(selected),
+          slot,
+          locale,
+        }),
+      });
+      if (res.status === 409) {
+        // slot got taken meanwhile — refresh taken list, ask for another slot
+        setTaken((t) => (slot && !t.includes(slot) ? [...t, slot] : t));
+        setSlot(null);
+        setError(true);
+        return;
+      }
+      if (!res.ok) throw new Error("api");
+    } catch {
+      // API down (or DB not configured) — fall back to the old mailto flow
+      mailtoFallback();
+    } finally {
+      setBusy(false);
+    }
     setError(false);
     setSent(true);
   };
@@ -123,17 +193,7 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
           <label htmlFor="bkf-contact">{labels.contact}</label>
           <input id="bkf-contact" type="text" autoComplete="email" value={contact} onChange={(e) => setContact(e.target.value)} />
         </div>
-        <div className="bkf__field">
-          <span className="bkf__label">{labels.type}</span>
-          <div className="bkf__types">
-            <button type="button" className="bkf__pill" aria-pressed={kind === "consult"} onClick={() => setKind("consult")}>
-              {labels.typeConsult}
-            </button>
-            <button type="button" className="bkf__pill" aria-pressed={kind === "session"} onClick={() => setKind("session")}>
-              {labels.typeSession}
-            </button>
-          </div>
-        </div>
+        <p className="bkf__notice">{labels.consultNotice}</p>
         <div className="bkf__field">
           <label htmlFor="bkf-note">{labels.note}</label>
           <textarea id="bkf-note" rows={4} placeholder={labels.notePlaceholder} value={note} onChange={(e) => setNote(e.target.value)} />
@@ -190,13 +250,17 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
         <div className="bkf__field">
           <span className="bkf__label">{labels.time}</span>
           {selected ? (
-            <div className="bkf__slots">
-              {SLOTS.map((s) => (
-                <button key={s} type="button" className="bkf__pill bkf__slot" aria-pressed={slot === s} onClick={() => { setSlot(s); setError(false); }}>
-                  {s}
-                </button>
-              ))}
-            </div>
+            slots.length > 0 ? (
+              <div className="bkf__slots">
+                {slots.map((s) => (
+                  <button key={s} type="button" className="bkf__pill bkf__slot" disabled={taken.includes(s)} aria-pressed={slot === s} onClick={() => { setSlot(s); setError(false); }}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="bkf__hint">{labels.noSlots}</p>
+            )
           ) : (
             <p className="bkf__hint">{labels.pickDate}</p>
           )}
@@ -210,7 +274,7 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
             {labels.success} {labels.fallback} <a href={`mailto:${STUDIO_EMAIL}`}>{STUDIO_EMAIL}</a>
           </p>
         ) : (
-          <button type="submit" className="bkf__submit" data-magnetic>
+          <button type="submit" className="bkf__submit" data-magnetic disabled={busy}>
             <span>{labels.submit}</span>
             <ArrowUpRight size={16} strokeWidth={1.5} />
           </button>
