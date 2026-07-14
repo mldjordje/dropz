@@ -26,6 +26,7 @@ import {
   splatShader,
   vorticityShader,
 } from "./shaders";
+import { CHAPTER_MOTIFS, motifPlacement } from "./motifs";
 
 export interface SplatOptions {
   x: number;
@@ -60,12 +61,18 @@ const isMobile = () =>
   typeof window !== "undefined" && (navigator.maxTouchPoints > 1 || /Mobi|Android/i.test(navigator.userAgent));
 
 // Brand ink ramp: deep violet -> neon -> white-hot (docs/04 + 07).
+// Darkened ~15% overall (cinematic calm, less purple wash) — hues unchanged.
 const RAMP: [number, number, number][] = [
-  [0.443, 0.188, 1.0], // #7130ff
-  [0.651, 0.447, 1.0], // #a672ff
-  [0.729, 0.573, 1.0],
-  [0.953, 0.937, 0.98], // #f3effa
+  [0.377, 0.16, 0.85], // #7130ff, darkened ~15%
+  [0.553, 0.38, 0.85], // #a672ff, darkened ~15%
+  [0.62, 0.487, 0.85], // darkened ~15%
+  [0.81, 0.796, 0.833], // #f3effa, darkened ~15%
 ];
+
+function smoothstep01(t: number): number {
+  const x = Math.min(Math.max(t, 0), 1);
+  return x * x * (3 - 2 * x);
+}
 
 function sampleRamp(t: number): [number, number, number] {
   const clamped = Math.min(Math.max(t, 0), 0.999);
@@ -122,12 +129,14 @@ export class FluidEngine {
   private dyeRes = 1024;
   private pressureIterations = 24;
 
-  // tuning
-  private densityDissipation = 0.62; // low = ink lingers, dense
-  private velocityDissipation = 0.22;
+  // tuning — calmer/cinematic pass: motion dies out sooner, ink covers less
+  // of the screen, less turbulence. See docs/07 client feedback: "too fast,
+  // too much purple."
+  private densityDissipation = 0.75; // was 0.62 — ink fades a bit sooner, still lingers
+  private velocityDissipation = 0.4; // was 0.22 — motion settles faster, calmer
   private pressureDecay = 0.8;
-  private curlStrength = 34;
-  private splatForce = 6000;
+  private curlStrength = 20; // was 34 — less turbulent swirling
+  private splatForce = 3600; // was 6000 — pointer drag ~40% gentler
   private baseSplatRadius = 0.0028;
 
   private progress = 0;
@@ -148,6 +157,9 @@ export class FluidEngine {
   private lastInputAt = 0;
   private scrollAccum = 0;
   private needlePhase = 0;
+  private lastChapter = 0; // 7 scroll chapters; a new one gets announced by one slow ink drop
+  private motifDrawn = 0; // points of the current chapter's motif emitted so far
+  private motifChapter = -1; // chapter the draw state belongs to
 
   private pendingSplats: SplatOptions[] = [];
 
@@ -224,16 +236,17 @@ export class FluidEngine {
 
     this.initFramebuffers();
 
-    // seed: a few blooms so first paint is alive
-    for (let i = 0; i < 6; i++) {
+    // seed: a few dim blooms so first paint is alive (fewer/softer — calm open)
+    for (let i = 0; i < 4; i++) {
       const angle = Math.random() * Math.PI * 2;
+      const seed = sampleRamp(Math.random() * 0.5);
       this.pendingSplats.push({
         x: 0.35 + Math.random() * 0.3,
         y: 0.35 + Math.random() * 0.3,
-        dx: Math.cos(angle) * 600,
-        dy: Math.sin(angle) * 600,
-        color: sampleRamp(Math.random() * 0.5),
-        radius: 0.004 + Math.random() * 0.004,
+        dx: Math.cos(angle) * 300,
+        dy: Math.sin(angle) * 300,
+        color: [seed[0] * 0.6, seed[1] * 0.6, seed[2] * 0.6],
+        radius: 0.005 + Math.random() * 0.004,
       });
     }
 
@@ -404,14 +417,26 @@ export class FluidEngine {
     this.ignite = Math.min(Math.max(i, 0), 1);
   }
 
-  /** Color for the current chapter (violet high -> hotter neon down the page).
-   * Capped below white-hot: ambient ink must stay purple; white is reserved for
-   * dense cores (display shader) and the ignite. */
+  /** Color for the current chapter, with dramaturgy: deep violet hero ->
+   * near-monochrome charcoal ink through the middle chapters (violet survives
+   * only as rare accent splats) -> violet returns for the closing chapters.
+   * Capped below white-hot: white is reserved for dense cores and the ignite. */
   chapterColor(jitter = 0.18): [number, number, number] {
-    const t = Math.min(this.progress * 0.55 + Math.random() * jitter, 0.72);
+    const p = this.progress;
+    const t = Math.min(p * 0.55 + Math.random() * jitter, 0.72);
     const c = sampleRamp(t);
-    const boost = 0.32; // HDR-ish dye so bloom picks it up
-    return [c[0] * boost, c[1] * boost, c[2] * boost];
+    // 0 at hero and finale, 1 through the middle of the page
+    const mid =
+      smoothstep01((p - 0.14) / 0.16) * (1 - smoothstep01((p - 0.62) / 0.16));
+    // 12% of mid-page splats stay fully violet — accents, not wallpaper
+    const desat = Math.random() < 0.12 ? 0 : 0.78 * mid;
+    const luma = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+    const boost = 0.18; // was 0.32 — dimmer HDR dye, less purple wash from bloom
+    return [
+      (c[0] + (luma - c[0]) * desat) * boost,
+      (c[1] + (luma - c[1]) * desat) * boost,
+      (c[2] + (luma - c[2]) * desat) * boost,
+    ];
   }
 
   setMask(source: TexImageSource & (HTMLCanvasElement | HTMLImageElement)) {
@@ -524,9 +549,81 @@ export class FluidEngine {
 
   /** Autonomous inputs: idle drift, scroll needle-path injection. */
   private drive(now: number, dt: number) {
+    // chapter transition -> one slow, wide ink drop announces the section
+    // (composition alternates sides). Replaces part of the continuous scroll
+    // pumping with a deliberate, cinematic beat.
+    const chapter = Math.min(Math.floor(this.progress * 7), 6);
+    if (chapter !== this.lastChapter) {
+      this.lastChapter = chapter;
+      const cx = chapter % 2 === 0 ? 0.34 : 0.66;
+      const cy = 0.5 + (Math.random() - 0.5) * 0.18;
+      const c = this.chapterColor(0.08);
+      for (let i = 0; i < 3; i++) {
+        const a = Math.random() * Math.PI * 2;
+        this.pendingSplats.push({
+          x: cx + (Math.random() - 0.5) * 0.05,
+          y: cy + (Math.random() - 0.5) * 0.05,
+          dx: Math.cos(a) * 90,
+          dy: Math.sin(a) * 90,
+          color: [c[0] * 0.5, c[1] * 0.5, c[2] * 0.5],
+          radius: this.baseSplatRadius * 2.6,
+        });
+      }
+    }
+
+    // needle-draw: the chapter's tattoo motif gets "needle-drawn" stroke by
+    // stroke as its chapter is scrolled through, then faintly reinforced so
+    // it survives dissipation while on screen. See lib/fluid/motifs.ts.
+    const motif = CHAPTER_MOTIFS[chapter];
+    if (motif) {
+      if (this.motifChapter !== chapter) {
+        this.motifChapter = chapter;
+        this.motifDrawn = 0;
+      }
+      const local = Math.min(Math.max(this.progress * 7 - chapter, 0), 1); // progress within the chapter
+      const reveal = smoothstep01((local - 0.12) / 0.6); // draw window: 12%..72% of the chapter
+      const target = Math.floor(reveal * motif.points.length);
+      const place = motifPlacement(chapter);
+      const aspect = this.canvas ? this.canvas.height / this.canvas.width : 0.6; // keep motif proportions in uv space
+      const perFrame = this.mobile ? 2 : 4; // cap emission per frame so fast scroll catches up over ~1s
+      const dye = 0.55; // denser than ambient so the line reads
+      let emitted = 0;
+      while (this.motifDrawn < target && emitted < perFrame) {
+        const pt = motif.points[this.motifDrawn++];
+        emitted++;
+        const c = this.chapterColor(0.06);
+        this.pendingSplats.push({
+          x: place.x + (pt.x - 0.5) * place.scale * aspect,
+          y: place.y + (pt.y - 0.5) * place.scale,
+          dx: pt.tx * 220, // velocity along the stroke -> organic smear
+          dy: pt.ty * 220,
+          color: [c[0] * dye, c[1] * dye, c[2] * dye],
+          radius: this.baseSplatRadius * 0.55, // thin, needle-like line
+        });
+      }
+      // reinforcement: once (partially) drawn, faintly re-ink random points already
+      // drawn so the piece survives dissipation while its chapter is on screen
+      if (this.motifDrawn > 8 && Math.random() < (this.mobile ? 0.18 : 0.35)) {
+        const pt = motif.points[Math.floor(Math.random() * this.motifDrawn)];
+        const c = this.chapterColor(0.06);
+        this.pendingSplats.push({
+          x: place.x + (pt.x - 0.5) * place.scale * aspect,
+          y: place.y + (pt.y - 0.5) * place.scale,
+          dx: pt.tx * 40,
+          dy: pt.ty * 40,
+          color: [c[0] * 0.22, c[1] * 0.22, c[2] * 0.22],
+          radius: this.baseSplatRadius * 0.5,
+        });
+      }
+    } else {
+      this.motifChapter = -1;
+      this.motifDrawn = 0;
+    }
+
     // scroll -> rhythmic dye along a sinuous vertical "needle path".
     // Tuned cinematic: long accumulator tail, low velocities, wide soft blooms —
     // the ink should billow and drift with the scroll, not shoot.
+    // Force and dye both halved vs. the original pass so scrolling doesn't churn the ink.
     const scroll = this.scrollAccum;
     this.scrollAccum *= 0.86;
     const mag = Math.abs(scroll);
@@ -538,37 +635,40 @@ export class FluidEngine {
         const yPos = 0.82 - ((this.needlePhase * 0.13 + i * 0.31) % 0.66);
         const x = 0.5 + Math.sin(this.needlePhase * 1.7 + i * 2.1) * 0.22;
         const dir = scroll > 0 ? -1 : 1;
+        const c = this.chapterColor();
         this.pendingSplats.push({
           x,
           y: yPos,
-          dx: Math.sin(this.needlePhase * 2.2 + i) * 110 * surge,
-          dy: dir * (190 + 230 * surge),
-          color: this.chapterColor(),
+          dx: Math.sin(this.needlePhase * 2.2 + i) * 55 * surge, // was 110 — halved
+          dy: dir * (95 + 115 * surge), // was (190 + 230 * surge) — halved
+          color: [c[0] * 0.5, c[1] * 0.5, c[2] * 0.5], // halved dye so scroll doesn't churn ink
           radius: this.baseSplatRadius * (1.35 + surge * 0.75),
         });
       }
     }
 
-    // idle: wandering emitters keep ink breathing
+    // idle: wandering emitters keep ink breathing — slowed way down, softer,
+    // dimmer: soft slow blooms read as cinematic instead of busy.
     const idleFor = now - this.lastInputAt;
     const idleGain = Math.min(idleFor / 2500, 1) * 0.75 + 0.25;
     for (const e of this.emitters) {
       e.a += (Math.random() - 0.5) * 0.35;
-      e.x += Math.cos(e.a) * 0.0011 * idleGain;
-      e.y += Math.sin(e.a) * 0.0011 * idleGain;
+      e.x += Math.cos(e.a) * 0.0005 * idleGain; // was 0.0011 — slower wander
+      e.y += Math.sin(e.a) * 0.0005 * idleGain; // was 0.0011 — slower wander
       if (e.x < 0.12 || e.x > 0.88) e.a = Math.PI - e.a;
       if (e.y < 0.14 || e.y > 0.86) e.a = -e.a;
       e.x = Math.min(Math.max(e.x, 0.1), 0.9);
       e.y = Math.min(Math.max(e.y, 0.12), 0.88);
-      if (Math.random() < 0.5 * idleGain) {
+      if (Math.random() < 0.28 * idleGain) {
+        // was 0.5 * idleGain — fewer idle spawns
         const c = this.chapterColor(0.3);
         this.pendingSplats.push({
           x: e.x,
           y: e.y,
-          dx: Math.cos(e.a) * 260 * idleGain,
-          dy: Math.sin(e.a) * 260 * idleGain,
-          color: [c[0] * 0.35, c[1] * 0.35, c[2] * 0.35],
-          radius: this.baseSplatRadius * 1.4,
+          dx: Math.cos(e.a) * 130 * idleGain, // was 260 — gentler splat force
+          dy: Math.sin(e.a) * 130 * idleGain, // was 260 — gentler splat force
+          color: [c[0] * 0.25, c[1] * 0.25, c[2] * 0.25], // was 0.35 — dimmer, less purple
+          radius: this.baseSplatRadius * 1.7, // was 1.4 — slightly larger/softer bloom
         });
       }
     }
@@ -586,7 +686,7 @@ export class FluidEngine {
           y: p.y,
           dx: (Math.random() - 0.5) * 120,
           dy: (Math.random() - 0.5) * 120,
-          color: [c[0] * 0.4, c[1] * 0.4, c[2] * 0.4],
+          color: [c[0] * 0.3, c[1] * 0.3, c[2] * 0.3], // was 0.4 — dimmer settle dye
           radius: this.baseSplatRadius * 0.8,
         });
       }
@@ -691,7 +791,9 @@ export class FluidEngine {
     const { bloomPrefilter, blur, display } = this.programs;
 
     // bloom: threshold -> separable blur on downsampled target
-    const threshold = 0.55;
+    // threshold raised slightly (was 0.55) so less of the ambient dye blooms —
+    // a big contributor to the "too much purple glow" feedback.
+    const threshold = 0.65;
     const knee = threshold * 0.7;
     gl.useProgram(bloomPrefilter.program);
     gl.uniform3f(bloomPrefilter.uniforms.curve, threshold - knee, knee * 2, 0.25 / knee);

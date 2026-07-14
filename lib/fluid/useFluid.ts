@@ -55,8 +55,8 @@ export function useFluid(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
         engine.splat({
           x,
           y,
-          dx: Math.cos(a) * 900,
-          dy: Math.sin(a) * 900,
+          dx: Math.cos(a) * 500, // was 900 — calmer click burst
+          dy: Math.sin(a) * 500, // was 900 — calmer click burst
           color: engine.chapterColor(0.35),
           radius: 0.005,
         });

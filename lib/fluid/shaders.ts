@@ -269,6 +269,12 @@ export const displayShader = /* glsl */ `
     return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
   }
 
+  // filmic tonemap (ACES approximation) — rolls off highlights instead of
+  // clipping, deepens shadows; the raw HDR sum used to read as flat purple.
+  vec3 aces (vec3 x) {
+    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+  }
+
   void main () {
     vec3 c = texture2D(uTexture, vUv).rgb;
     vec3 bloom = texture2D(uBloom, vUv).rgb;
@@ -279,7 +285,9 @@ export const displayShader = /* glsl */ `
     vec3 hot = vec3(0.953, 0.937, 0.980);
     c += hot * smoothstep(1.2, 2.8, lum) * 0.55;
 
-    c += bloom * (0.9 + uIgnite * 2.6);
+    // bloom intensity was 0.9 base — reduced ~30% (calmer, less purple glow);
+    // ignite multiplier (finale flash) left untouched.
+    c += bloom * (0.63 + uIgnite * 2.6);
 
     // finale: ink (and its bloom) settles into the wordmark, the rest recedes to void
     if (uHasMask > 0.5) {
@@ -289,6 +297,14 @@ export const displayShader = /* glsl */ `
       c += vec3(0.651, 0.447, 1.0) * m * uIgnite * 1.35;
       c += hot * m * uIgnite * uIgnite * 0.5;
     }
+
+    // filmic grade: tonemap, then pull shadows toward neutral charcoal so the
+    // dark field reads as ink on skin, not a purple wash. Bright cores keep
+    // their full color (sat -> 1 above ~0.3 luma).
+    c = aces(c);
+    float luma = dot(c, vec3(0.299, 0.587, 0.114));
+    float sat = 0.22 + 0.78 * smoothstep(0.02, 0.30, luma);
+    c = mix(vec3(luma), c, sat);
 
     // film grain (animated)
     float grain = hash(vUv * uResolution + mod(uTime, 64.0));
