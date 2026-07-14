@@ -351,9 +351,8 @@ export function FinaleV3({ title, action }: { title: string; action: string }) {
     <section className="v3-finale" id="finale">
       <div className="v3-finale__stage">
         <p className="v3-finale__line">{title}</p>
-        {/* crisp wordmark snaps in as the ink resolves; black jpg background drops out via screen blend */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="v3-finale__logo" src="/media/logo.jpg" alt="Dropz Tattoo" loading="lazy" />
+        <img className="v3-finale__logo" src="/media/dropz%20png%20logo%20original-01.png" alt="Dropz Tattoo" loading="lazy" />
         <a className="v3-finale__cta" data-magnetic href="#booking">
           <span>{action}</span>
           <ArrowUpRight size={16} strokeWidth={1.5} />

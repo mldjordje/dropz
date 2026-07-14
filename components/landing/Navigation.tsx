@@ -14,7 +14,7 @@ type NavigationProps = {
 export function Navigation({ locale, setLocale, labels }: NavigationProps) {
   return (
     <header className="site-nav">
-      <a className="site-nav__brand" href="#top" aria-label="Dropz Tattoo home"><Image src="/media/logo.jpg" alt="Dropz Tattoo" width={168} height={100} priority /></a>
+      <a className="site-nav__brand" href="#top" aria-label="Dropz Tattoo home"><Image src="/media/dropz%20png%20logo%20original-01.png" alt="Dropz Tattoo" width={168} height={100} priority /></a>
       <nav className="site-nav__links" aria-label="Glavna navigacija">
         <a href="#work">{labels.work}</a>
         <a href="#craft">{labels.process}</a>
