@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { BookingForm } from "@/components/booking/BookingForm";
 import { copy } from "@/components/landing/content";
+
+export const metadata: Metadata = {
+  title: "Rezervacija termina",
+  description:
+    "Rezerviši termin za besplatnu tattoo konsultaciju u Dropz Tattoo studiju u Nišu. Izaberi datum i vreme online.",
+  alternates: { canonical: "/booking" },
+};
 
 export default function BookingPage() {
   const t = copy.sr;
