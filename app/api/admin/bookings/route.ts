@@ -13,15 +13,18 @@ export async function GET(request: Request) {
   let rows: Booking[];
   if (status && (STATUSES as readonly string[]).includes(status)) {
     rows = (await sql`
-      SELECT * FROM bookings WHERE status = ${status} ORDER BY date ASC, slot ASC
+      SELECT id, name, contact, kind, note, date::text AS date, slot, status, locale, created_at
+      FROM bookings WHERE status = ${status} ORDER BY date ASC, slot ASC
     `) as Booking[];
   } else if (from) {
     rows = (await sql`
-      SELECT * FROM bookings WHERE date >= ${from} ORDER BY date ASC, slot ASC
+      SELECT id, name, contact, kind, note, date::text AS date, slot, status, locale, created_at
+      FROM bookings WHERE date >= ${from} ORDER BY date ASC, slot ASC
     `) as Booking[];
   } else {
     rows = (await sql`
-      SELECT * FROM bookings ORDER BY date DESC, slot ASC LIMIT 300
+      SELECT id, name, contact, kind, note, date::text AS date, slot, status, locale, created_at
+      FROM bookings ORDER BY date DESC, slot ASC LIMIT 300
     `) as Booking[];
   }
   return NextResponse.json({ ok: true, bookings: rows });

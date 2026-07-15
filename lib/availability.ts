@@ -70,12 +70,12 @@ export async function getMonthAvailability(sql: Sql, yearMonth: string): Promise
   }
 
   const overrides = (await sql`
-    SELECT date, slots FROM consult_days
+    SELECT date::text AS date, slots FROM consult_days
     WHERE date >= ${`${yearMonth}-01`} AND date < (${`${yearMonth}-01`}::date + INTERVAL '1 month')
   `) as { date: string; slots: string[] }[];
 
   for (const row of overrides) {
-    const date = String(row.date).slice(0, 10);
+    const date = row.date;
     if (row.slots.length > 0) {
       result[date] = row.slots;
     } else {

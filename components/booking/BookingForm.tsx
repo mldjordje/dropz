@@ -55,6 +55,7 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
   const [note, setNote] = useState("");
   const [error, setError] = useState(false);
   const [sent, setSent] = useState(false);
+  const [sentVia, setSentVia] = useState<"api" | "mailto">("api");
   const [busy, setBusy] = useState(false);
   const [slots, setSlots] = useState<string[]>([]);
   const [taken, setTaken] = useState<string[]>([]);
@@ -172,9 +173,11 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
         return;
       }
       if (!res.ok) throw new Error("api");
+      setSentVia("api");
     } catch {
       // API down (or DB not configured) — fall back to the old mailto flow
       mailtoFallback();
+      setSentVia("mailto");
     } finally {
       setBusy(false);
     }
@@ -271,7 +274,10 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
         {error && <p className="bkf__error" role="alert">{labels.missing}</p>}
         {sent ? (
           <p className="bkf__success" role="status">
-            {labels.success} {labels.fallback} <a href={`mailto:${STUDIO_EMAIL}`}>{STUDIO_EMAIL}</a>
+            {labels.success}
+            {sentVia === "mailto" && (
+              <> {labels.fallback} <a href={`mailto:${STUDIO_EMAIL}`}>{STUDIO_EMAIL}</a></>
+            )}
           </p>
         ) : (
           <button type="submit" className="bkf__submit" data-magnetic disabled={busy}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PortfolioTab } from "./PortfolioTab";
@@ -422,8 +422,10 @@ function DostupnostTab() {
   const [selected, setSelected] = useState<string | null>(null);
   const [addHour, setAddHour] = useState(HOURS[0]);
   const [busy, setBusy] = useState(false);
+  const editorRef = useRef<HTMLDivElement | null>(null);
 
   const key = monthKey(offset);
+  const today = todayIso();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -449,7 +451,8 @@ function DostupnostTab() {
     setSelected(null);
   };
 
-  const day = days.find((d) => d.date === selected) ?? null;
+  const visibleDays = useMemo(() => days.filter((d) => d.date >= today), [days, today]);
+  const day = visibleDays.find((d) => d.date === selected) ?? null;
 
   useEffect(() => {
     if (!day) return;
@@ -457,6 +460,10 @@ function DostupnostTab() {
     if (free) setAddHour(free);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day?.date, day?.slots.length]);
+
+  useEffect(() => {
+    if (day) editorRef.current?.scrollIntoView({ block: "start" });
+  }, [day?.date]);
 
   const putSlots = async (date: string, slots: string[]) => {
     setBusy(true);
@@ -528,7 +535,7 @@ function DostupnostTab() {
       <div className="adm__avail-list">
         {loading && <p className="adm__empty">Učitavanje…</p>}
         {!loading &&
-          days.map((d) => (
+          visibleDays.map((d) => (
             <button
               key={d.date}
               type="button"
@@ -552,7 +559,7 @@ function DostupnostTab() {
       </div>
 
       {day && (
-        <div className="adm__editor">
+        <div className="adm__editor" ref={editorRef}>
           <h3>{fmtDayLabel(day.date)}</h3>
           <div className="adm__chips">
             {day.slots.length === 0 && <span className="adm__hint">Dan je zatvoren.</span>}

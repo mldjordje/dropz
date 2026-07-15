@@ -19,10 +19,10 @@ export async function GET(request: Request) {
 
   const sql = getSql();
   const overrides = (await sql`
-    SELECT date, slots FROM consult_days
+    SELECT date::text AS date, slots FROM consult_days
     WHERE date >= ${`${month}-01`} AND date < (${`${month}-01`}::date + INTERVAL '1 month')
   `) as { date: string; slots: string[] }[];
-  const overrideMap = new Map(overrides.map((r) => [String(r.date).slice(0, 10), r.slots]));
+  const overrideMap = new Map(overrides.map((r) => [r.date, r.slots]));
 
   const days = [];
   for (let day = 1; day <= total; day++) {
