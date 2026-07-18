@@ -157,7 +157,8 @@ export class FluidEngine {
   private lastInputAt = 0;
   private scrollAccum = 0;
   private needlePhase = 0;
-  private lastChapter = 0; // 7 scroll chapters; a new one gets announced by one slow ink drop
+  private lastChapter = 0; // 7 scroll chapters; a new one gets announced by an ink beat
+  private beatSeed = Math.floor(Math.random() * 3); // varies chapter-beat choreography per visit
   private motifDrawn = 0; // points of the current chapter's motif emitted so far
   private motifChapter = -1; // chapter the draw state belongs to
 
@@ -549,25 +550,56 @@ export class FluidEngine {
 
   /** Autonomous inputs: idle drift, scroll needle-path injection. */
   private drive(now: number, dt: number) {
-    // chapter transition -> one slow, wide ink drop announces the section
-    // (composition alternates sides). Replaces part of the continuous scroll
-    // pumping with a deliberate, cinematic beat.
+    // chapter transition -> a deliberate cinematic beat announces the section.
+    // The beat itself varies (slow drop / soft ring bloom / rising plume) with a
+    // per-mount random offset, so neither two chapters in a row nor two visits
+    // to the same chapter read identically.
     const chapter = Math.min(Math.floor(this.progress * 7), 6);
     if (chapter !== this.lastChapter) {
       this.lastChapter = chapter;
       const cx = chapter % 2 === 0 ? 0.34 : 0.66;
       const cy = 0.5 + (Math.random() - 0.5) * 0.18;
       const c = this.chapterColor(0.08);
-      for (let i = 0; i < 3; i++) {
-        const a = Math.random() * Math.PI * 2;
-        this.pendingSplats.push({
-          x: cx + (Math.random() - 0.5) * 0.05,
-          y: cy + (Math.random() - 0.5) * 0.05,
-          dx: Math.cos(a) * 90,
-          dy: Math.sin(a) * 90,
-          color: [c[0] * 0.5, c[1] * 0.5, c[2] * 0.5],
-          radius: this.baseSplatRadius * 2.6,
-        });
+      const dim: [number, number, number] = [c[0] * 0.5, c[1] * 0.5, c[2] * 0.5];
+      const beat = (chapter + this.beatSeed) % 3;
+      if (beat === 0) {
+        // slow, wide ink drop
+        for (let i = 0; i < 3; i++) {
+          const a = Math.random() * Math.PI * 2;
+          this.pendingSplats.push({
+            x: cx + (Math.random() - 0.5) * 0.05,
+            y: cy + (Math.random() - 0.5) * 0.05,
+            dx: Math.cos(a) * 90,
+            dy: Math.sin(a) * 90,
+            color: dim,
+            radius: this.baseSplatRadius * 2.6,
+          });
+        }
+      } else if (beat === 1) {
+        // soft ring bloom expanding outward
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + Math.random() * 0.4;
+          this.pendingSplats.push({
+            x: cx + Math.cos(a) * 0.03,
+            y: cy + Math.sin(a) * 0.03,
+            dx: Math.cos(a) * 150,
+            dy: Math.sin(a) * 150,
+            color: dim,
+            radius: this.baseSplatRadius * 1.8,
+          });
+        }
+      } else {
+        // rising plume from below the fold
+        for (let i = 0; i < 3; i++) {
+          this.pendingSplats.push({
+            x: cx + (Math.random() - 0.5) * 0.12,
+            y: 0.12 + Math.random() * 0.08,
+            dx: (Math.random() - 0.5) * 70,
+            dy: 180 + Math.random() * 120,
+            color: dim,
+            radius: this.baseSplatRadius * 2.2,
+          });
+        }
       }
     }
 

@@ -285,6 +285,58 @@ export function VoicesV3({ index, title, voices }: { index: string; title: strin
   );
 }
 
+// ---------- Education ----------
+
+type EduProgram = { readonly name: string; readonly meta: string; readonly desc: string };
+
+type EduProps = {
+  index: string;
+  title: string;
+  body: string;
+  start: EduProgram;
+  pro: EduProgram;
+  action: string;
+};
+
+export function EduV3({ index, title, body, start, pro, action }: EduProps) {
+  return (
+    <section className="v3-edu" id="edukacija">
+      <div className="v3-edu__media" aria-hidden="true">
+        <video
+          className="v3-edu__video"
+          poster="/media/dragan-skola-poster.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        >
+          <source src="/media/dragan-skola.mp4" type="video/mp4" />
+        </video>
+        <span className="v3-edu__media-frame" />
+      </div>
+      <div className="v3-edu__copy">
+        <span className="v3-index">{index}</span>
+        <h2 className="v3-edu__title v3-blur-title">{title}</h2>
+        <p className="v3-edu__body">{body}</p>
+        <div className="v3-edu__programs">
+          {[start, pro].map((program) => (
+            <Link key={program.name} href="/edukacija" className="v3-edu__program" data-magnetic>
+              <strong>{program.name}</strong>
+              <small>{program.meta}</small>
+              <p>{program.desc}</p>
+            </Link>
+          ))}
+        </div>
+        <Link href="/edukacija" className="v3-edu__cta" data-magnetic>
+          <span>{action}</span>
+          <ArrowUpRight size={15} strokeWidth={1.6} />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 // ---------- Paths ----------
 
 type PathsProps = {
