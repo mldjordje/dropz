@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getSql } from "@/lib/db";
 import type { PortfolioCategory, PortfolioWork } from "@/lib/portfolio";
 import { PortfolioGallery } from "@/components/portfolio/PortfolioGallery";
+import { RouteChrome } from "@/components/layout/RouteChrome";
 
 export const metadata: Metadata = {
   title: "Portfolio",
@@ -34,6 +35,7 @@ export default async function PortfolioPage() {
 
   return (
     <main className="route-shell">
+      <RouteChrome />
       <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
       <div className="route-index">Portfolio</div>
       <h1>Radovi<br />studija.</h1>

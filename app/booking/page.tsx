@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { BookingForm } from "@/components/booking/BookingForm";
+import { RouteChrome } from "@/components/layout/RouteChrome";
 import { copy } from "@/components/landing/content";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function BookingPage() {
   const t = copy.sr;
   return (
     <main className="route-shell">
+      <RouteChrome />
       <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
       <div className="route-index">{t.bookingIndex}</div>
       <h1>Rezerviši<br />svoje mesto.</h1>

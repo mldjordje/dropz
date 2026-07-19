@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
+import { RouteChrome } from "@/components/layout/RouteChrome";
 
 export const metadata: Metadata = {
   title: "Edukacija — tattoo obuke",
@@ -31,6 +32,7 @@ const proItems = [
 export default function EducationPage() {
   return (
     <main className="route-shell edu-shell">
+      <RouteChrome />
       <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
       <div className="route-index">05 / Edukacija</div>
       <h1>Zanat se uči<br />iz prve ruke.</h1>

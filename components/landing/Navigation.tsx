@@ -4,11 +4,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { Locale, locales } from "./content";
+import { MobileMenu } from "@/components/layout/MobileMenu";
 
 type NavigationProps = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  labels: { work: string; process: string; education: string; booking: string; reserve: string; account: string };
+  labels: {
+    work: string;
+    process: string;
+    portfolio: string;
+    education: string;
+    booking: string;
+    reserve: string;
+    account: string;
+  };
 };
 
 export function Navigation({ locale, setLocale, labels }: NavigationProps) {
@@ -33,6 +42,7 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
         <Link className="nav-cta" href="/booking">
           <span>{labels.reserve}</span><ArrowUpRight size={16} strokeWidth={1.5} />
         </Link>
+        <MobileMenu labels={labels} variant="nav" locale={locale} onLocaleChange={setLocale} isHome />
       </div>
     </header>
   );

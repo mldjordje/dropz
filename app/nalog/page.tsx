@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { getSessionUser } from "@/lib/auth/user-session";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import { TattooRequests } from "@/components/account/TattooRequests";
+import { RouteChrome } from "@/components/layout/RouteChrome";
 
 export const metadata: Metadata = {
   title: "Moj nalog",
@@ -30,6 +31,7 @@ export default async function NalogPage({
 
   return (
     <main className="route-shell">
+      <RouteChrome />
       <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
       <div className="route-index">Nalog</div>
       <h1>Moj<br />nalog.</h1>
