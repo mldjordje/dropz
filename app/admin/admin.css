@@ -135,6 +135,13 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__pf-card-body .adm__badge{justify-self:start;align-self:flex-start}
 .adm__pf-card > button{margin:0 12px 12px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .adm__pf-card > button:hover{border-color:#ff7ab8;color:#ff7ab8}
+.adm__pf-feat{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.adm__pf-feat input{accent-color:var(--neon)}
+.adm__pf-card-actions{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 12px}
+.adm__pf-card-actions button{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:9px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.adm__pf-card-actions button:hover:not(:disabled){border-color:var(--neon);color:#fff}
+.adm__pf-card-actions button:disabled{opacity:.35;cursor:default}
+.adm__pf-edit-preview{width:100%;max-height:220px;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
 
 @media(max-width:700px){.adm__row{grid-template-columns:1fr;gap:10px}.adm__actions{align-items:flex-start}.adm__avail-day{grid-template-columns:1fr}.adm__badge{justify-self:start}}
 
@@ -175,6 +182,16 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__wh-times select{padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:12px}
 .adm__wh-row>button{justify-self:end;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .adm__wh-row>button:hover:not(:disabled){border-color:var(--neon);color:#fff}
+.adm__modal{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,4,12,.72);backdrop-filter:blur(4px);animation:admFade .15s ease}
+@keyframes admFade{from{opacity:0}to{opacity:1}}
+.adm__modal-box{position:relative;width:min(560px,100%);max-height:calc(100vh - 40px);overflow-y:auto;background:#0d0918;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+.adm__modal-x{position:absolute;top:10px;right:12px;border:0;background:none;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.adm__modal-x:hover{color:#fff}
+.adm__cal-fin{margin:14px 0 4px;padding-top:12px;border-top:1px solid var(--line)}
+.adm__cal-fin h4{margin-bottom:10px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.adm__cal-checks{align-items:center}
+.adm__cal-check{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;cursor:pointer}
+.adm__cal-check input{accent-color:var(--neon)}
 .adm__cal-panel{padding:18px;border:1px solid rgba(113,48,255,.4);border-radius:6px;background:rgba(113,48,255,.06)}
 .adm__cal-panel h3{margin-bottom:12px;font-size:13px}
 .adm__cal-panel .adm__hint{margin-bottom:10px;color:var(--muted);font-size:12px;line-height:1.5}

@@ -27,6 +27,7 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
       <nav className="site-nav__links" aria-label="Glavna navigacija">
         <a href="#work">{labels.work}</a>
         <a href="#craft">{labels.process}</a>
+        <Link href="/portfolio">{labels.portfolio}</Link>
         <Link href="/edukacija">{labels.education}</Link>
         <a href="#booking">{labels.booking}</a>
         <Link href="/nalog">{labels.account}</Link>

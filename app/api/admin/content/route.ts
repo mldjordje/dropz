@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getSql } from "@/lib/db";
 import { getCopyOverrides } from "@/lib/content";
 import { locales } from "@/components/landing/content";
@@ -34,5 +35,7 @@ export async function PUT(request: Request) {
     VALUES (${`copy_${locale}`}, ${JSON.stringify(body.values)}::jsonb, now())
     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
   `;
+  // Landing is ISR-cached (revalidate 60); regenerate right away so copy edits go live immediately.
+  revalidatePath("/");
   return NextResponse.json({ ok: true });
 }

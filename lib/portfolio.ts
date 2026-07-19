@@ -18,6 +18,7 @@ export type PortfolioWork = {
   description: string | null;
   tags: string[];
   seo_title: string | null;
+  featured: boolean;
   sort: number;
   created_at: string;
 };

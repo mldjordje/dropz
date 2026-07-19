@@ -167,6 +167,9 @@ await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS tags TEXT[] NOT N
 await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS seo_title TEXT`;
 await sql`CREATE UNIQUE INDEX IF NOT EXISTS portfolio_works_slug ON portfolio_works (slug) WHERE slug IS NOT NULL`;
 
+// --- Landing gallery control: which works show in the landing "Radovi" section ---
+await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS featured BOOLEAN NOT NULL DEFAULT true`;
+
 // --- Finance fields on appointments ---
 await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS price NUMERIC`;
 await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS deposit NUMERIC`;

@@ -11,10 +11,13 @@ export async function GET() {
     const sql = getSql();
     const [categoriesResult, worksResult] = await Promise.all([
       sql`SELECT id, name, slug FROM portfolio_categories ORDER BY sort ASC, created_at DESC`,
-      sql`SELECT id, title, image_url, category_id, slug, alt FROM portfolio_works ORDER BY sort ASC, created_at DESC`,
+      sql`SELECT id, title, image_url, category_id, slug, alt, description, tags, seo_title, featured FROM portfolio_works ORDER BY sort ASC, created_at DESC`,
     ]);
     const categories = categoriesResult as Pick<PortfolioCategory, "id" | "name" | "slug">[];
-    const works = worksResult as Pick<PortfolioWork, "id" | "title" | "image_url" | "category_id" | "slug" | "alt">[];
+    const works = worksResult as Pick<
+      PortfolioWork,
+      "id" | "title" | "image_url" | "category_id" | "slug" | "alt" | "description" | "tags" | "seo_title" | "featured"
+    >[];
     return NextResponse.json({ ok: true, categories, works });
   } catch {
     return NextResponse.json({ ok: false, categories: [], works: [] });

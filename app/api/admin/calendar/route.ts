@@ -19,6 +19,11 @@ type ConsultRow = {
 };
 
 type AppointmentRow = Appointment & {
+  price: number | null;
+  deposit: number | null;
+  deposit_paid: boolean;
+  paid: boolean;
+  payment_method: string | null;
   user_name: string | null;
   user_email: string | null;
   request_description: string | null;
@@ -40,6 +45,8 @@ export async function GET(request: Request) {
     sql`
       SELECT a.id, a.kind, a.title, a.request_id, a.user_id, a.date::text AS date,
              a.start_time, a.end_time, a.note, a.status, a.created_at,
+             a.price::float8 AS price, a.deposit::float8 AS deposit,
+             a.deposit_paid, a.paid, a.payment_method,
              u.name AS user_name, u.email AS user_email,
              r.description AS request_description
       FROM appointments a

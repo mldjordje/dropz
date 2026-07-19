@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getSql } from "@/lib/db";
 import { slugify } from "@/lib/portfolio";
 
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
       VALUES (${name}, ${slug})
       RETURNING id, name, slug, sort, created_at
     `) as { id: number; name: string; slug: string; sort: number; created_at: string }[];
+    revalidatePath("/portfolio");
     return NextResponse.json({ ok: true, category: inserted[0] }, { status: 201 });
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;
@@ -55,5 +57,6 @@ export async function DELETE(request: Request) {
 
   const sql = getSql();
   await sql`DELETE FROM portfolio_categories WHERE id = ${id}`;
+  revalidatePath("/portfolio");
   return NextResponse.json({ ok: true });
 }

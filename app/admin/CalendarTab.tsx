@@ -23,6 +23,11 @@ type AppointmentRow = {
   end_time: string;
   note: string | null;
   status: "scheduled" | "done" | "canceled";
+  price: number | null;
+  deposit: number | null;
+  deposit_paid: boolean;
+  paid: boolean;
+  payment_method: string | null;
   user_name: string | null;
   user_email: string | null;
   request_description: string | null;
@@ -237,6 +242,24 @@ export function CalendarTab() {
   const [eEnd, setEEnd] = useState("11:00");
   const [eTitle, setETitle] = useState("");
   const [eNote, setENote] = useState("");
+  // finance fields (saved via /api/admin/finance)
+  const [ePrice, setEPrice] = useState("");
+  const [eDeposit, setEDeposit] = useState("");
+  const [eDepositPaid, setEDepositPaid] = useState(false);
+  const [ePaid, setEPaid] = useState(false);
+  const [eMethod, setEMethod] = useState("");
+
+  // Close any open popup with Escape.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setCreateSel(null);
+        setSelected(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const onEventClick = useCallback((arg: EventClickArg) => {
     const props = arg.event.extendedProps as
@@ -251,6 +274,11 @@ export function CalendarTab() {
       setEEnd(props.row.end_time);
       setETitle(props.row.title ?? "");
       setENote(props.row.note ?? "");
+      setEPrice(props.row.price != null ? String(props.row.price) : "");
+      setEDeposit(props.row.deposit != null ? String(props.row.deposit) : "");
+      setEDepositPaid(props.row.deposit_paid);
+      setEPaid(props.row.paid);
+      setEMethod(props.row.payment_method ?? "");
     }
   }, []);
 
@@ -278,16 +306,53 @@ export function CalendarTab() {
     }
   };
 
-  const saveEdit = () =>
-    patchSelected({
-      date: eDate,
-      start: eStart,
-      end: eEnd,
-      note: eNote.trim() === "" ? "" : eNote.trim(),
-      ...(selected?.type === "appointment" && selected.row.kind === "manual"
-        ? { title: eTitle.trim() }
-        : {}),
-    });
+  const saveEdit = async () => {
+    if (!selected || selected.type !== "appointment") return;
+    setBusy(true);
+    setPanelError(null);
+    try {
+      const res = await fetch("/api/admin/appointments", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selected.row.id,
+          date: eDate,
+          start: eStart,
+          end: eEnd,
+          note: eNote.trim() === "" ? "" : eNote.trim(),
+          ...(selected.row.kind === "manual" ? { title: eTitle.trim() } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setPanelError(data.message ?? "Izmena nije uspela.");
+        return;
+      }
+      const finRes = await fetch("/api/admin/finance", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selected.row.id,
+          price: ePrice.trim() === "" ? null : Number(ePrice),
+          deposit: eDeposit.trim() === "" ? null : Number(eDeposit),
+          deposit_paid: eDepositPaid,
+          paid: ePaid,
+          payment_method: eMethod === "" ? null : eMethod,
+        }),
+      });
+      const finData = await finRes.json();
+      if (!finRes.ok || !finData.ok) {
+        setPanelError(finData.message ?? "Naplata nije sačuvana.");
+        return;
+      }
+      setSelected(null);
+      await load();
+    } catch {
+      setPanelError("Izmena nije uspela.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const removeSelected = async () => {
     if (!selected || selected.type !== "appointment") return;
@@ -418,7 +483,9 @@ export function CalendarTab() {
       </div>
 
       {createSel && (
-        <div className="adm__cal-panel">
+        <div className="adm__modal" onMouseDown={(e) => { if (e.target === e.currentTarget) setCreateSel(null); }}>
+        <div className="adm__cal-panel adm__modal-box" role="dialog" aria-modal="true" aria-label="Novi unos">
+          <button type="button" className="adm__modal-x" aria-label="Zatvori" onClick={() => setCreateSel(null)}>×</button>
           <h3>Novi unos — {createSel.date}</h3>
           <div className="adm__cal-panel-row">
             <button type="button" className="adm__chip" aria-pressed={cKind === "manual"} onClick={() => setCKind("manual")}>
@@ -473,10 +540,13 @@ export function CalendarTab() {
             <button type="button" onClick={() => setCreateSel(null)} disabled={busy}>Otkaži</button>
           </div>
         </div>
+        </div>
       )}
 
       {selected && selected.type === "consult" && (
-        <div className="adm__cal-panel">
+        <div className="adm__modal" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
+        <div className="adm__cal-panel adm__modal-box" role="dialog" aria-modal="true" aria-label="Konsultacija">
+          <button type="button" className="adm__modal-x" aria-label="Zatvori" onClick={() => setSelected(null)}>×</button>
           <h3>Konsultacija — {selected.row.date} u {selected.row.slot}</h3>
           <p className="adm__hint">
             {selected.row.name} · {selected.row.contact}
@@ -487,10 +557,13 @@ export function CalendarTab() {
             <button type="button" onClick={() => setSelected(null)}>Zatvori</button>
           </div>
         </div>
+        </div>
       )}
 
       {selected && selected.type === "appointment" && (
-        <div className="adm__cal-panel">
+        <div className="adm__modal" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
+        <div className="adm__cal-panel adm__modal-box" role="dialog" aria-modal="true" aria-label="Termin">
+          <button type="button" className="adm__modal-x" aria-label="Zatvori" onClick={() => setSelected(null)}>×</button>
           <h3>
             {selected.row.kind === "tattoo"
               ? `Tattoo sesija — ${selected.row.user_name ?? selected.row.user_email ?? ""}`
@@ -525,6 +598,39 @@ export function CalendarTab() {
             <input type="text" value={eNote} onChange={(e) => setENote(e.target.value)} disabled={busy} />
           </label>
 
+          <div className="adm__cal-fin">
+            <h4>Naplata</h4>
+            <div className="adm__cal-panel-row">
+              <label className="adm__cal-field">
+                Cena
+                <input type="number" min={0} value={ePrice} onChange={(e) => setEPrice(e.target.value)} disabled={busy} placeholder="RSD" />
+              </label>
+              <label className="adm__cal-field">
+                Depozit
+                <input type="number" min={0} value={eDeposit} onChange={(e) => setEDeposit(e.target.value)} disabled={busy} placeholder="RSD" />
+              </label>
+              <label className="adm__cal-field">
+                Način plaćanja
+                <select value={eMethod} onChange={(e) => setEMethod(e.target.value)} disabled={busy}>
+                  <option value="">—</option>
+                  <option value="cash">Keš</option>
+                  <option value="card">Kartica</option>
+                  <option value="transfer">Uplata</option>
+                </select>
+              </label>
+            </div>
+            <div className="adm__cal-panel-row adm__cal-checks">
+              <label className="adm__cal-check">
+                <input type="checkbox" checked={eDepositPaid} onChange={(e) => setEDepositPaid(e.target.checked)} disabled={busy} />
+                Depozit plaćen
+              </label>
+              <label className="adm__cal-check">
+                <input type="checkbox" checked={ePaid} onChange={(e) => setEPaid(e.target.checked)} disabled={busy} />
+                Plaćeno u celosti
+              </label>
+            </div>
+          </div>
+
           {panelError && <p className="adm__err" role="alert">{panelError}</p>}
           <div className="adm__cal-panel-actions">
             <button type="button" className="adm__resched-confirm" onClick={saveEdit} disabled={busy}>
@@ -543,6 +649,7 @@ export function CalendarTab() {
             <button type="button" onClick={removeSelected} disabled={busy}>Obriši</button>
             <button type="button" onClick={() => setSelected(null)} disabled={busy}>Zatvori</button>
           </div>
+        </div>
         </div>
       )}
     </div>

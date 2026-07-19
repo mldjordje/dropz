@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Category = { id: number; name: string; slug: string };
-type Work = { id: number; title: string; image_url: string; category_id: number | null };
+type Work = {
+  id: number;
+  title: string;
+  image_url: string;
+  category_id: number | null;
+  alt: string | null;
+  description: string | null;
+  tags: string[];
+  seo_title: string | null;
+  featured: boolean;
+};
 
 const NO_CATEGORY = "__none__";
 
@@ -204,6 +214,127 @@ export function PortfolioTab() {
     }
   };
 
+  // ---- edit / landing toggle / reorder ----
+  const [editWork, setEditWork] = useState<Work | null>(null);
+  const [edTitle, setEdTitle] = useState("");
+  const [edCategory, setEdCategory] = useState(NO_CATEGORY);
+  const [edImage, setEdImage] = useState("");
+  const [edAlt, setEdAlt] = useState("");
+  const [edDescription, setEdDescription] = useState("");
+  const [edTags, setEdTags] = useState("");
+  const [edSeoTitle, setEdSeoTitle] = useState("");
+  const [edBusy, setEdBusy] = useState(false);
+  const [edError, setEdError] = useState<string | null>(null);
+  const [edUploadBusy, setEdUploadBusy] = useState(false);
+
+  const openEdit = (w: Work) => {
+    setEditWork(w);
+    setEdTitle(w.title);
+    setEdCategory(w.category_id !== null ? String(w.category_id) : NO_CATEGORY);
+    setEdImage(w.image_url);
+    setEdAlt(w.alt ?? "");
+    setEdDescription(w.description ?? "");
+    setEdTags((w.tags ?? []).join(", "));
+    setEdSeoTitle(w.seo_title ?? "");
+    setEdError(null);
+  };
+
+  const handleEditFile = async (file: File | null) => {
+    if (!file) return;
+    setEdUploadBusy(true);
+    setEdError(null);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setEdError(data.message ?? "Otpremanje nije uspelo — nalepi URL ručno.");
+        return;
+      }
+      setEdImage(data.url);
+    } catch {
+      setEdError("Otpremanje nije uspelo.");
+    } finally {
+      setEdUploadBusy(false);
+    }
+  };
+
+  const saveEdit = async () => {
+    if (!editWork) return;
+    if (!edTitle.trim() || !edImage.trim()) {
+      setEdError("Naslov i slika su obavezni.");
+      return;
+    }
+    setEdBusy(true);
+    setEdError(null);
+    try {
+      const res = await fetch("/api/admin/portfolio", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editWork.id,
+          title: edTitle.trim(),
+          image_url: edImage.trim(),
+          category_id: edCategory === NO_CATEGORY ? null : Number(edCategory),
+          alt: edAlt.trim(),
+          description: edDescription.trim(),
+          seo_title: edSeoTitle.trim(),
+          tags: edTags.split(",").map((s) => s.trim()).filter(Boolean),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setEdError(data.message ?? "Čuvanje nije uspelo.");
+        return;
+      }
+      setEditWork(null);
+      await load();
+    } catch {
+      setEdError("Čuvanje nije uspelo.");
+    } finally {
+      setEdBusy(false);
+    }
+  };
+
+  const toggleFeatured = async (w: Work) => {
+    setWorkError(null);
+    // Optimistic flip so the toggle feels instant.
+    setWorks((list) => list.map((x) => (x.id === w.id ? { ...x, featured: !w.featured } : x)));
+    try {
+      const res = await fetch("/api/admin/portfolio", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: w.id, featured: !w.featured }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error("");
+    } catch {
+      setWorks((list) => list.map((x) => (x.id === w.id ? { ...x, featured: w.featured } : x)));
+      setWorkError("Izmena nije uspela.");
+    }
+  };
+
+  const moveWork = async (index: number, dir: -1 | 1) => {
+    const target = index + dir;
+    if (target < 0 || target >= works.length) return;
+    const next = [...works];
+    [next[index], next[target]] = [next[target], next[index]];
+    setWorks(next);
+    try {
+      const res = await fetch("/api/admin/portfolio", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: next.map((w) => w.id) }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error("");
+    } catch {
+      setWorkError("Promena redosleda nije uspela.");
+      await load();
+    }
+  };
+
   const deleteWork = async (id: number) => {
     if (!window.confirm("Obrisati ovaj rad iz portfolija?")) return;
     setWorkError(null);
@@ -354,24 +485,117 @@ export function PortfolioTab() {
 
       <section className="adm__pf-section">
         <h3>Radovi</h3>
+        <p className="adm__hint">
+          Redosled ovde je redosled na sajtu. „Landing" određuje da li se rad prikazuje u sekciji Radovi
+          na početnoj strani — stranica /portfolio uvek prikazuje sve radove.
+        </p>
         {loading && <p className="adm__empty">Učitavanje…</p>}
         {!loading && works.length === 0 && <p className="adm__empty">Nema radova u portfoliju.</p>}
         <div className="adm__pf-grid">
-          {works.map((w) => (
+          {works.map((w, i) => (
             <article key={w.id} className="adm__pf-card">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={w.image_url} alt={w.title} />
               <div className="adm__pf-card-body">
                 <strong>{w.title}</strong>
                 <span className="adm__badge adm__badge--default">{categoryName(w.category_id)}</span>
+                <label className="adm__pf-feat">
+                  <input type="checkbox" checked={w.featured} onChange={() => toggleFeatured(w)} />
+                  Landing
+                </label>
               </div>
-              <button type="button" onClick={() => deleteWork(w.id)}>
-                Obriši
-              </button>
+              <div className="adm__pf-card-actions">
+                <button type="button" onClick={() => moveWork(i, -1)} disabled={i === 0} aria-label="Pomeri gore">↑</button>
+                <button type="button" onClick={() => moveWork(i, 1)} disabled={i === works.length - 1} aria-label="Pomeri dole">↓</button>
+                <button type="button" onClick={() => openEdit(w)}>Izmeni</button>
+                <button type="button" onClick={() => deleteWork(w.id)}>Obriši</button>
+              </div>
             </article>
           ))}
         </div>
       </section>
+
+      {editWork && (
+        <div className="adm__modal" onMouseDown={(e) => { if (e.target === e.currentTarget) setEditWork(null); }}>
+          <div className="adm__pf-section adm__modal-box" role="dialog" aria-modal="true" aria-label="Izmena rada">
+            <button type="button" className="adm__modal-x" aria-label="Zatvori" onClick={() => setEditWork(null)}>×</button>
+            <h3>Izmena rada</h3>
+            {edError && <p className="adm__err" role="alert">{edError}</p>}
+            <div className="adm__pf-form">
+              <input
+                type="text"
+                placeholder="Naslov rada"
+                value={edTitle}
+                onChange={(e) => setEdTitle(e.target.value)}
+                disabled={edBusy}
+              />
+              <select value={edCategory} onChange={(e) => setEdCategory(e.target.value)} disabled={edBusy}>
+                <option value={NO_CATEGORY}>Bez kategorije</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {edImage && <img className="adm__pf-edit-preview" src={edImage} alt="" />}
+              <div className="adm__pf-upload">
+                <label className="adm__pf-file">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={edUploadBusy || edBusy}
+                    onChange={(e) => handleEditFile(e.target.files?.[0] ?? null)}
+                  />
+                  {edUploadBusy ? "Otpremanje…" : "Zameni sliku"}
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://... ili /media/slika.jpg"
+                  value={edImage}
+                  onChange={(e) => setEdImage(e.target.value)}
+                  disabled={edBusy}
+                />
+              </div>
+
+              <input
+                type="text"
+                placeholder="SEO naslov (za Google)"
+                value={edSeoTitle}
+                onChange={(e) => setEdSeoTitle(e.target.value)}
+                disabled={edBusy}
+              />
+              <input
+                type="text"
+                placeholder="Alt tekst slike"
+                value={edAlt}
+                onChange={(e) => setEdAlt(e.target.value)}
+                disabled={edBusy}
+              />
+              <textarea
+                rows={3}
+                placeholder="Opis rada"
+                value={edDescription}
+                onChange={(e) => setEdDescription(e.target.value)}
+                disabled={edBusy}
+              />
+              <input
+                type="text"
+                placeholder="Tagovi, odvojeni zarezom"
+                value={edTags}
+                onChange={(e) => setEdTags(e.target.value)}
+                disabled={edBusy}
+              />
+
+              <div className="adm__cal-panel-actions">
+                <button type="button" className="adm__resched-confirm" onClick={saveEdit} disabled={edBusy || edUploadBusy}>
+                  {edBusy ? "Čuvanje…" : "Sačuvaj izmene"}
+                </button>
+                <button type="button" onClick={() => setEditWork(null)} disabled={edBusy}>Otkaži</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

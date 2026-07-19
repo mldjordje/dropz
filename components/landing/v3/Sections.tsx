@@ -63,13 +63,15 @@ export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) 
 
 // Static fallback gallery — used whenever the DB has no portfolio works yet
 // (or is unreachable), so the section never looks broken.
+// Captions stay style-neutral here — real titles come from the admin
+// (portfolio works with the "Landing" flag), where each caption is editable.
 const pieces = [
-  { src: "/media/DSC04808.jpeg", alt: "Blackwork tattoo detail", cap: "001 — Blackwork", cls: "v3-piece--a", speed: 0.4 },
-  { src: "/media/IMG_2288.jpeg", alt: "Custom tattoo composition", cap: "002 — Composition", cls: "v3-piece--b", speed: -0.6 },
-  { src: "/media/IMG_8123.jpeg", alt: "Finished piece", cap: "003 — Fine line", cls: "v3-piece--c", speed: 0.8 },
-  { src: "/media/IMG_0941.jpeg", alt: "Tattoo artwork", cap: "004 — Ornamental", cls: "v3-piece--d", speed: -0.4 },
-  { src: "/media/FullSizeRender.jpeg", alt: "Line work", cap: "005 — Linework", cls: "v3-piece--e", speed: 0.6 },
-  { src: "/media/IMG_4676.jpeg", alt: "Fine line detail", cap: "006 — Detail", cls: "v3-piece--f", speed: -0.8 },
+  { src: "/media/DSC04808.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 001", cls: "v3-piece--a", speed: 0.4 },
+  { src: "/media/IMG_2288.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 002", cls: "v3-piece--b", speed: -0.6 },
+  { src: "/media/IMG_8123.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 003", cls: "v3-piece--c", speed: 0.8 },
+  { src: "/media/IMG_0941.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 004", cls: "v3-piece--d", speed: -0.4 },
+  { src: "/media/FullSizeRender.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 005", cls: "v3-piece--e", speed: 0.6 },
+  { src: "/media/IMG_4676.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 006", cls: "v3-piece--f", speed: -0.8 },
 ] as const;
 
 // Positional layout classes cycle for DB-sourced works so the scattered
@@ -86,7 +88,7 @@ const POSITIONS = [
 const marqueeTerms = ["Realizam", "Hiperrealizam", "Portreti", "Black&Grey", "Fine line", "Custom", "Cover-up", "Chicano", "Japanese", "American Traditional"];
 
 type ApiCategory = { id: number; name: string; slug: string };
-type ApiWork = { id: number; title: string; image_url: string; category_id: number | null };
+type ApiWork = { id: number; title: string; image_url: string; category_id: number | null; alt?: string | null; featured?: boolean };
 
 type GalleryItem = {
   key: string;
@@ -113,7 +115,10 @@ export function WorkV3({ index, title, body, allLabel }: { index: string; title:
       .then((data) => {
         if (cancelled || !data.ok) return;
         if (Array.isArray(data.works) && data.works.length > 0) {
-          setDbWorks(data.works);
+          // Landing shows only works flagged for it; if none are flagged, show all.
+          const all = data.works as ApiWork[];
+          const featured = all.filter((w) => w.featured !== false);
+          setDbWorks(featured.length > 0 ? featured : all);
           setCategories(Array.isArray(data.categories) ? data.categories : []);
         }
       })
@@ -132,7 +137,7 @@ export function WorkV3({ index, title, body, allLabel }: { index: string; title:
         return {
           key: `db-${w.id}`,
           src: w.image_url,
-          alt: w.title,
+          alt: w.alt || w.title,
           cap: w.title,
           cls: pos.cls,
           speed: pos.speed,
