@@ -345,6 +345,11 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 .bkf__success a{color:var(--neon)}
 .bkf__submit{display:flex;justify-content:space-between;align-items:center;gap:20px;width:100%;padding:18px 4px;border:0;border-block:1px solid var(--neon);background:none;color:var(--white);font-size:12px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(113,48,255,.15);transition:box-shadow .35s,color .35s}
 .bkf__submit:hover{color:var(--neon);box-shadow:0 0 44px rgba(113,48,255,.35)}
+/* Every message/hint in the form is a <p>; without this, the global
+   `.route-shell p{width:min(520px,90vw);margin-left:auto}` (meant for the
+   route intro paragraph) wins on specificity and pushes them past the
+   grid column's edge on narrow screens. */
+.bkf p{width:auto;max-width:100%;margin-left:0}
 .route-booking{margin-top:8vh;padding:clamp(26px,4vw,58px);border:1px solid rgba(243,239,250,.16);background:rgba(5,1,10,.72)}
 
 /* /booking mode choice: consultation vs inquiry */
