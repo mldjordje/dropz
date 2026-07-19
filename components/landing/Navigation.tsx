@@ -8,7 +8,7 @@ import { Locale, locales } from "./content";
 type NavigationProps = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  labels: { work: string; process: string; education: string; booking: string; reserve: string };
+  labels: { work: string; process: string; education: string; booking: string; reserve: string; account: string };
 };
 
 export function Navigation({ locale, setLocale, labels }: NavigationProps) {
@@ -20,6 +20,7 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
         <a href="#craft">{labels.process}</a>
         <Link href="/edukacija">{labels.education}</Link>
         <a href="#booking">{labels.booking}</a>
+        <Link href="/nalog">{labels.account}</Link>
       </nav>
       <div className="site-nav__tools">
         <div className="locale-switcher" aria-label="Jezik">

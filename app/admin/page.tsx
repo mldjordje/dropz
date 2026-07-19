@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PortfolioTab } from "./PortfolioTab";
+import { RequestsTab } from "./RequestsTab";
+import { CalendarTab } from "./CalendarTab";
 
 type Booking = {
   id: number;
@@ -34,7 +36,9 @@ const FILTERS = [
 type FilterKey = (typeof FILTERS)[number]["key"];
 
 const TABS = [
+  { key: "kalendar", label: "Kalendar" },
   { key: "termini", label: "Termini" },
+  { key: "zahtevi", label: "Tattoo zahtevi" },
   { key: "dostupnost", label: "Dostupnost" },
   { key: "portfolio", label: "Portfolio" },
 ] as const;
@@ -92,7 +96,7 @@ function fmtDayLabel(date: string) {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [tab, setTab] = useState<TabKey>("termini");
+  const [tab, setTab] = useState<TabKey>("kalendar");
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filter, setFilter] = useState<FilterKey>("upcoming");
@@ -404,6 +408,10 @@ export default function AdminDashboard() {
               ))}
             </div>
           </>
+        ) : tab === "kalendar" ? (
+          <CalendarTab />
+        ) : tab === "zahtevi" ? (
+          <RequestsTab />
         ) : tab === "dostupnost" ? (
           <DostupnostTab />
         ) : (

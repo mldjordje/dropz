@@ -137,3 +137,71 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__pf-card > button:hover{border-color:#ff7ab8;color:#ff7ab8}
 
 @media(max-width:700px){.adm__row{grid-template-columns:1fr;gap:10px}.adm__actions{align-items:flex-start}.adm__avail-day{grid-template-columns:1fr}.adm__badge{justify-self:start}}
+
+/* Tattoo zahtevi tab */
+.adm__req-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;color:var(--muted);font-size:11px}
+.adm__req-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.adm__req-thumbs img{width:64px;height:64px;object-fit:cover;border:1px solid var(--line);border-radius:4px}
+.adm__req-quote-info{margin-top:10px;padding:8px 12px;border:1px solid rgba(113,48,255,.35);border-radius:4px;background:rgba(113,48,255,.08);color:#cbb6ff;font-size:12px}
+.adm__status--req-pending{background:rgba(166,114,255,.2);color:var(--neon)}
+.adm__status--req-quoted{background:rgba(255,196,80,.16);color:#f0c069}
+.adm__status--req-scheduled{background:rgba(80,200,120,.16);color:#7ee2a0}
+.adm__status--req-done{background:rgba(255,255,255,.1);color:var(--muted)}
+.adm__status--req-canceled{background:rgba(220,60,60,.14);color:#e0837f}
+.adm__quote{grid-column:1/-1;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.02)}
+.adm__quote-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.adm__quote label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.adm__quote select,.adm__quote input,.adm__quote textarea{padding:9px 12px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:13px;letter-spacing:normal;text-transform:none}
+.adm__quote select:focus,.adm__quote input:focus,.adm__quote textarea:focus{outline:none;border-color:var(--neon)}
+.adm__quote-note{margin-top:14px}
+.adm__quote textarea{resize:vertical}
+.adm__quote .adm__resched-confirm{margin-top:14px}
+
+/* Kalendar tab */
+.adm__cal{display:flex;flex-direction:column;gap:18px}
+.adm__cal-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.adm__cal-key{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.adm__cal-key::before{content:"";width:10px;height:10px;border-radius:3px}
+.adm__cal-key--consult::before{background:#8b5cf6}
+.adm__cal-key--tattoo::before{background:#34d399}
+.adm__cal-key--manual::before{background:#9ca3af}
+.adm__cal-hours-btn{margin-left:auto;padding:8px 16px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.adm__cal-hours-btn:hover{border-color:var(--neon);color:#fff}
+.adm__wh{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.02)}
+.adm__wh-row{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:12px}
+.adm__wh-day{font-size:12px;color:#fff}
+.adm__wh-closed{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+.adm__wh-times{display:flex;align-items:center;gap:8px;color:var(--muted)}
+.adm__wh-times select{padding:6px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:12px}
+.adm__wh-row>button{justify-self:end;padding:6px 14px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.adm__wh-row>button:hover:not(:disabled){border-color:var(--neon);color:#fff}
+.adm__cal-panel{padding:18px;border:1px solid rgba(113,48,255,.4);border-radius:6px;background:rgba(113,48,255,.06)}
+.adm__cal-panel h3{margin-bottom:12px;font-size:13px}
+.adm__cal-panel .adm__hint{margin-bottom:10px;color:var(--muted);font-size:12px;line-height:1.5}
+.adm__cal-panel-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.adm__cal-field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.adm__cal-field input,.adm__cal-field select{padding:9px 12px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:13px;letter-spacing:normal;text-transform:none;color-scheme:dark}
+.adm__cal-field input:focus,.adm__cal-field select:focus{outline:none;border-color:var(--neon)}
+.adm__cal-panel-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.adm__cal-panel-actions button{padding:9px 18px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.adm__cal-panel-actions button:hover:not(:disabled){border-color:var(--neon);color:#fff}
+.adm__cal-panel-actions .adm__resched-confirm{border-color:var(--neon);background:rgba(113,48,255,.14);color:#fff}
+
+/* FullCalendar dark theme */
+.adm__fc-wrap{--fc-border-color:rgba(243,239,250,.12);--fc-page-bg-color:transparent;--fc-neutral-bg-color:rgba(255,255,255,.03);--fc-today-bg-color:rgba(113,48,255,.08);--fc-now-indicator-color:#ff5a8a;--fc-event-border-color:transparent}
+.adm__fc-wrap .fc{font-size:12px;color:#e7e3ee}
+.adm__fc-wrap .fc .fc-toolbar-title{font-size:16px;text-transform:uppercase;letter-spacing:.06em}
+.adm__fc-wrap .fc .fc-button{padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:none;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;box-shadow:none}
+.adm__fc-wrap .fc .fc-button:hover{background:rgba(255,255,255,.06);color:#fff}
+.adm__fc-wrap .fc .fc-button-primary:not(:disabled).fc-button-active,.adm__fc-wrap .fc .fc-button-primary:not(:disabled):active{background:rgba(113,48,255,.25);border-color:var(--neon);color:#fff}
+.adm__fc-wrap .fc .fc-button:disabled{opacity:.4}
+.adm__fc-wrap .fc .fc-col-header-cell-cushion,.adm__fc-wrap .fc .fc-daygrid-day-number{color:#cbc5d6;text-decoration:none}
+.adm__fc-wrap .fc .fc-timegrid-slot-label,.adm__fc-wrap .fc .fc-timegrid-axis-cushion{color:var(--muted);font-size:10px}
+.adm__fc-wrap .fc .fc-non-business{background:rgba(0,0,0,.35)}
+.adm__fc-wrap .fc .fc-highlight{background:rgba(113,48,255,.2)}
+.dz-ev{border:0;border-radius:4px;padding:1px 4px;font-size:11px;cursor:pointer}
+.dz-ev--consult{background:rgba(139,92,246,.75)}
+.dz-ev--tattoo{background:rgba(16,150,105,.8)}
+.dz-ev--manual{background:rgba(107,114,128,.75)}
+.dz-ev--done{opacity:.55}
+@media(max-width:700px){.adm__wh-row{grid-template-columns:1fr;gap:6px}.adm__wh-row>button{justify-self:start}}
