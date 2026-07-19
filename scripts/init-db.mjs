@@ -209,6 +209,33 @@ await sql`
 `;
 await sql`INSERT INTO studio_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING`;
 
+// --- One-time seed: turn the landing page's hardcoded fallback images into
+// real, admin-editable portfolio_works rows. Without this the "Radovi"
+// section on landing shows /media/*.jpeg with fixed captions baked into
+// components/landing/v3/Sections.tsx that the admin panel cannot touch at
+// all — seeding them here is what makes them show up (and be editable) in
+// /admin/portfolio. Only runs while the table is empty, so it never
+// clobbers works the admin has already added or edited.
+const existingWorks = await sql`SELECT count(*)::int AS count FROM portfolio_works`;
+if (existingWorks[0].count === 0) {
+  const seedWorks = [
+    { title: "Rad 01", image_url: "/media/DSC04808.jpeg", alt: "Blackwork tattoo detalj" },
+    { title: "Rad 02", image_url: "/media/IMG_2288.jpeg", alt: "Custom tattoo kompozicija" },
+    { title: "Rad 03", image_url: "/media/IMG_8123.jpeg", alt: "Završen tattoo rad" },
+    { title: "Rad 04", image_url: "/media/IMG_0941.jpeg", alt: "Tattoo rad" },
+    { title: "Rad 05", image_url: "/media/FullSizeRender.jpeg", alt: "Linework tattoo" },
+    { title: "Rad 06", image_url: "/media/IMG_4676.jpeg", alt: "Fine line tattoo detalj" },
+  ];
+  for (let i = 0; i < seedWorks.length; i++) {
+    const w = seedWorks[i];
+    await sql`
+      INSERT INTO portfolio_works (title, image_url, alt, sort, featured)
+      VALUES (${w.title}, ${w.image_url}, ${w.alt}, ${i}, true)
+    `;
+  }
+  console.log("portfolio_works seeded with 6 default landing images (edit these in /admin/portfolio).");
+}
+
 console.log("bookings table ready.");
 console.log("users table ready.");
 console.log("tattoo_requests table ready.");
