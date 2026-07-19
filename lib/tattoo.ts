@@ -19,6 +19,7 @@ export type TattooRequest = {
   description: string;
   size: string | null;
   body_part: string | null;
+  budget: string | null;
   image_urls: string[];
   status: TattooStatus;
   session_count: number | null;
@@ -48,7 +49,7 @@ export async function getBookableRequest(
   userId: number,
 ): Promise<TattooRequest | null> {
   const rows = (await sql`
-    SELECT id, user_id, description, size, body_part, image_urls, status,
+    SELECT id, user_id, description, size, body_part, budget, image_urls, status,
            session_count, session_minutes, price, admin_note, sessions_done,
            quoted_at, created_at
     FROM tattoo_requests

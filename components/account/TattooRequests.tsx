@@ -10,6 +10,7 @@ type TattooRequest = {
   description: string;
   size: string | null;
   body_part: string | null;
+  budget: string | null;
   image_urls: string[];
   status: TattooStatus;
   session_count: number | null;
@@ -260,6 +261,7 @@ export function TattooRequests() {
   const [description, setDescription] = useState("");
   const [size, setSize] = useState("");
   const [bodyPart, setBodyPart] = useState("");
+  const [budget, setBudget] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [uploadOff, setUploadOff] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -310,6 +312,7 @@ export function TattooRequests() {
           description: description.trim(),
           size: size.trim() || undefined,
           bodyPart: bodyPart.trim() || undefined,
+          budget: budget.trim() || undefined,
           imageUrls: images,
         }),
       });
@@ -321,6 +324,7 @@ export function TattooRequests() {
       setDescription("");
       setSize("");
       setBodyPart("");
+      setBudget("");
       setImages([]);
       setShowForm(false);
       setOkMsg("Zahtev je poslat. Javićemo ti se sa procenom termina i cene.");
@@ -394,6 +398,18 @@ export function TattooRequests() {
               disabled={busy}
             />
           </div>
+          <div className="bkf__field">
+            <label htmlFor="treq-budget">Budžet u evrima (opciono)</label>
+            <input
+              id="treq-budget"
+              type="text"
+              inputMode="numeric"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              placeholder="npr. 150–250 €"
+              disabled={busy}
+            />
+          </div>
 
           <div className="bkf__field">
             <span className="bkf__label">Reference (do {MAX_IMAGES} slika)</span>
@@ -461,10 +477,11 @@ export function TattooRequests() {
               <small>{fmtDate(r.created_at)}</small>
             </div>
             <p className="treq__desc">{r.description}</p>
-            {(r.size || r.body_part) && (
+            {(r.size || r.body_part || r.budget) && (
               <div className="treq__meta">
                 {r.size && <span>Veličina: {r.size}</span>}
                 {r.body_part && <span>Deo tela: {r.body_part}</span>}
+                {r.budget && <span>Budžet: {r.budget} €</span>}
               </div>
             )}
             {r.status !== "pending" && r.status !== "canceled" && r.session_count && r.session_minutes && (

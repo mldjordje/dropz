@@ -19,11 +19,11 @@ async function loadPortfolio() {
     const sql = getSql();
     const [categories, works] = await Promise.all([
       sql`SELECT id, name, slug FROM portfolio_categories ORDER BY sort ASC, created_at DESC`,
-      sql`SELECT id, title, image_url, category_id FROM portfolio_works ORDER BY sort ASC, created_at DESC`,
+      sql`SELECT id, title, image_url, category_id, alt FROM portfolio_works ORDER BY sort ASC, created_at DESC`,
     ]);
     return {
       categories: categories as Pick<PortfolioCategory, "id" | "name" | "slug">[],
-      works: works as Pick<PortfolioWork, "id" | "title" | "image_url" | "category_id">[],
+      works: works as Pick<PortfolioWork, "id" | "title" | "image_url" | "category_id" | "alt">[],
     };
   } catch {
     return { categories: [], works: [] };

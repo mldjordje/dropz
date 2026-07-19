@@ -17,7 +17,7 @@ export async function GET() {
 
   const sql = getSql();
   const requests = (await sql`
-    SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.image_urls, r.status,
+    SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.budget, r.image_urls, r.status,
            r.session_count, r.session_minutes, r.price, r.admin_note, r.sessions_done,
            r.quoted_at, r.created_at,
            (
@@ -71,6 +71,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, message: "Deo tela je predugačak." }, { status: 400 });
     }
   }
+  let budget: string | null = null;
+  if (typeof body.budget === "string" && body.budget.trim() !== "") {
+    budget = cleanText(body.budget, 60);
+    if (!budget) {
+      return NextResponse.json({ ok: false, message: "Budžet je predugačak." }, { status: 400 });
+    }
+  }
   const imageUrls = cleanImageUrls(body.imageUrls);
   if (imageUrls === null) {
     return NextResponse.json({ ok: false, message: "Neispravne reference slike." }, { status: 400 });
@@ -89,9 +96,9 @@ export async function POST(request: Request) {
   }
 
   const rows = (await sql`
-    INSERT INTO tattoo_requests (user_id, description, size, body_part, image_urls)
-    VALUES (${user.uid}, ${description}, ${size}, ${bodyPart}, ${imageUrls})
-    RETURNING id, user_id, description, size, body_part, image_urls, status,
+    INSERT INTO tattoo_requests (user_id, description, size, body_part, budget, image_urls)
+    VALUES (${user.uid}, ${description}, ${size}, ${bodyPart}, ${budget}, ${imageUrls})
+    RETURNING id, user_id, description, size, body_part, budget, image_urls, status,
               session_count, session_minutes, price, admin_note, sessions_done,
               quoted_at, created_at
   `) as TattooRequest[];

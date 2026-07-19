@@ -12,6 +12,7 @@ type TattooRequest = {
   description: string;
   size: string | null;
   body_part: string | null;
+  budget: string | null;
   image_urls: string[];
   status: TattooStatus;
   session_count: number | null;
@@ -183,6 +184,7 @@ export function RequestsTab() {
               <div className="adm__req-meta">
                 {r.size && <span>Veličina: {r.size}</span>}
                 {r.body_part && <span>Deo tela: {r.body_part}</span>}
+                {r.budget && <span>Budžet: {r.budget} €</span>}
               </div>
               {r.image_urls.length > 0 && (
                 <div className="adm__req-thumbs">

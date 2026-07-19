@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { BookingForm } from "@/components/booking/BookingForm";
+import { BookingChoice } from "@/components/booking/BookingChoice";
 import { RouteChrome } from "@/components/layout/RouteChrome";
 import { copy } from "@/components/landing/content";
 
@@ -22,7 +22,7 @@ export default function BookingPage() {
       <h1>Rezerviši<br />svoje mesto.</h1>
       <p>{t.bookingBody}</p>
       <div className="route-booking">
-        <BookingForm labels={t.bookingForm} locale="sr" />
+        <BookingChoice labels={t.bookingForm} locale="sr" />
       </div>
     </main>
   );

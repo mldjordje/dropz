@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
+import interactionPlugin, { type DateClickArg } from "@fullcalendar/interaction";
 import srLocale from "@fullcalendar/core/locales/sr";
 
 // FullCalendar's `sr` locale has Latin button texts but its code makes Intl
@@ -152,7 +152,7 @@ export function CalendarTab() {
 
   // ---- create panel (opens on empty-slot select) ----
   const [createSel, setCreateSel] = useState<{ date: string; start: string; end: string } | null>(null);
-  const [cKind, setCKind] = useState<"manual" | "tattoo">("manual");
+  const [cKind, setCKind] = useState<"manual" | "tattoo" | "block">("manual");
   const [cTitle, setCTitle] = useState("");
   const [cNote, setCNote] = useState("");
   const [cRequestId, setCRequestId] = useState<number | null>(null);
@@ -162,14 +162,11 @@ export function CalendarTab() {
   const [busy, setBusy] = useState(false);
   const [panelError, setPanelError] = useState<string | null>(null);
 
-  const onSelect = useCallback(async (sel: DateSelectArg) => {
-    const date = isoDate(sel.start);
-    const start = isoTime(sel.start);
-    // Month-view selections come through as all-day; give a sane default block.
-    const end = sel.allDay ? addMinutes(start === "00:00" ? "10:00" : start, 60) : isoTime(sel.end);
-    const realStart = sel.allDay && start === "00:00" ? "10:00" : start;
-    setCreateSel({ date, start: realStart, end });
-    setCStart(realStart);
+  // Single entry point for the create popup — called from both drag-select and
+  // plain single clicks (dateClick), so every slot is clickable (drigic pattern).
+  const openCreate = useCallback(async (date: string, start: string, end: string) => {
+    setCreateSel({ date, start, end });
+    setCStart(start);
     setCEnd(end);
     setCKind("manual");
     setCTitle("");
@@ -193,6 +190,22 @@ export function CalendarTab() {
     }
   }, []);
 
+  const onSelect = useCallback((sel: DateSelectArg) => {
+    const date = isoDate(sel.start);
+    const start = isoTime(sel.start);
+    // Month-view selections come through as all-day; give a sane default block.
+    const end = sel.allDay ? addMinutes(start === "00:00" ? "10:00" : start, 60) : isoTime(sel.end);
+    const realStart = sel.allDay && start === "00:00" ? "10:00" : start;
+    openCreate(date, realStart, end);
+  }, [openCreate]);
+
+  const onDateClick = useCallback((arg: DateClickArg) => {
+    const date = isoDate(arg.date);
+    const raw = isoTime(arg.date);
+    const start = arg.allDay || raw === "00:00" ? "10:00" : raw;
+    openCreate(date, start, addMinutes(start, 60));
+  }, [openCreate]);
+
   const create = async () => {
     if (!createSel) return;
     if (cKind === "manual" && !cTitle.trim()) {
@@ -214,7 +227,9 @@ export function CalendarTab() {
           start: cStart,
           end: cEnd,
           note: cNote.trim() || undefined,
-          ...(cKind === "manual" ? { title: cTitle.trim() } : { requestId: cRequestId }),
+          ...(cKind === "tattoo"
+            ? { requestId: cRequestId }
+            : { title: cKind === "block" ? "Blokirano" : cTitle.trim() }),
         }),
       });
       const data = await res.json();
@@ -471,6 +486,7 @@ export function CalendarTab() {
           selectable
           selectMirror
           select={onSelect}
+          dateClick={onDateClick}
           eventClick={onEventClick}
           events={events}
           height="auto"
@@ -494,14 +510,18 @@ export function CalendarTab() {
             <button type="button" className="adm__chip" aria-pressed={cKind === "tattoo"} onClick={() => setCKind("tattoo")}>
               Tattoo sesija
             </button>
+            <button type="button" className="adm__chip" aria-pressed={cKind === "block"} onClick={() => setCKind("block")}>
+              Blokada
+            </button>
           </div>
 
-          {cKind === "manual" ? (
+          {cKind === "manual" && (
             <label className="adm__cal-field">
               Naziv
               <input type="text" value={cTitle} onChange={(e) => setCTitle(e.target.value)} placeholder="npr. Privatna obaveza" disabled={busy} />
             </label>
-          ) : (
+          )}
+          {cKind === "tattoo" && (
             <label className="adm__cal-field">
               Tattoo zahtev
               <select value={cRequestId ?? ""} onChange={(e) => setCRequestId(Number(e.target.value) || null)} disabled={busy}>
@@ -514,6 +534,9 @@ export function CalendarTab() {
                 ))}
               </select>
             </label>
+          )}
+          {cKind === "block" && (
+            <p className="adm__hint">Blokira izabrani period — klijenti ne mogu da zakažu sesiju u njemu.</p>
           )}
 
           <div className="adm__cal-panel-row">

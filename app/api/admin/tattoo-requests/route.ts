@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   let rows: AdminTattooRequest[];
   if (status && isTattooStatus(status)) {
     rows = (await sql`
-      SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.image_urls,
+      SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.budget, r.image_urls,
              r.status, r.session_count, r.session_minutes, r.price, r.admin_note,
              r.sessions_done, r.quoted_at, r.created_at,
              u.email AS user_email, u.name AS user_name
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     `) as AdminTattooRequest[];
   } else {
     rows = (await sql`
-      SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.image_urls,
+      SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.budget, r.image_urls,
              r.status, r.session_count, r.session_minutes, r.price, r.admin_note,
              r.sessions_done, r.quoted_at, r.created_at,
              u.email AS user_email, u.name AS user_name

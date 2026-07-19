@@ -156,6 +156,9 @@ await sql`
   )
 `;
 
+// --- Optional client budget (EUR) on tattoo requests ---
+await sql`ALTER TABLE tattoo_requests ADD COLUMN IF NOT EXISTS budget TEXT`;
+
 // --- CRM: admin note on clients ---
 await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_note TEXT`;
 
