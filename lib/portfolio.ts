@@ -13,6 +13,11 @@ export type PortfolioWork = {
   category_id: number | null;
   title: string;
   image_url: string;
+  slug: string | null;
+  alt: string | null;
+  description: string | null;
+  tags: string[];
+  seo_title: string | null;
   sort: number;
   created_at: string;
 };

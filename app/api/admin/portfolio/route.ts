@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
-import { isValidImageUrl } from "@/lib/portfolio";
+import { isValidImageUrl, slugify } from "@/lib/portfolio";
 
 // Admin: add a portfolio work (image + title + optional category).
 // Auth is enforced by middleware.ts for the /api/admin/:path* matcher.
@@ -31,6 +31,14 @@ export async function POST(request: Request) {
     }
   }
 
+  // Optional SEO / AI metadata.
+  const alt = typeof body.alt === "string" ? body.alt.trim().slice(0, 200) || null : null;
+  const description = typeof body.description === "string" ? body.description.trim().slice(0, 1000) || null : null;
+  const seoTitle = typeof body.seo_title === "string" ? body.seo_title.trim().slice(0, 80) || null : null;
+  const tags = Array.isArray(body.tags)
+    ? body.tags.filter((t): t is string => typeof t === "string").map((t) => t.toLowerCase().trim()).filter(Boolean).slice(0, 10)
+    : [];
+
   const sql = getSql();
   if (categoryId !== null) {
     const found = (await sql`SELECT id FROM portfolio_categories WHERE id = ${categoryId}`) as { id: number }[];
@@ -39,11 +47,20 @@ export async function POST(request: Request) {
     }
   }
 
+  // Unique slug from the provided value or the title.
+  const baseSlug = slugify(typeof body.slug === "string" && body.slug.trim() ? body.slug : title);
+  let slug = baseSlug;
+  for (let i = 2; i <= 50; i++) {
+    const taken = (await sql`SELECT id FROM portfolio_works WHERE slug = ${slug}`) as { id: number }[];
+    if (taken.length === 0) break;
+    slug = `${baseSlug}-${i}`;
+  }
+
   const inserted = (await sql`
-    INSERT INTO portfolio_works (title, image_url, category_id)
-    VALUES (${title}, ${imageUrl}, ${categoryId})
-    RETURNING id, title, image_url, category_id, sort, created_at
-  `) as { id: number; title: string; image_url: string; category_id: number | null; sort: number; created_at: string }[];
+    INSERT INTO portfolio_works (title, image_url, category_id, slug, alt, description, tags, seo_title)
+    VALUES (${title}, ${imageUrl}, ${categoryId}, ${slug}, ${alt}, ${description}, ${tags}, ${seoTitle})
+    RETURNING id, title, image_url, category_id, slug, alt, description, tags, seo_title, sort, created_at
+  `) as { id: number }[];
 
   return NextResponse.json({ ok: true, work: inserted[0] }, { status: 201 });
 }

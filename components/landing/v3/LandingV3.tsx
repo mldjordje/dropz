@@ -19,12 +19,12 @@ import { VoltmeterV3 } from "./VoltmeterV3";
 import { buildLogoMask } from "./logoMask";
 import { BookingV3, CraftV3, EduV3, FinaleV3, HeroV3, PathsV3, ProcessV3, VoicesV3, WorkV3 } from "./Sections";
 
-export function LandingV3() {
+export function LandingV3({ copyData }: { copyData?: typeof copy }) {
   const [locale, setLocale] = useState<Locale>("sr");
   const [ready, setReady] = useState(false);
   const engineRef = useRef<FluidEngine | null>(null);
   const finaleProgress = useRef(0);
-  const text = copy[locale];
+  const text = (copyData ?? copy)[locale];
 
   const handleEngine = useCallback((engine: FluidEngine | null) => {
     engineRef.current = engine;

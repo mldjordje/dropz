@@ -156,6 +156,53 @@ await sql`
   )
 `;
 
+// --- CRM: admin note on clients ---
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS admin_note TEXT`;
+
+// --- Portfolio SEO/AI metadata ---
+await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS slug TEXT`;
+await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS alt TEXT`;
+await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS description TEXT`;
+await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'`;
+await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS seo_title TEXT`;
+await sql`CREATE UNIQUE INDEX IF NOT EXISTS portfolio_works_slug ON portfolio_works (slug) WHERE slug IS NOT NULL`;
+
+// --- Finance fields on appointments ---
+await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS price NUMERIC`;
+await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS deposit NUMERIC`;
+await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS deposit_paid BOOLEAN NOT NULL DEFAULT false`;
+await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS paid BOOLEAN NOT NULL DEFAULT false`;
+await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_method TEXT`;
+
+// --- CMS: editable site content (key/value, JSONB) ---
+await sql`
+  CREATE TABLE IF NOT EXISTS site_content (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`;
+
+// --- Studio settings (single row, id=1; groundwork for multi-tenant) ---
+await sql`
+  CREATE TABLE IF NOT EXISTS studio_settings (
+    id INT PRIMARY KEY DEFAULT 1,
+    name TEXT,
+    logo_url TEXT,
+    currency TEXT NOT NULL DEFAULT 'RSD',
+    locale TEXT NOT NULL DEFAULT 'sr',
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    instagram TEXT,
+    facebook TEXT,
+    tiktok TEXT,
+    colors JSONB,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`;
+await sql`INSERT INTO studio_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING`;
+
 console.log("bookings table ready.");
 console.log("users table ready.");
 console.log("tattoo_requests table ready.");

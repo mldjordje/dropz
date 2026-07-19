@@ -97,6 +97,41 @@ export function PortfolioTab() {
   const [workBusy, setWorkBusy] = useState(false);
   const [workError, setWorkError] = useState<string | null>(null);
 
+  // SEO / AI metadata fields
+  const [alt, setAlt] = useState("");
+  const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiMsg, setAiMsg] = useState<string | null>(null);
+
+  const generateAiMeta = async () => {
+    if (!imageUrl.trim()) return;
+    setAiBusy(true);
+    setAiMsg(null);
+    try {
+      const res = await fetch("/api/admin/portfolio/ai-meta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_url: imageUrl.trim(), title: title.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setAiMsg(data.message ?? "AI generisanje nije uspelo.");
+        return;
+      }
+      setAlt(data.meta.alt);
+      setDescription(data.meta.description);
+      setTags(data.meta.tags.join(", "));
+      setSeoTitle(data.meta.seo_title);
+      setAiMsg("AI opis generisan — pregledaj i izmeni po potrebi.");
+    } catch {
+      setAiMsg("AI generisanje nije uspelo.");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
   const handleFile = async (file: File | null) => {
     if (!file) return;
     setUploadBusy(true);
@@ -140,6 +175,10 @@ export function PortfolioTab() {
           title: t,
           image_url: imageUrl.trim(),
           category_id: categoryId === NO_CATEGORY ? null : Number(categoryId),
+          alt: alt.trim(),
+          description: description.trim(),
+          seo_title: seoTitle.trim(),
+          tags: tags.split(",").map((s) => s.trim()).filter(Boolean),
         }),
       });
       const data = await res.json();
@@ -152,6 +191,11 @@ export function PortfolioTab() {
       setCategoryId(NO_CATEGORY);
       setUrlMode(false);
       setUploadMsg(null);
+      setAlt("");
+      setDescription("");
+      setTags("");
+      setSeoTitle("");
+      setAiMsg(null);
       await load();
     } catch {
       setWorkError("Dodavanje nije uspelo.");
@@ -261,6 +305,46 @@ export function PortfolioTab() {
           )}
           {uploadMsg && <p className="adm__hint">{uploadMsg}</p>}
           {imageUrl && !urlMode && <p className="adm__hint">{imageUrl}</p>}
+
+          <div className="adm__pf-ai">
+            <button
+              type="button"
+              className="adm__pf-link"
+              onClick={generateAiMeta}
+              disabled={aiBusy || workBusy || !imageUrl.trim()}
+            >
+              {aiBusy ? "AI generiše…" : "✦ Generiši AI opis i tagove"}
+            </button>
+            {aiMsg && <p className="adm__hint">{aiMsg}</p>}
+            <input
+              type="text"
+              placeholder="SEO naslov (za Google)"
+              value={seoTitle}
+              onChange={(e) => setSeoTitle(e.target.value)}
+              disabled={workBusy}
+            />
+            <input
+              type="text"
+              placeholder="Alt tekst slike"
+              value={alt}
+              onChange={(e) => setAlt(e.target.value)}
+              disabled={workBusy}
+            />
+            <textarea
+              rows={3}
+              placeholder="Opis rada (prikazuje se na stranici rada)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={workBusy}
+            />
+            <input
+              type="text"
+              placeholder="Tagovi, odvojeni zarezom (fineline, ruka, cvet…)"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              disabled={workBusy}
+            />
+          </div>
 
           <button type="button" className="adm__pf-submit" onClick={addWork} disabled={workBusy || uploadBusy || !title.trim() || !imageUrl.trim()}>
             Dodaj rad

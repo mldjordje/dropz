@@ -470,3 +470,17 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
   .v3-cta__frame::before{background:conic-gradient(from 0deg,var(--neon),var(--neon))}
   .v3-cta__label i,.v3-cta__ink,.v3-cta__icon{transition:none}
 }
+
+/* ---- Portfolio work detail page (/portfolio/[slug]) ---- */
+.pf-work{min-height:100vh;background:radial-gradient(circle at 50% 0%,rgba(113,48,255,.12),transparent 40%),#000;color:#fff;padding:calc(80px + env(safe-area-inset-top)) 20px 12vh}
+.pf-work__inner{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.pf-work__back{color:var(--muted);font-size:11px;letter-spacing:.16em;text-transform:uppercase;transition:color .2s}
+.pf-work__back:hover{color:var(--neon)}
+.pf-work__img{width:100%;border-radius:6px;border:1px solid var(--line)}
+.pf-work h1{margin:0;font-family:var(--font-display,var(--display));font-size:clamp(26px,5vw,40px);letter-spacing:.02em;text-transform:uppercase}
+.pf-work__cat{margin:-8px 0 0;color:var(--neon);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.pf-work__desc{margin:0;color:#cfc9d8;font-size:15px;line-height:1.65;max-width:56ch}
+.pf-work__tags{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.pf-work__tags li{padding:5px 12px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:11px;letter-spacing:.06em}
+.pf-work__cta{align-self:flex-start;margin-top:8px;padding:12px 26px;border:1px solid var(--neon);border-radius:999px;background:rgba(113,48,255,.16);color:#fff;font-size:11px;letter-spacing:.16em;text-transform:uppercase;transition:background .2s}
+.pf-work__cta:hover{background:rgba(113,48,255,.32)}
