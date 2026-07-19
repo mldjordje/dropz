@@ -235,19 +235,31 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__body{flex:1;min-width:0}
 .adm__top--shell{justify-content:flex-end}
 .adm__brand--mobile{display:none;margin-right:auto}
-.adm__bottomnav{display:none}
+.adm__burger{display:none}
 @media(max-width:900px){
   .adm__side{display:none}
-  .adm__top--shell{justify-content:space-between}
+  .adm__top--shell{justify-content:space-between;gap:14px}
   .adm__brand--mobile{display:flex}
-  .adm__bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;justify-content:flex-start;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:6px 4px calc(6px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(0,0,0,.92);backdrop-filter:blur(8px)}
-  .adm__bottomnav::-webkit-scrollbar{display:none}
-  .adm__bn-item{flex:0 0 auto;min-width:64px}
-  .adm__bn-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 8px;border-radius:6px;color:var(--muted);font-size:8px;letter-spacing:.08em;text-transform:uppercase}
-  .adm__bn-item[aria-current=page]{color:var(--neon)}
-  .adm__nav-badge--bn{position:absolute;top:0;right:2px;margin:0;min-width:15px;height:15px;font-size:9px}
-  .adm__main{padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+  .adm__burger{position:relative;display:grid;place-items:center;width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;color:var(--white);cursor:pointer;transition:border-color .2s,color .2s}
+  .adm__burger:hover{border-color:var(--neon);color:var(--neon)}
+  .adm__nav-badge--burger{position:absolute;top:-6px;right:-6px;margin:0}
+
+  /* Mobile nav: hamburger opens a top-anchored dropdown panel (not a bottom
+     scroll strip — that "slider" felt broken on touch: cramped hit targets,
+     scroll-snap fighting the swipe, badges clipped at the edge). */
+  .adm__mmenu{position:fixed;inset:64px 0 0;z-index:30}
+  .adm__mmenu-backdrop{position:absolute;inset:0;border:0;padding:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px);animation:admMenuFade .18s ease}
+  @keyframes admMenuFade{from{opacity:0}to{opacity:1}}
+  .adm__mmenu-panel{position:relative;display:flex;flex-direction:column;gap:2px;max-height:calc(100vh - 64px);overflow-y:auto;padding:10px;border-bottom:1px solid var(--line);background:#0a0612;box-shadow:0 20px 50px rgba(0,0,0,.5);animation:admMenuDrop .22s cubic-bezier(.22,.61,.36,1)}
+  @keyframes admMenuDrop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  .adm__mmenu-item{display:flex;align-items:center;gap:14px;padding:15px 14px;border-radius:8px;color:var(--muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase;transition:color .2s,background .2s}
+  .adm__mmenu-item:active{background:rgba(255,255,255,.06)}
+  .adm__mmenu-item[aria-current=page]{color:#fff;background:rgba(113,48,255,.16)}
+  .adm__mmenu-item .adm__nav-badge{margin-left:auto}
+
+  .adm__main{padding-bottom:8vh}
 }
+@media(min-width:901px){.adm__mmenu{display:none}}
 
 /* ---- Dashboard ---- */
 .adm__dash{display:flex;flex-direction:column;gap:26px}

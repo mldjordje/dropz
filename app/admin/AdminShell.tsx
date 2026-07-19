@@ -14,6 +14,8 @@ import {
   FileText,
   Banknote,
   Settings,
+  Menu,
+  X,
 } from "lucide-react";
 
 type NavItem = {
@@ -43,6 +45,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     bookingsNew: 0,
     requestsPending: 0,
   });
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -59,6 +62,23 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     };
   }, [pathname]);
 
+  // Route changed (nav link tap) — close the mobile menu.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // Escape closes the mobile menu; lock body scroll while it's open.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
   const logout = async () => {
     await fetch("/api/admin/logout", { method: "POST" });
     router.replace("/admin/login");
@@ -67,6 +87,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
 
   const badgeValue = (item: NavItem) => (item.badge ? badges[item.badge] : 0);
+  const totalBadge = badges.bookingsNew + badges.requestsPending;
 
   return (
     <div className="adm__shell">
@@ -94,6 +115,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       <div className="adm__body">
         <header className="adm__top adm__top--shell">
+          <button
+            type="button"
+            className="adm__burger"
+            aria-label={menuOpen ? "Zatvori meni" : "Otvori meni"}
+            aria-expanded={menuOpen}
+            aria-haspopup="true"
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            {menuOpen ? <X size={20} strokeWidth={1.6} /> : <Menu size={20} strokeWidth={1.6} />}
+            {!menuOpen && totalBadge > 0 && <em className="adm__nav-badge adm__nav-badge--burger">{totalBadge}</em>}
+          </button>
           <div className="adm__brand adm__brand--mobile">
             Dropz <small>ADMIN</small>
           </div>
@@ -101,22 +133,33 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             Odjava
           </button>
         </header>
+
+        {menuOpen && (
+          <div className="adm__mmenu" role="dialog" aria-modal="true" aria-label="Navigacija">
+            <button type="button" className="adm__mmenu-backdrop" aria-label="Zatvori meni" onClick={() => setMenuOpen(false)} />
+            <nav className="adm__mmenu-panel" aria-label="Glavna navigacija">
+              {NAV.map((item) => {
+                const Icon = item.icon;
+                const n = badgeValue(item);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="adm__mmenu-item"
+                    aria-current={isActive(item.href) ? "page" : undefined}
+                  >
+                    <Icon size={18} strokeWidth={1.6} />
+                    <span>{item.label}</span>
+                    {n > 0 && <em className="adm__nav-badge">{n}</em>}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        )}
+
         <main className="adm__main">{children}</main>
       </div>
-
-      <nav className="adm__bottomnav">
-        {NAV.map((item) => {
-          const Icon = item.icon;
-          const n = badgeValue(item);
-          return (
-            <Link key={item.href} href={item.href} className="adm__bn-item" aria-current={isActive(item.href) ? "page" : undefined}>
-              <Icon size={18} strokeWidth={1.6} />
-              <span>{item.label}</span>
-              {n > 0 && <em className="adm__nav-badge adm__nav-badge--bn">{n}</em>}
-            </Link>
-          );
-        })}
-      </nav>
     </div>
   );
 }
