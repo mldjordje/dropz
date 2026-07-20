@@ -104,18 +104,25 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 .route-ambient{position:fixed;inset:0;z-index:-1;width:100%;height:100%;mix-blend-mode:screen;opacity:.75}.route-back{display:flex;align-items:center;gap:12px;width:max-content;font-size:10px;text-transform:uppercase}.route-index{margin-top:18vh;color:var(--neon);font-size:9px;text-transform:uppercase}.route-shell h1{margin:4vh 0;font:900 clamp(62px,10vw,154px)/.82 var(--display);text-transform:uppercase}.route-shell p{width:min(520px,90vw);margin-left:auto;color:var(--muted);font-size:16px;line-height:1.6}.route-contact{display:flex;justify-content:space-between;align-items:center;width:min(520px,90vw);margin:7vh 0 0 auto;padding:18px 0;border-block:1px solid var(--neon);font-size:10px;text-transform:uppercase}
 
 /* ---------- education page ---------- */
-.edu-shell{background:radial-gradient(circle at 20% 22%,rgba(113,48,255,.15),transparent 34%),radial-gradient(circle at 80% 70%,rgba(113,48,255,.1),transparent 30%),#000}
+/* Fullscreen video background: fixed layer under the content, heavily shaded
+   so the type stays readable. Shell must stay transparent or it hides it. */
+.edu-shell{background:transparent}
+.edu-bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:#000 url('/media/dragan-skola-bg-poster.jpg') center/cover no-repeat}
+.edu-bg__video{width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:grayscale(.4) contrast(1.12) brightness(.6) saturate(.9)}
+.edu-bg__shade{position:fixed;inset:0;z-index:-1;background:
+  linear-gradient(90deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.55) 45%,rgba(0,0,0,.35) 100%),
+  linear-gradient(0deg,rgba(0,0,0,.88) 0%,transparent 34%,transparent 72%,rgba(0,0,0,.66) 100%),
+  radial-gradient(circle at 78% 32%,rgba(113,48,255,.16),transparent 42%)}
+@media(prefers-reduced-motion:reduce){.edu-bg__video{display:none}}
 .edu-shell .route-index{margin-top:14vh}
-.edu-shell h1{font-family:var(--font-display,var(--display));font-weight:400}
+.edu-shell h1{font-family:var(--font-display,var(--display));font-weight:400;text-shadow:0 0 40px rgba(0,0,0,.9),0 2px 18px rgba(0,0,0,.7)}
 .edu-shell p{width:auto;margin-left:0}
-.edu-intro{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:clamp(28px,5vw,90px);align-items:start;margin-top:6vh}
-.edu-intro__media{position:relative}
-.edu-intro__video{width:100%;aspect-ratio:9/16;object-fit:cover;border:1px solid rgba(166,114,255,.32);background:#0a0512;box-shadow:0 0 60px rgba(113,48,255,.2)}
-.edu-intro__copy{max-width:560px;padding-top:2vh}
+.edu-intro{margin-top:6vh}
+.edu-intro__copy{max-width:620px;padding-top:2vh}
 .edu-intro__copy p{margin:0 0 22px;color:#c9c2d4;font-size:16px;line-height:1.68}
 .edu-intro__note{padding:14px 18px;border-left:1px solid var(--neon);background:rgba(113,48,255,.08);color:#e6dff2!important;font-size:14px!important}
 .edu-programs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:10vh}
-.edu-program{display:flex;flex-direction:column;padding:clamp(26px,3vw,46px);border:1px solid rgba(243,239,250,.16);background:rgba(5,1,10,.6);backdrop-filter:blur(8px)}
+.edu-program{display:flex;flex-direction:column;padding:clamp(26px,3vw,46px);border:1px solid rgba(243,239,250,.16);background:rgba(5,1,10,.72);backdrop-filter:blur(10px)}
 .edu-program--pro{border-color:rgba(166,114,255,.45);box-shadow:0 0 50px rgba(113,48,255,.16)}
 .edu-program__head{margin-bottom:22px}
 .edu-program__tag{color:var(--neon);font-size:10px;letter-spacing:.24em;text-transform:uppercase}
@@ -137,8 +144,6 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 .edu-apply__alt{margin-top:5vh;padding-bottom:8px;border-bottom:1px solid rgba(243,239,250,.25);font-size:11px;letter-spacing:.16em;text-transform:uppercase;transition:color .3s,border-color .3s}
 .edu-apply__alt:hover{color:var(--neon);border-color:var(--neon)}
 @media(max-width:900px){
-  .edu-intro{grid-template-columns:1fr}
-  .edu-intro__media{max-width:min(420px,90vw);margin:0 auto}
   .edu-programs{grid-template-columns:1fr}
 }
 

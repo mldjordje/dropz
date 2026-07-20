@@ -32,23 +32,22 @@ const proItems = [
 export default function EducationPage() {
   return (
     <main className="route-shell edu-shell">
+      {/* Raw HTML so `muted` lands in the SSR markup — React drops the
+          attribute, and without it browsers block autoplay before hydration. */}
+      <div
+        className="edu-bg"
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{
+          __html: `<video class="edu-bg__video" autoplay muted loop playsinline preload="metadata" poster="/media/dragan-skola-bg-poster.jpg"><source src="/media/dragan-skola-bg.mp4" type="video/mp4" /></video>`,
+        }}
+      />
+      <div className="edu-bg__shade" aria-hidden="true" />
       <RouteChrome />
       <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
       <div className="route-index">05 / Edukacija</div>
       <h1>Zanat se uči<br />iz prve ruke.</h1>
 
       <section className="edu-intro">
-        <div className="edu-intro__media">
-          <video
-            className="edu-intro__video"
-            poster="/media/dragan-skola-poster.jpg"
-            controls
-            playsInline
-            preload="metadata"
-          >
-            <source src="/media/dragan-skola.mp4" type="video/mp4" />
-          </video>
-        </div>
         <div className="edu-intro__copy">
           <p>
             U Dropz Tattoo Studiju u Nišu učiš tetoviranje onako kako se zanat oduvek prenosio — direktno, u
