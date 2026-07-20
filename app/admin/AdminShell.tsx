@@ -15,6 +15,7 @@ import {
   FileText,
   Banknote,
   Settings,
+  ImagePlus,
   Menu,
   X,
 } from "lucide-react";
@@ -36,14 +37,16 @@ const NAV: NavItem[] = [
   { href: "/admin/finansije", label: "Finansije", icon: Banknote },
   { href: "/admin/dostupnost", label: "Dostupnost", icon: SlidersHorizontal },
   { href: "/admin/portfolio", label: "Portfolio", icon: Images },
+  { href: "/admin/moji-radovi", label: "Moji radovi", icon: ImagePlus },
   { href: "/admin/sadrzaj", label: "Sadržaj", icon: FileText },
   { href: "/admin/podesavanja", label: "Podešavanja", icon: Settings },
 ];
 
-// Staff (artists) get exactly two pages — mirrors the middleware allow-list.
+// Staff pages mirror the middleware allow-list.
 const STAFF_NAV: NavItem[] = [
   { href: "/admin/kalendar", label: "Kalendar", icon: CalendarDays },
   { href: "/admin/dostupnost", label: "Dostupnost", icon: SlidersHorizontal },
+  { href: "/admin/moji-radovi", label: "Moji radovi", icon: ImagePlus },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

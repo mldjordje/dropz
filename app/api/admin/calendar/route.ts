@@ -20,6 +20,8 @@ type ConsultRow = {
   date: string;
   slot: string;
   status: string;
+  artist_id: number | null;
+  artist_name: string | null;
 };
 
 type AppointmentRow = Appointment & {
@@ -92,15 +94,19 @@ export async function GET(request: Request) {
       `;
   const appointments = appointmentsRaw as AppointmentRow[];
 
-  // Consult bookings are the owner's time — staff calendars skip them.
-  const consults = session.role === "owner"
-    ? ((await sql`
-        SELECT id, name, contact, note, date::text AS date, slot, status
-        FROM bookings
-        WHERE date >= ${from} AND date < ${to} AND status <> 'canceled'
-        ORDER BY date, slot
-      `) as ConsultRow[])
-    : [];
+  // Consult bookings follow the chosen artist; "svejedno" (null) is the
+  // owner's. Owner in the "all" view sees every consult; a specific-artist
+  // view (owner or staff) shows only that artist's.
+  const consults = (await sql`
+    SELECT b.id, b.name, b.contact, b.note, b.date::text AS date, b.slot, b.status,
+           b.artist_id, s.name AS artist_name
+    FROM bookings b
+    LEFT JOIN staff s ON s.id = b.artist_id
+    WHERE b.date >= ${from} AND b.date < ${to} AND b.status <> 'canceled'
+      AND (${allArtists} OR b.artist_id = ${artistId}
+           OR (b.artist_id IS NULL AND (SELECT role FROM staff WHERE id = ${artistId}) = 'owner'))
+    ORDER BY b.date, b.slot
+  `) as ConsultRow[];
 
   // Weekly hours for the calendar's business-hours shading: the selected
   // artist's schedule; in "all" view the owner's own.

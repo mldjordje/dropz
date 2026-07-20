@@ -9,7 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FluidEngine } from "@/lib/fluid/engine";
-import { BookingForm } from "../../booking/BookingForm";
+import { BookingChoice } from "../../booking/BookingChoice";
 import { copy, Locale } from "../content";
 import { Navigation } from "../Navigation";
 import { Preloader } from "../Preloader";
@@ -453,7 +453,7 @@ export function LandingV3({ copyData }: { copyData?: typeof copy }) {
           onInkPush={pushInk}
         />
         <BookingV3 index={text.bookingIndex} title={text.bookingTitle} body={text.bookingBody}>
-          <BookingForm labels={text.bookingForm} locale={locale} />
+          <BookingChoice labels={text.bookingForm} locale={locale} initialMode="consult" />
         </BookingV3>
         <FinaleV3 title={text.finale} action={text.finalAction} />
       </div>

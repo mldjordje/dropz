@@ -47,6 +47,22 @@ export async function POST(request: Request) {
   }
 
   const sql = getSql();
+
+  // Optional artist preference — must be an active team member; absent means
+  // "svejedno" (the owner takes it). Slots stay globally unique either way:
+  // the studio runs one consultation at a time.
+  let artistId: number | null = null;
+  if (body.artistId !== undefined && body.artistId !== null && body.artistId !== "") {
+    const requested = Number(body.artistId);
+    if (!Number.isInteger(requested)) {
+      return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
+    }
+    const found = (await sql`SELECT id FROM staff WHERE id = ${requested} AND active`) as { id: number }[];
+    if (found.length === 0) {
+      return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
+    }
+    artistId = requested;
+  }
   const slots = await getSlotsForDate(sql, date);
   if (!slots.includes(slot)) {
     return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
@@ -60,8 +76,8 @@ export async function POST(request: Request) {
   }
 
   const inserted = (await sql`
-    INSERT INTO bookings (name, contact, kind, note, date, slot, locale)
-    VALUES (${name}, ${contact}, 'consult', ${note || null}, ${date}, ${slot}, ${locale})
+    INSERT INTO bookings (name, contact, kind, note, date, slot, locale, artist_id)
+    VALUES (${name}, ${contact}, 'consult', ${note || null}, ${date}, ${slot}, ${locale}, ${artistId})
     RETURNING id
   `) as { id: number }[];
 

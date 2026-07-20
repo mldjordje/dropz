@@ -23,11 +23,17 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default async function NalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ greska?: string }>;
+  searchParams: Promise<{ greska?: string; novi?: string; artist?: string }>;
 }) {
   const user = await getSessionUser();
-  const { greska } = await searchParams;
+  const { greska, novi, artist } = await searchParams;
   const error = greska ? ERROR_MESSAGES[greska] ?? ERROR_MESSAGES.prijava : null;
+
+  // "?novi=1" (from the landing / /upit CTAs) drops the visitor straight into
+  // the request form — through the Google login too, via the next param.
+  const openForm = novi === "1";
+  const preselectArtist = artist && /^\d+$/.test(artist) ? Number(artist) : null;
+  const nextPath = `/nalog${openForm ? `?novi=1${preselectArtist ? `&artist=${preselectArtist}` : ""}` : ""}`;
 
   return (
     <main className="route-shell">
@@ -54,11 +60,11 @@ export default async function NalogPage({
                 <span>{user.email}</span>
               </div>
             </div>
-            <TattooRequests />
+            <TattooRequests autoOpenForm={openForm} preselectArtist={preselectArtist} />
             <LogoutButton />
           </>
         ) : (
-          <a className="bkf__submit" href="/api/auth/google?next=/nalog">
+          <a className="bkf__submit" href={`/api/auth/google?next=${encodeURIComponent(nextPath)}`}>
             <span>Prijavi se Google nalogom</span>
             <ArrowUpRight size={16} strokeWidth={1.5} />
           </a>

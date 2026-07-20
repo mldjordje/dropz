@@ -46,6 +46,8 @@ type ConsultRow = {
   date: string;
   slot: string;
   status: string;
+  artist_id: number | null;
+  artist_name: string | null;
 };
 
 type WorkingHoursRow = {
@@ -127,9 +129,13 @@ export function CalendarTab() {
   const events = useMemo<EventInput[]>(() => {
     const items: EventInput[] = [];
     for (const c of consults) {
+      const consultLabel =
+        artistView === 0 && role === "owner" && c.artist_name
+          ? `[${c.artist_name}] Konsultacija — ${c.name}`
+          : `Konsultacija — ${c.name}`;
       items.push({
         id: `consult-${c.id}`,
-        title: `Konsultacija — ${c.name}`,
+        title: consultLabel,
         start: `${c.date}T${c.slot}`,
         end: `${c.date}T${addMinutes(c.slot, 60)}`,
         classNames: ["dz-ev", "dz-ev--consult"],
@@ -667,6 +673,7 @@ export function CalendarTab() {
           <h3>Konsultacija — {selected.row.date} u {selected.row.slot}</h3>
           <p className="adm__hint">
             {selected.row.name} · {selected.row.contact}
+            {selected.row.artist_name ? ` · kod: ${selected.row.artist_name}` : ""}
             {selected.row.note ? ` · ${selected.row.note}` : ""}
           </p>
           <p className="adm__hint">Konsultacije se menjaju u tabu „Termini".</p>

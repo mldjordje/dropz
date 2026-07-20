@@ -19,6 +19,7 @@ export type StaffMember = {
   role: StaffRole;
   active: boolean;
   avatar_url: string | null;
+  slug: string | null;
   created_at: string;
 };
 
@@ -35,7 +36,7 @@ export function isStaffRole(value: unknown): value is StaffRole {
 // Owner first (he's the headliner), then artists alphabetically.
 export async function getActiveArtists(sql: Sql): Promise<StaffMember[]> {
   return (await sql`
-    SELECT id, email, name, role, active, avatar_url, created_at
+    SELECT id, email, name, role, active, avatar_url, slug, created_at
     FROM staff WHERE active
     ORDER BY (role = 'owner') DESC, name
   `) as StaffMember[];
@@ -43,7 +44,7 @@ export async function getActiveArtists(sql: Sql): Promise<StaffMember[]> {
 
 export async function getOwner(sql: Sql): Promise<StaffMember | null> {
   const rows = (await sql`
-    SELECT id, email, name, role, active, avatar_url, created_at
+    SELECT id, email, name, role, active, avatar_url, slug, created_at
     FROM staff WHERE role = 'owner' LIMIT 1
   `) as StaffMember[];
   return rows[0] ?? null;
@@ -51,7 +52,7 @@ export async function getOwner(sql: Sql): Promise<StaffMember | null> {
 
 export async function getStaffByEmail(sql: Sql, email: string): Promise<StaffMember | null> {
   const rows = (await sql`
-    SELECT id, email, name, role, active, avatar_url, created_at
+    SELECT id, email, name, role, active, avatar_url, slug, created_at
     FROM staff WHERE lower(email) = ${email.toLowerCase()} AND active
     LIMIT 1
   `) as StaffMember[];
@@ -60,8 +61,16 @@ export async function getStaffByEmail(sql: Sql, email: string): Promise<StaffMem
 
 export async function getStaffById(sql: Sql, id: number): Promise<StaffMember | null> {
   const rows = (await sql`
-    SELECT id, email, name, role, active, avatar_url, created_at
+    SELECT id, email, name, role, active, avatar_url, slug, created_at
     FROM staff WHERE id = ${id} LIMIT 1
+  `) as StaffMember[];
+  return rows[0] ?? null;
+}
+
+export async function getStaffBySlug(sql: Sql, slug: string): Promise<StaffMember | null> {
+  const rows = (await sql`
+    SELECT id, email, name, role, active, avatar_url, slug, created_at
+    FROM staff WHERE slug = ${slug} AND active LIMIT 1
   `) as StaffMember[];
   return rows[0] ?? null;
 }
@@ -117,15 +126,16 @@ export async function getArtistBusyMap(
     (map[row.date] ??= []).push({ start_time: row.start_time, end_time: row.end_time });
   }
 
-  if (artist.role === "owner") {
-    const consults = (await sql`
-      SELECT date::text AS date, slot FROM bookings
-      WHERE date >= ${from} AND date <= ${to} AND status <> 'canceled'
-    `) as { date: string; slot: string }[];
-    for (const row of consults) {
-      const end = minutesToTime(Math.min(timeToMinutes(row.slot) + 60, 24 * 60 - 1));
-      (map[row.date] ??= []).push({ start_time: row.slot, end_time: end });
-    }
+  // Consult bookings block the artist they were made with; ones without a
+  // chosen artist ("svejedno") are the owner's.
+  const consults = (await sql`
+    SELECT date::text AS date, slot FROM bookings
+    WHERE date >= ${from} AND date <= ${to} AND status <> 'canceled'
+      AND (artist_id = ${artist.id} OR (${artist.role === "owner"} AND artist_id IS NULL))
+  `) as { date: string; slot: string }[];
+  for (const row of consults) {
+    const end = minutesToTime(Math.min(timeToMinutes(row.slot) + 60, 24 * 60 - 1));
+    (map[row.date] ??= []).push({ start_time: row.slot, end_time: end });
   }
   return map;
 }

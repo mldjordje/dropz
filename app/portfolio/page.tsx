@@ -40,6 +40,7 @@ export default async function PortfolioPage() {
       <div className="route-index">Portfolio</div>
       <h1>Radovi<br />studija.</h1>
       <p>Izbor autorskih radova po stilovima. Za termin ili procenu — pošalji zahtev preko naloga.</p>
+      <Link className="route-contact portfolio-artists-link" href="/artisti">Upoznaj artiste</Link>
       <PortfolioGallery categories={categories} works={works} />
     </main>
   );

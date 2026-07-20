@@ -44,7 +44,7 @@ export default function InquiryPage() {
         ))}
       </ol>
 
-      <Link className="route-contact" href="/nalog">
+      <Link className="route-contact" href="/nalog?novi=1">
         Nastavi — pošalji upit <ArrowUpRight />
       </Link>
       <p className="bkf__hint">

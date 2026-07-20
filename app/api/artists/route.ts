@@ -17,6 +17,7 @@ export async function GET() {
         name: a.name,
         role: a.role,
         avatar_url: a.avatar_url,
+        slug: a.slug,
       })),
     });
   } catch {

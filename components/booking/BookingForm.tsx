@@ -31,6 +31,8 @@ export type BookingFormLabels = {
 const STUDIO_EMAIL = "studio@dropz.tattoo";
 const MAX_MONTHS_AHEAD = 2;
 
+type Artist = { id: number; name: string; role: "owner" | "staff"; avatar_url: string | null };
+
 const INTL_TAG: Record<Locale, string> = { sr: "sr-Latn-RS", en: "en-GB", de: "de-DE" };
 
 function startOfDay(d: Date) {
@@ -60,6 +62,22 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
   const [slots, setSlots] = useState<string[]>([]);
   const [taken, setTaken] = useState<string[]>([]);
   const [openDays, setOpenDays] = useState<Record<string, string[]>>({});
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [artistId, setArtistId] = useState<number | null>(null);
+
+  // Team roster for the "kod koga" picker; empty list hides the field.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/artists", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled && d.ok) setArtists(d.artists);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // which days are open this month, so the calendar can enable/disable them
   useEffect(() => {
@@ -163,6 +181,7 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
           date: isoKey(selected),
           slot,
           locale,
+          artistId: artistId ?? undefined,
         }),
       });
       if (res.status === 409) {
@@ -197,6 +216,32 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
           <input id="bkf-contact" type="text" autoComplete="email" value={contact} onChange={(e) => setContact(e.target.value)} />
         </div>
         <p className="bkf__notice">{labels.consultNotice}</p>
+        {artists.length > 0 && (
+          <div className="bkf__field">
+            <span className="bkf__label">Kod koga? (opciono)</span>
+            <div className="bkf__slots bkf__artists">
+              <button
+                type="button"
+                className="bkf__pill"
+                aria-pressed={artistId === null}
+                onClick={() => setArtistId(null)}
+              >
+                Svejedno
+              </button>
+              {artists.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  className={`bkf__pill${a.role === "owner" ? " bkf__pill--featured" : ""}`}
+                  aria-pressed={artistId === a.id}
+                  onClick={() => setArtistId(a.id)}
+                >
+                  {a.name}{a.role === "owner" ? " ★" : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="bkf__field">
           <label htmlFor="bkf-note">{labels.note}</label>
           <textarea id="bkf-note" rows={4} placeholder={labels.notePlaceholder} value={note} onChange={(e) => setNote(e.target.value)} />

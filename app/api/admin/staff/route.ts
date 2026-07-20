@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { getAdminSession } from "@/lib/auth/admin";
 import { cleanText } from "@/lib/tattoo";
+import { slugify } from "@/lib/portfolio";
 import { seedDefaultHours, type StaffMember } from "@/lib/staff";
 
 export const runtime = "nodejs";
@@ -22,7 +23,7 @@ export async function GET() {
 
   const sql = getSql();
   const staff = (await sql`
-    SELECT id, email, name, role, active, avatar_url, created_at
+    SELECT id, email, name, role, active, avatar_url, slug, created_at
     FROM staff ORDER BY (role = 'owner') DESC, name
   `) as StaffMember[];
   return NextResponse.json({ ok: true, staff });
@@ -56,10 +57,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Taj email je već u timu." }, { status: 409 });
   }
 
+  // Unique slug for the artist's public page (/artisti/<slug>).
+  const baseSlug = slugify(name);
+  let slug = baseSlug;
+  for (let i = 2; i <= 50; i++) {
+    const taken = (await sql`SELECT id FROM staff WHERE slug = ${slug}`) as { id: number }[];
+    if (taken.length === 0) break;
+    slug = `${baseSlug}-${i}`;
+  }
+
   const rows = (await sql`
-    INSERT INTO staff (email, name, role)
-    VALUES (${email}, ${name}, 'staff')
-    RETURNING id, email, name, role, active, avatar_url, created_at
+    INSERT INTO staff (email, name, role, slug)
+    VALUES (${email}, ${name}, 'staff', ${slug})
+    RETURNING id, email, name, role, active, avatar_url, slug, created_at
   `) as StaffMember[];
   await seedDefaultHours(sql, rows[0].id);
 
@@ -86,7 +96,7 @@ export async function PATCH(request: Request) {
 
   const sql = getSql();
   const rows = (await sql`
-    SELECT id, email, name, role, active, avatar_url, created_at FROM staff WHERE id = ${id}
+    SELECT id, email, name, role, active, avatar_url, slug, created_at FROM staff WHERE id = ${id}
   `) as StaffMember[];
   const current = rows[0];
   if (!current) {

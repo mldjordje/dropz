@@ -15,7 +15,7 @@ function unauthorized(request: NextRequest) {
 // availability — plus the APIs those pages need (each of which additionally
 // scopes data to the caller's own staffId server-side). Everything else in
 // the panel is owner-only.
-const STAFF_PAGES = ["/admin/kalendar", "/admin/dostupnost"];
+const STAFF_PAGES = ["/admin/kalendar", "/admin/dostupnost", "/admin/moji-radovi"];
 const STAFF_APIS = [
   "/api/admin/me",
   "/api/admin/logout",
@@ -23,6 +23,8 @@ const STAFF_APIS = [
   "/api/admin/appointments",
   "/api/admin/working-hours",
   "/api/admin/day-overrides",
+  "/api/admin/my-works",
+  "/api/admin/upload",
 ];
 
 export async function middleware(request: NextRequest) {

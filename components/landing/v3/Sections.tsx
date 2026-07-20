@@ -369,7 +369,7 @@ export function PathsV3(props: PathsProps) {
           <span>{props.consultAction} <ArrowUpRight size={15} strokeWidth={1.6} /></span>
         </a>
         <i className="v3-paths__divider" aria-hidden="true" />
-        <Link href="/upit" className="v3-path" data-magnetic onPointerEnter={push} onPointerDown={push}>
+        <Link href="/nalog?novi=1" className="v3-path" data-magnetic onPointerEnter={push} onPointerDown={push}>
           <small>{props.inquiryMeta}</small>
           <strong>{props.inquiry}</strong>
           <span>{props.inquiryAction} <ArrowUpRight size={15} strokeWidth={1.6} /></span>

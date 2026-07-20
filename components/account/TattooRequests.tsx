@@ -5,6 +5,14 @@ import { ArrowUpRight, Bell, ChevronLeft, ChevronRight, ImagePlus, X } from "luc
 
 type TattooStatus = "pending" | "quoted" | "scheduled" | "done" | "canceled";
 
+type Artist = {
+  id: number;
+  name: string;
+  role: "owner" | "staff";
+  avatar_url: string | null;
+  slug: string | null;
+};
+
 type TattooRequest = {
   id: number;
   description: string;
@@ -13,6 +21,8 @@ type TattooRequest = {
   budget: string | null;
   image_urls: string[];
   status: TattooStatus;
+  artist_id: number | null;
+  artist_name: string | null;
   session_count: number | null;
   session_minutes: number | null;
   price: string | null;
@@ -225,7 +235,15 @@ function BookSession({ request, onBooked }: { request: TattooRequest; onBooked: 
   );
 }
 
-export function TattooRequests() {
+export function TattooRequests({
+  autoOpenForm = false,
+  preselectArtist = null,
+}: {
+  /** Open the new-request form immediately (?novi=1 deep link). */
+  autoOpenForm?: boolean;
+  /** Artist id to preselect in the picker (?artist=N, from artist pages). */
+  preselectArtist?: number | null;
+}) {
   const [requests, setRequests] = useState<TattooRequest[] | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -255,9 +273,19 @@ export function TattooRequests() {
     load();
   }, [load]);
 
+  // Team roster for the artist picker (loaded once; empty list hides the field).
+  useEffect(() => {
+    fetch("/api/artists", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => data.ok && setArtists(data.artists))
+      .catch(() => {});
+  }, []);
+
   // ---- new request form ----
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(autoOpenForm);
   const [bookId, setBookId] = useState<number | null>(null);
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [artistId, setArtistId] = useState<number | null>(preselectArtist);
   const [description, setDescription] = useState("");
   const [size, setSize] = useState("");
   const [bodyPart, setBodyPart] = useState("");
@@ -314,6 +342,7 @@ export function TattooRequests() {
           bodyPart: bodyPart.trim() || undefined,
           budget: budget.trim() || undefined,
           imageUrls: images,
+          artistId: artistId ?? undefined,
         }),
       });
       const data = await res.json();
@@ -326,6 +355,7 @@ export function TattooRequests() {
       setBodyPart("");
       setBudget("");
       setImages([]);
+      setArtistId(null);
       setShowForm(false);
       setOkMsg("Zahtev je poslat. Javićemo ti se sa procenom termina i cene.");
       await load();
@@ -365,6 +395,45 @@ export function TattooRequests() {
 
       {showForm && (
         <div className="bkf treq__form">
+          {artists.length > 0 && (
+            <div className="bkf__field">
+              <span className="bkf__label">Izaberi artista (opciono)</span>
+              <div className="treq__artists">
+                <button
+                  type="button"
+                  className="treq__artist"
+                  aria-pressed={artistId === null}
+                  onClick={() => setArtistId(null)}
+                  disabled={busy}
+                >
+                  <span className="treq__artist-avatar treq__artist-avatar--any">?</span>
+                  <span className="treq__artist-name">Svejedno mi je</span>
+                  <small>studio bira</small>
+                </button>
+                {artists.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    className={`treq__artist${a.role === "owner" ? " treq__artist--featured" : ""}`}
+                    aria-pressed={artistId === a.id}
+                    onClick={() => setArtistId(a.id)}
+                    disabled={busy}
+                  >
+                    <span className="treq__artist-avatar">
+                      {a.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- google-hosted avatar
+                        <img src={a.avatar_url} alt="" />
+                      ) : (
+                        a.name.slice(0, 1).toUpperCase()
+                      )}
+                    </span>
+                    <span className="treq__artist-name">{a.name}</span>
+                    {a.role === "owner" && <small className="treq__artist-badge">★ Head artist</small>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="bkf__field">
             <label htmlFor="treq-desc">Opis tetovaže *</label>
             <textarea
@@ -477,8 +546,9 @@ export function TattooRequests() {
               <small>{fmtDate(r.created_at)}</small>
             </div>
             <p className="treq__desc">{r.description}</p>
-            {(r.size || r.body_part || r.budget) && (
+            {(r.size || r.body_part || r.budget || r.artist_name) && (
               <div className="treq__meta">
+                {r.artist_name && <span>Artist: {r.artist_name}</span>}
                 {r.size && <span>Veličina: {r.size}</span>}
                 {r.body_part && <span>Deo tela: {r.body_part}</span>}
                 {r.budget && <span>Budžet: {r.budget} €</span>}

@@ -20,8 +20,18 @@ const INQUIRY_STEPS = [
   { title: "Potvrda", body: "Admin potvrđuje izabrani termin i vidimo se u studiju." },
 ];
 
-export function BookingChoice({ labels, locale }: { labels: BookingFormLabels; locale: Locale }) {
-  const [mode, setMode] = useState<Mode | null>(null);
+export function BookingChoice({
+  labels,
+  locale,
+  initialMode = null,
+}: {
+  labels: BookingFormLabels;
+  locale: Locale;
+  /** "consult" pre-opens the calendar (used on the landing, so the hero CTA
+   * still lands on something actionable while the inquiry tab stays visible). */
+  initialMode?: Mode | null;
+}) {
+  const [mode, setMode] = useState<Mode | null>(initialMode);
 
   return (
     <div className="bkc">
@@ -67,7 +77,7 @@ export function BookingChoice({ labels, locale }: { labels: BookingFormLabels; l
               </li>
             ))}
           </ol>
-          <Link className="bkf__submit bkc__cta" href="/nalog">
+          <Link className="bkf__submit bkc__cta" href="/nalog?novi=1">
             <span>Nastavi — pošalji upit</span>
             <ArrowUpRight size={16} strokeWidth={1.5} />
           </Link>

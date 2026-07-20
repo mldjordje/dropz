@@ -398,3 +398,18 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__req-artist select:focus{outline:none;border-color:var(--neon)}
 .adm__tim-email{padding:0;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;text-align:left;cursor:pointer;text-decoration:underline dotted rgba(243,239,250,.3);text-underline-offset:3px}
 .adm__tim-email:hover{color:#fff}
+
+/* ---- Artist's own public portfolio ---- */
+.adm__myworks{display:flex;flex-direction:column;gap:18px}
+.adm__myworks h1{margin:0;font-size:20px;text-transform:uppercase;letter-spacing:.06em}
+.adm__myworks-add{display:flex;flex-wrap:wrap;gap:10px}
+.adm__myworks-add input[type=text]{flex:1;min-width:210px;padding:11px 14px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit}
+.adm__myworks-add button{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border:1px solid var(--neon);border-radius:4px;background:rgba(113,48,255,.16);color:#fff;cursor:pointer}
+.adm__myworks-add button:disabled{opacity:.45;cursor:default}
+.adm__myworks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.adm__myworks-item{margin:0;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.adm__myworks-item img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover}
+.adm__myworks-item figcaption{display:flex;align-items:center;gap:8px;padding:9px 10px;color:var(--muted);font-size:11px}
+.adm__myworks-item figcaption span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm__myworks-item figcaption button{margin-left:auto;display:grid;place-items:center;padding:6px;border:0;background:none;color:var(--muted);cursor:pointer}
+.adm__myworks-item figcaption button:hover{color:#ff5a8a}

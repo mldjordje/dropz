@@ -252,6 +252,22 @@ await sql`
   WHERE artist_id IS NULL
 `;
 
+// --- Consult bookings can carry a chosen artist (null = "svejedno") ---
+await sql`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS artist_id INT REFERENCES staff(id)`;
+
+// --- Portfolio works can belong to an artist (null = studio/general) ---
+await sql`ALTER TABLE portfolio_works ADD COLUMN IF NOT EXISTS artist_id INT REFERENCES staff(id)`;
+
+// --- Public artist pages: slug on staff, backfilled from the name ---
+await sql`ALTER TABLE staff ADD COLUMN IF NOT EXISTS slug TEXT`;
+await sql`
+  UPDATE staff SET slug = trim(both '-' from regexp_replace(lower(
+    translate(name, 'šđčćžŠĐČĆŽ', 'sdcczSDCCZ')
+  ), '[^a-z0-9]+', '-', 'g'))
+  WHERE slug IS NULL
+`;
+await sql`CREATE UNIQUE INDEX IF NOT EXISTS staff_slug ON staff (slug) WHERE slug IS NOT NULL`;
+
 // --- CMS: editable site content (key/value, JSONB) ---
 await sql`
   CREATE TABLE IF NOT EXISTS site_content (

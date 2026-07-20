@@ -555,6 +555,29 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 .treq__artist small{color:var(--muted);font-size:10px}
 .treq__artist-badge{color:#e8c65a;letter-spacing:.1em;text-transform:uppercase}
 
+/* Public artist directory and individual portfolios */
+.portfolio-artists-link{display:inline-flex;margin:8px 0 34px}
+.artists-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:36px}
+.artist-card{display:flex;align-items:center;gap:14px;padding:18px;border:1px solid rgba(243,239,250,.16);background:rgba(255,255,255,.025);color:var(--white);transition:border-color .2s,transform .2s}
+.artist-card:hover{border-color:var(--neon);transform:translateY(-2px)}
+.artist-card>svg{margin-left:auto;color:var(--neon)}
+.artist-card__avatar,.artist-hero__avatar{display:grid;place-items:center;overflow:hidden;border-radius:50%;background:rgba(113,48,255,.28);color:#fff;flex-shrink:0}
+.artist-card__avatar{width:58px;height:58px;font-size:20px}
+.artist-card__avatar img,.artist-hero__avatar img{width:100%;height:100%;object-fit:cover}
+.artist-card__copy{display:flex;flex-direction:column;gap:4px}
+.artist-card__copy strong{font-size:16px}
+.artist-card__copy small{color:var(--muted);font-size:11px}
+.artist-hero{display:flex;align-items:center;gap:24px;margin:32px 0 22px}
+.artist-hero h1{margin:4px 0 0}
+.artist-hero__avatar{width:104px;height:104px;font-size:36px}
+.artist-page__cta{display:inline-flex;margin-bottom:36px}
+.artist-works{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.artist-works figure{margin:0;background:rgba(255,255,255,.025)}
+.artist-works img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover}
+.artist-works figcaption{padding:10px 12px;color:var(--muted);font-size:11px}
+.artist-page__empty{margin-top:34px;color:var(--muted)}
+@media(max-width:640px){.artist-hero{align-items:flex-end}.artist-hero__avatar{width:78px;height:78px}.artist-works{grid-template-columns:1fr}}
+
 /* /upit — inquiry steps outside the booking-choice wrapper */
 .upit__steps{margin:36px 0 30px;max-width:560px}
 .upit__alt{margin:18px 0 0;color:var(--muted);font-size:12px;line-height:1.6;max-width:420px}
