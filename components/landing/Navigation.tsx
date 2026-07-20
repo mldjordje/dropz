@@ -40,9 +40,9 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
             </button>
           ))}
         </div>
-        <Link className="nav-cta" href="/booking">
+        <a className="nav-cta" href="#booking">
           <span>{labels.reserve}</span><ArrowUpRight size={16} strokeWidth={1.5} />
-        </Link>
+        </a>
         <MobileMenu labels={labels} variant="nav" locale={locale} onLocaleChange={setLocale} isHome />
       </div>
     </header>

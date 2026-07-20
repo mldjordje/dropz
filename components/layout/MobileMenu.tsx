@@ -62,7 +62,7 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
     { key: "process", label: labels.process, href: `${prefix}#craft` },
     { key: "portfolio", label: labels.portfolio, href: "/portfolio" },
     { key: "education", label: labels.education, href: "/edukacija" },
-    { key: "booking", label: labels.booking, href: "/booking" },
+    { key: "booking", label: labels.booking, href: `${prefix}#booking` },
     { key: "account", label: labels.account, href: "/nalog" },
   ];
 
@@ -123,7 +123,7 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
               ))}
             </div>
           )}
-          <a className="mnav__cta" href="/booking" onClick={() => setOpen(false)}>
+          <a className="mnav__cta" href={`${prefix}#booking`} onClick={() => setOpen(false)}>
             <span>{labels.reserve}</span>
             <ArrowUpRight size={16} strokeWidth={1.5} />
           </a>
