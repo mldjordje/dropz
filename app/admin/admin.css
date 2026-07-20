@@ -322,3 +322,79 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__fin-fields input:focus,.adm__fin-fields select:focus{outline:none;border-color:var(--neon)}
 .adm__fin-check{flex-direction:row!important;align-items:center;gap:8px!important;padding-bottom:9px;cursor:pointer}
 .adm__fin-check input{accent-color:var(--neon);width:15px;height:15px}
+
+/* ---- Tim (staff management) ---- */
+.adm__tim{display:flex;flex-direction:column;gap:18px;max-width:640px}
+.adm__tim h1{font-size:20px;text-transform:uppercase;letter-spacing:.06em}
+.adm__tim-add{display:flex;gap:10px;flex-wrap:wrap}
+.adm__tim-add input{flex:1;min-width:160px;padding:11px 14px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:13px}
+.adm__tim-add input:focus{outline:none;border-color:var(--neon)}
+.adm__tim-add button{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border:1px solid var(--neon);border-radius:4px;background:rgba(113,48,255,.16);color:#fff;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.adm__tim-add button:hover:not(:disabled){background:rgba(113,48,255,.32)}
+.adm__tim-add button:disabled{opacity:.4;cursor:default}
+.adm__tim-list{display:flex;flex-direction:column;gap:10px}
+.adm__tim-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.02)}
+.adm__tim-card--owner{border-color:rgba(113,48,255,.55);background:linear-gradient(120deg,rgba(113,48,255,.14),rgba(113,48,255,.03))}
+.adm__tim-card--off{opacity:.5}
+.adm__tim-avatar{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;overflow:hidden;background:rgba(113,48,255,.25);color:#fff;font-size:15px;flex-shrink:0}
+.adm__tim-avatar img{width:100%;height:100%;object-fit:cover}
+.adm__tim-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.adm__tim-info strong{display:flex;align-items:center;gap:8px;font-size:14px}
+.adm__tim-info span{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.adm__tim-info small{color:#ff5a8a;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.adm__tim-owner-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid rgba(113,48,255,.6);border-radius:999px;background:rgba(113,48,255,.2);color:#d9c9ff;font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-style:normal}
+.adm__tim-toggle{margin-left:auto;padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.adm__tim-toggle:hover:not(:disabled){border-color:var(--neon);color:#fff}
+
+/* ---- Team calendar switcher (owner) ---- */
+.adm__cal-team{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.adm__cal-artist{display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 8px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+.adm__cal-artist:hover{border-color:rgba(113,48,255,.5);color:#fff}
+.adm__cal-artist[aria-selected="true"]{border-color:var(--neon);background:rgba(113,48,255,.18);color:#fff}
+.adm__cal-artist--owner{border-color:rgba(113,48,255,.45);background:linear-gradient(120deg,rgba(113,48,255,.12),transparent);font-weight:600}
+.adm__cal-artist--owner[aria-selected="true"]{background:rgba(113,48,255,.28)}
+.adm__cal-artist-avatar{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;overflow:hidden;background:rgba(113,48,255,.3);color:#fff;font-size:11px;flex-shrink:0}
+.adm__cal-artist-avatar img{width:100%;height:100%;object-fit:cover}
+.adm__cal-artist-avatar--all{background:rgba(255,255,255,.08)}
+.adm__cal-artist-name{display:inline-flex;align-items:center;gap:5px}
+.adm__cal-artist-star{color:#e8c65a;font-style:normal;font-size:11px}
+
+/* ---- Staff schedule (moja dostupnost) ---- */
+.adm__sched{display:flex;flex-direction:column;gap:18px;max-width:640px}
+.adm__sched h1{font-size:20px;text-transform:uppercase;letter-spacing:.06em}
+.adm__sched h2,.adm__ovr h2{margin-bottom:12px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.adm__ovr{padding:16px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.02)}
+.adm__ovr-add{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.adm__ovr-add input[type=date]{padding:9px 12px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:13px;color-scheme:dark}
+.adm__ovr-add>button{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1px solid var(--neon);border-radius:999px;background:rgba(113,48,255,.14);color:#fff;font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.adm__ovr-add>button:disabled{opacity:.4;cursor:default}
+.adm__ovr-list{display:flex;flex-direction:column;gap:8px}
+.adm__ovr-row{display:flex;align-items:center;gap:14px;padding:10px 12px;border:1px solid var(--line);border-radius:6px}
+.adm__ovr-date{font-size:13px}
+.adm__ovr-what{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.adm__ovr-row>button{margin-left:auto;display:grid;place-items:center;padding:7px;border:1px solid var(--line);border-radius:6px;background:none;color:var(--muted);cursor:pointer;transition:all .2s}
+.adm__ovr-row>button:hover:not(:disabled){border-color:#ff5a8a;color:#ff5a8a}
+
+/* ---- Login: Google door for the team ---- */
+.adm-login__or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+.adm-login__or::before,.adm-login__or::after{content:"";flex:1;height:1px;background:var(--line)}
+.adm-login__google{padding:13px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.04);color:#fff;text-align:center;font-size:11px;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;transition:all .2s}
+.adm-login__google:hover{border-color:var(--neon);background:rgba(113,48,255,.14)}
+
+/* ---- Bigger tap targets in the calendar on touch screens ---- */
+@media(max-width:700px){
+  .adm__fc-wrap .fc .fc-timegrid-slot{height:3.2em}
+  .adm__fc-wrap .fc{font-size:13px}
+  .dz-ev{font-size:12px;padding:3px 6px;border-radius:5px}
+  .adm__fc-wrap .fc .fc-timegrid-slot-label{font-size:11px}
+  .adm__fc-wrap .fc .fc-toolbar{flex-wrap:wrap;gap:8px}
+  .adm__fc-wrap .fc .fc-toolbar-title{font-size:14px}
+  .adm__fc-wrap .fc .fc-button{padding:9px 13px;font-size:12px}
+}
+
+/* Artist assignment on a request (zahtevi) */
+.adm__req-artist{display:inline-flex;align-items:center;gap:10px;margin-top:10px;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.adm__req-artist select{padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:12px;letter-spacing:normal;text-transform:none}
+.adm__req-artist select:focus{outline:none;border-color:var(--neon)}
+.adm__tim-email{padding:0;border:0;background:none;color:var(--muted);font:inherit;font-size:12px;text-align:left;cursor:pointer;text-decoration:underline dotted rgba(243,239,250,.3);text-underline-offset:3px}
+.adm__tim-email:hover{color:#fff}

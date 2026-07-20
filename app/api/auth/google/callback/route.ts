@@ -8,6 +8,8 @@ import {
   signUserSessionToken,
   verifyOAuthTxnToken,
 } from "@/lib/auth/user-session";
+import { setSessionCookie, signSessionToken } from "@/lib/auth/session";
+import { getStaffByEmail } from "@/lib/staff";
 
 export const runtime = "nodejs";
 
@@ -99,6 +101,36 @@ export async function GET(request: NextRequest) {
     name: user.name,
     avatar: user.avatar_url,
   });
+
+  // Staff/owner door: if this gmail is on the team (added in /admin/tim), the
+  // same Google login also opens the admin panel — set the admin session
+  // cookie alongside the customer one and land them in the panel.
+  let staffMember = null;
+  try {
+    staffMember = await getStaffByEmail(sql, email);
+  } catch {
+    // staff table missing (pre-migration) — plain customer login.
+  }
+
+  if (staffMember) {
+    await sql`
+      UPDATE staff
+      SET google_id = ${googleId}, avatar_url = ${avatar},
+          name = CASE WHEN name = '' THEN COALESCE(${name}, name) ELSE name END
+      WHERE id = ${staffMember.id}
+    `;
+    const adminToken = await signSessionToken({
+      role: staffMember.role,
+      staffId: staffMember.id,
+      name: staffMember.name,
+    });
+    const dest = staffMember.role === "owner" ? "/admin" : "/admin/kalendar";
+    const response = NextResponse.redirect(new URL(dest, origin));
+    clearOAuthTxnCookie(response);
+    setUserSessionCookie(response, token);
+    setSessionCookie(response, adminToken);
+    return response;
+  }
 
   const response = NextResponse.redirect(new URL(txn.next, origin));
   clearOAuthTxnCookie(response);

@@ -11,6 +11,7 @@ import {
   SlidersHorizontal,
   Images,
   Users,
+  UsersRound,
   FileText,
   Banknote,
   Settings,
@@ -31,11 +32,18 @@ const NAV: NavItem[] = [
   { href: "/admin/termini", label: "Termini", icon: Clock3, badge: "bookingsNew" },
   { href: "/admin/zahtevi", label: "Zahtevi", icon: Inbox, badge: "requestsPending" },
   { href: "/admin/klijenti", label: "Klijenti", icon: Users },
+  { href: "/admin/tim", label: "Tim", icon: UsersRound },
   { href: "/admin/finansije", label: "Finansije", icon: Banknote },
   { href: "/admin/dostupnost", label: "Dostupnost", icon: SlidersHorizontal },
   { href: "/admin/portfolio", label: "Portfolio", icon: Images },
   { href: "/admin/sadrzaj", label: "Sadržaj", icon: FileText },
   { href: "/admin/podesavanja", label: "Podešavanja", icon: Settings },
+];
+
+// Staff (artists) get exactly two pages — mirrors the middleware allow-list.
+const STAFF_NAV: NavItem[] = [
+  { href: "/admin/kalendar", label: "Kalendar", icon: CalendarDays },
+  { href: "/admin/dostupnost", label: "Dostupnost", icon: SlidersHorizontal },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -46,8 +54,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     requestsPending: 0,
   });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [me, setMe] = useState<{ role: "owner" | "staff"; name: string | null } | null>(null);
 
   useEffect(() => {
+    let alive = true;
+    fetch("/api/admin/me", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (alive && data?.ok) setMe({ role: data.role, name: data.name });
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Badges come from an owner-only endpoint — staff nav has none anyway.
+    if (me?.role !== "owner") return;
     let alive = true;
     fetch("/api/admin/summary", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
@@ -60,7 +84,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     return () => {
       alive = false;
     };
-  }, [pathname]);
+  }, [pathname, me]);
 
   // Route changed (nav link tap) — close the mobile menu.
   useEffect(() => {
@@ -86,6 +110,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
 
+  const nav = me?.role === "staff" ? STAFF_NAV : NAV;
   const badgeValue = (item: NavItem) => (item.badge ? badges[item.badge] : 0);
   const totalBadge = badges.bookingsNew + badges.requestsPending;
 
@@ -96,7 +121,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           Dropz <small>ADMIN</small>
         </div>
         <nav className="adm__nav">
-          {NAV.map((item) => {
+          {nav.map((item) => {
             const Icon = item.icon;
             const n = badgeValue(item);
             return (
@@ -138,7 +163,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="adm__mmenu" role="dialog" aria-modal="true" aria-label="Navigacija">
             <button type="button" className="adm__mmenu-backdrop" aria-label="Zatvori meni" onClick={() => setMenuOpen(false)} />
             <nav className="adm__mmenu-panel" aria-label="Glavna navigacija">
-              {NAV.map((item) => {
+              {nav.map((item) => {
                 const Icon = item.icon;
                 const n = badgeValue(item);
                 return (

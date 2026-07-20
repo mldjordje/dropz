@@ -3,7 +3,15 @@ import { getSql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/user-session";
 import { MONTH_RE } from "@/lib/availability";
 import { getBookableRequest } from "@/lib/tattoo";
-import { freeStartTimes, getBusyMap, getWorkingHours, weekdayIndex } from "@/lib/schedule";
+import { freeStartTimes } from "@/lib/schedule";
+import {
+  getArtistBusyMap,
+  getOwner,
+  getStaffById,
+  getStaffOverrides,
+  getStaffWeeklyHours,
+  hoursForDate,
+} from "@/lib/staff";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,8 +22,9 @@ function todayIso(): string {
 }
 
 // GET ?month=YYYY-MM — per-day free start times for the request's next
-// session (session_minutes long), inside working hours, avoiding everything
-// already on the calendar. Booking starts from tomorrow.
+// session (session_minutes long), inside the assigned artist's working hours
+// (weekly schedule + date overrides), avoiding that artist's calendar.
+// Requests without an assigned artist fall back to the owner.
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -45,26 +54,31 @@ export async function GET(
   }
   const duration = bookable.session_minutes as number;
 
+  const artist = (bookable.artist_id ? await getStaffById(sql, bookable.artist_id) : null) ?? (await getOwner(sql));
+  if (!artist) {
+    return NextResponse.json({ ok: false, message: "Artist nije podešen." }, { status: 500 });
+  }
+
   const [year, monthNum] = month.split("-").map(Number);
   const daysTotal = new Date(year, monthNum, 0).getDate();
   const first = `${month}-01`;
   const last = `${month}-${String(daysTotal).padStart(2, "0")}`;
   const today = todayIso();
 
-  const [hours, busy] = await Promise.all([
-    getWorkingHours(sql),
-    getBusyMap(sql, first, last),
+  const [weekly, overrides, busy] = await Promise.all([
+    getStaffWeeklyHours(sql, artist.id),
+    getStaffOverrides(sql, artist.id, first, last),
+    getArtistBusyMap(sql, artist, first, last),
   ]);
 
   const days: Record<string, string[]> = {};
   for (let day = 1; day <= daysTotal; day++) {
     const date = `${month}-${String(day).padStart(2, "0")}`;
     if (date <= today) continue;
-    const wh = hours.find((h) => h.weekday === weekdayIndex(date));
-    if (!wh) continue;
+    const wh = hoursForDate(weekly, overrides, date);
     const starts = freeStartTimes(wh, busy[date] ?? [], duration);
     if (starts.length > 0) days[date] = starts;
   }
 
-  return NextResponse.json({ ok: true, days, duration });
+  return NextResponse.json({ ok: true, days, duration, artist: { id: artist.id, name: artist.name } });
 }

@@ -3,15 +3,15 @@ import { getSql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/user-session";
 import { DATE_RE } from "@/lib/availability";
 import { getBookableRequest } from "@/lib/tattoo";
+import { freeStartTimes, isValidTime, minutesToTime, timeToMinutes } from "@/lib/schedule";
 import {
-  freeStartTimes,
-  getBusyMap,
-  getWorkingHours,
-  isValidTime,
-  minutesToTime,
-  timeToMinutes,
-  weekdayIndex,
-} from "@/lib/schedule";
+  getArtistBusyMap,
+  getOwner,
+  getStaffById,
+  getStaffOverrides,
+  getStaffWeeklyHours,
+  hoursForDate,
+} from "@/lib/staff";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,9 +63,20 @@ export async function POST(
   }
   const duration = bookable.session_minutes as number;
 
-  const wh = (await getWorkingHours(sql)).find((h) => h.weekday === weekdayIndex(date));
-  const busy = (await getBusyMap(sql, date, date))[date] ?? [];
-  const free = wh ? freeStartTimes(wh, busy, duration) : [];
+  // The session goes on the assigned artist's calendar (owner when the client
+  // had no preference), validated against that artist's schedule.
+  const artist = (bookable.artist_id ? await getStaffById(sql, bookable.artist_id) : null) ?? (await getOwner(sql));
+  if (!artist) {
+    return NextResponse.json({ ok: false, message: "Artist nije podešen." }, { status: 500 });
+  }
+
+  const [weekly, overrides, busyMap] = await Promise.all([
+    getStaffWeeklyHours(sql, artist.id),
+    getStaffOverrides(sql, artist.id, date, date),
+    getArtistBusyMap(sql, artist, date, date),
+  ]);
+  const wh = hoursForDate(weekly, overrides, date);
+  const free = freeStartTimes(wh, busyMap[date] ?? [], duration);
   if (!free.includes(start)) {
     return NextResponse.json(
       { ok: false, code: "slot_taken", message: "Taj termin više nije slobodan. Izaberi drugi." },
@@ -75,8 +86,8 @@ export async function POST(
 
   const end = minutesToTime(timeToMinutes(start) + duration);
   const rows = (await sql`
-    INSERT INTO appointments (kind, request_id, user_id, date, start_time, end_time)
-    VALUES ('tattoo', ${requestId}, ${user.uid}, ${date}, ${start}, ${end})
+    INSERT INTO appointments (kind, request_id, user_id, artist_id, date, start_time, end_time)
+    VALUES ('tattoo', ${requestId}, ${user.uid}, ${artist.id}, ${date}, ${start}, ${end})
     RETURNING id, date::text AS date, start_time, end_time
   `) as { id: number; date: string; start_time: string; end_time: string }[];
   await sql`

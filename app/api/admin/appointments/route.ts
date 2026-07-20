@@ -1,16 +1,31 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
+import { getAdminSession, type AdminSession } from "@/lib/auth/admin";
 import { DATE_RE } from "@/lib/availability";
 import { cleanText } from "@/lib/tattoo";
 import { isAppointmentStatus, isValidTime, type Appointment } from "@/lib/schedule";
+import { getOwner, resolveArtistId } from "@/lib/staff";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Auth for /api/admin/* is enforced by middleware.ts.
+// Auth for /api/admin/* is enforced by middleware.ts. Role scoping here:
+// staff create/edit/delete only their own entries; the owner manages anyone's
+// (body.artistId picks whose calendar a new entry lands on).
 
 function badRequest(message: string) {
   return NextResponse.json({ ok: false, message }, { status: 400 });
+}
+
+function forbidden() {
+  return NextResponse.json({ ok: false, message: "Forbidden" }, { status: 403 });
+}
+
+type AppointmentWithArtist = Appointment & { artist_id: number | null };
+
+// Staff may touch only rows on their own calendar.
+function canTouch(session: AdminSession, row: { artist_id: number | null }): boolean {
+  return session.role === "owner" || (session.staffId !== null && row.artist_id === session.staffId);
 }
 
 // POST — create a calendar entry.
@@ -18,6 +33,9 @@ function badRequest(message: string) {
 //   { date, start, end, requestId, note? }         -> tattoo session (links the
 //     quoted request, copies its user, flips request status to 'scheduled')
 export async function POST(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -41,22 +59,34 @@ export async function POST(request: Request) {
 
   const sql = getSql();
 
-  // Tattoo session path.
+  // Whose calendar the entry lands on. Staff are pinned to themselves; the
+  // owner can target any artist via body.artistId (default: himself).
+  const artistId = await resolveArtistId(sql, session, body.artistId);
+  if (!artistId) return badRequest("Nedostaje artist.");
+
+  // Tattoo session path — owner only (staff calendars get sessions when the
+  // owner or the client books them; staff themselves add manual entries only).
   if (body.requestId !== undefined) {
+    if (session.role !== "owner") return forbidden();
     const requestId = Number(body.requestId);
     if (!Number.isInteger(requestId)) return badRequest("Neispravan zahtev.");
     const reqRows = (await sql`
-      SELECT id, user_id, status FROM tattoo_requests WHERE id = ${requestId}
-    `) as { id: number; user_id: number; status: string }[];
+      SELECT id, user_id, status, artist_id FROM tattoo_requests WHERE id = ${requestId}
+    `) as { id: number; user_id: number; status: string; artist_id: number | null }[];
     if (reqRows.length === 0) return badRequest("Zahtev nije nađen.");
     if (!["quoted", "scheduled"].includes(reqRows[0].status)) {
       return badRequest("Zahtev još nema procenu ili je zatvoren.");
     }
 
+    // The session belongs to the request's artist; explicit artistId wins so
+    // the owner can reassign on the fly, otherwise fall back to the request.
+    const sessionArtist =
+      body.artistId !== undefined ? artistId : reqRows[0].artist_id ?? (await getOwner(sql))?.id ?? artistId;
+
     const rows = (await sql`
-      INSERT INTO appointments (kind, request_id, user_id, date, start_time, end_time, note)
-      VALUES ('tattoo', ${requestId}, ${reqRows[0].user_id}, ${date}, ${start}, ${end}, ${note})
-      RETURNING id, kind, title, request_id, user_id, date::text AS date,
+      INSERT INTO appointments (kind, request_id, user_id, artist_id, date, start_time, end_time, note)
+      VALUES ('tattoo', ${requestId}, ${reqRows[0].user_id}, ${sessionArtist}, ${date}, ${start}, ${end}, ${note})
+      RETURNING id, kind, title, request_id, user_id, artist_id, date::text AS date,
                 start_time, end_time, note, status, created_at
     `) as Appointment[];
     await sql`
@@ -74,9 +104,9 @@ export async function POST(request: Request) {
   if (!title) return badRequest("Naziv je obavezan za ručni unos.");
 
   const rows = (await sql`
-    INSERT INTO appointments (kind, title, date, start_time, end_time, note)
-    VALUES ('manual', ${title}, ${date}, ${start}, ${end}, ${note})
-    RETURNING id, kind, title, request_id, user_id, date::text AS date,
+    INSERT INTO appointments (kind, title, artist_id, date, start_time, end_time, note)
+    VALUES ('manual', ${title}, ${artistId}, ${date}, ${start}, ${end}, ${note})
+    RETURNING id, kind, title, request_id, user_id, artist_id, date::text AS date,
               start_time, end_time, note, status, created_at
   `) as Appointment[];
   return NextResponse.json({ ok: true, appointment: rows[0] }, { status: 201 });
@@ -86,6 +116,9 @@ export async function POST(request: Request) {
 // Marking a tattoo session 'done' advances the linked request's sessions_done
 // (and closes the request when all sessions are finished).
 export async function PATCH(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -98,14 +131,15 @@ export async function PATCH(request: Request) {
 
   const sql = getSql();
   const existing = (await sql`
-    SELECT id, kind, title, request_id, user_id, date::text AS date,
+    SELECT id, kind, title, request_id, user_id, artist_id, date::text AS date,
            start_time, end_time, note, status, created_at
     FROM appointments WHERE id = ${id}
-  `) as Appointment[];
+  `) as AppointmentWithArtist[];
   if (existing.length === 0) {
     return NextResponse.json({ ok: false, message: "Termin nije nađen." }, { status: 404 });
   }
   const current = existing[0];
+  if (!canTouch(session, current)) return forbidden();
 
   const date = body.date === undefined ? current.date : typeof body.date === "string" ? body.date : "";
   if (!DATE_RE.test(date)) return badRequest("Neispravan datum.");
@@ -181,6 +215,9 @@ export async function PATCH(request: Request) {
 
 // DELETE { id }
 export async function DELETE(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
@@ -191,11 +228,14 @@ export async function DELETE(request: Request) {
   if (!Number.isInteger(id)) return badRequest("Invalid id");
 
   const sql = getSql();
-  const rows = (await sql`
-    DELETE FROM appointments WHERE id = ${id} RETURNING id
-  `) as { id: number }[];
-  if (rows.length === 0) {
+  const existing = (await sql`
+    SELECT id, artist_id FROM appointments WHERE id = ${id}
+  `) as { id: number; artist_id: number | null }[];
+  if (existing.length === 0) {
     return NextResponse.json({ ok: false, message: "Termin nije nađen." }, { status: 404 });
   }
+  if (!canTouch(session, existing[0])) return forbidden();
+
+  await sql`DELETE FROM appointments WHERE id = ${id}`;
   return NextResponse.json({ ok: true });
 }

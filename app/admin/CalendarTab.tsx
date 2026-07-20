@@ -18,20 +18,25 @@ type AppointmentRow = {
   title: string | null;
   request_id: number | null;
   user_id: number | null;
+  artist_id: number | null;
+  artist_name: string | null;
   date: string;
   start_time: string;
   end_time: string;
   note: string | null;
   status: "scheduled" | "done" | "canceled";
-  price: number | null;
-  deposit: number | null;
-  deposit_paid: boolean;
-  paid: boolean;
-  payment_method: string | null;
+  // finance fields are omitted from the API response for staff
+  price?: number | null;
+  deposit?: number | null;
+  deposit_paid?: boolean;
+  paid?: boolean;
+  payment_method?: string | null;
   user_name: string | null;
   user_email: string | null;
   request_description: string | null;
 };
+
+type Artist = { id: number; name: string; role: "owner" | "staff"; avatar_url: string | null };
 
 type ConsultRow = {
   id: number;
@@ -89,20 +94,31 @@ export function CalendarTab() {
   const [hours, setHours] = useState<WorkingHoursRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Role + team switcher: owner flips between "Svi" (0) and each artist's
+  // calendar; staff are pinned server-side to their own.
+  const [role, setRole] = useState<"owner" | "staff">("owner");
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [artistView, setArtistView] = useState(0); // 0 = all (owner only)
+
   const load = useCallback(async () => {
     if (!range) return;
     setError(null);
     try {
-      const res = await fetch(`/api/admin/calendar?from=${range.from}&to=${range.to}`, { cache: "no-store" });
+      const res = await fetch(
+        `/api/admin/calendar?from=${range.from}&to=${range.to}&artistId=${artistView}`,
+        { cache: "no-store" },
+      );
       const data = await res.json();
       if (!data.ok) throw new Error(data.message);
       setAppointments(data.appointments);
       setConsults(data.consults);
       setHours(data.hours);
+      setRole(data.role);
+      if (data.role === "owner") setArtists(data.artists);
     } catch {
       setError("Ne mogu da učitam kalendar.");
     }
-  }, [range]);
+  }, [range, artistView]);
 
   useEffect(() => {
     load();
@@ -122,10 +138,14 @@ export function CalendarTab() {
     }
     for (const a of appointments) {
       if (a.status === "canceled") continue;
-      const label =
+      let label =
         a.kind === "tattoo"
           ? `Tattoo — ${a.user_name ?? a.user_email ?? ""}`
           : a.title ?? "Zauzeto";
+      // In the "all artists" view tag every entry with whose it is.
+      if (artistView === 0 && role === "owner" && a.artist_name) {
+        label = `[${a.artist_name}] ${label}`;
+      }
       items.push({
         id: `appt-${a.id}`,
         title: a.status === "done" ? `✓ ${label}` : label,
@@ -136,7 +156,7 @@ export function CalendarTab() {
       });
     }
     return items;
-  }, [appointments, consults]);
+  }, [appointments, consults, artistView, role]);
 
   const businessHours = useMemo(
     () =>
@@ -152,6 +172,7 @@ export function CalendarTab() {
 
   // ---- create panel (opens on empty-slot select) ----
   const [createSel, setCreateSel] = useState<{ date: string; start: string; end: string } | null>(null);
+  const [cArtist, setCArtist] = useState<number | null>(null);
   const [cKind, setCKind] = useState<"manual" | "tattoo" | "block">("manual");
   const [cTitle, setCTitle] = useState("");
   const [cNote, setCNote] = useState("");
@@ -172,8 +193,12 @@ export function CalendarTab() {
     setCTitle("");
     setCNote("");
     setCRequestId(null);
+    // Pre-pick whose calendar the entry lands on: the currently viewed artist,
+    // or the owner (first in the roster) in the "Svi" view.
+    setCArtist(artistView !== 0 ? artistView : artists[0]?.id ?? null);
     setSelected(null);
     setPanelError(null);
+    if (role !== "owner") return; // staff create manual/block entries only
     try {
       const res = await fetch("/api/admin/tattoo-requests", { cache: "no-store" });
       const data = await res.json();
@@ -188,7 +213,7 @@ export function CalendarTab() {
     } catch {
       setOpenRequests([]);
     }
-  }, []);
+  }, [artistView, artists, role]);
 
   const onSelect = useCallback((sel: DateSelectArg) => {
     const date = isoDate(sel.start);
@@ -227,6 +252,7 @@ export function CalendarTab() {
           start: cStart,
           end: cEnd,
           note: cNote.trim() || undefined,
+          ...(role === "owner" && cArtist ? { artistId: cArtist } : {}),
           ...(cKind === "tattoo"
             ? { requestId: cRequestId }
             : { title: cKind === "block" ? "Blokirano" : cTitle.trim() }),
@@ -291,8 +317,8 @@ export function CalendarTab() {
       setENote(props.row.note ?? "");
       setEPrice(props.row.price != null ? String(props.row.price) : "");
       setEDeposit(props.row.deposit != null ? String(props.row.deposit) : "");
-      setEDepositPaid(props.row.deposit_paid);
-      setEPaid(props.row.paid);
+      setEDepositPaid(props.row.deposit_paid ?? false);
+      setEPaid(props.row.paid ?? false);
       setEMethod(props.row.payment_method ?? "");
     }
   }, []);
@@ -341,6 +367,12 @@ export function CalendarTab() {
       const data = await res.json();
       if (!res.ok || !data.ok) {
         setPanelError(data.message ?? "Izmena nije uspela.");
+        return;
+      }
+      // Finance is owner-only — staff never see or save those fields.
+      if (role !== "owner") {
+        setSelected(null);
+        await load();
         return;
       }
       const finRes = await fetch("/api/admin/finance", {
@@ -403,7 +435,14 @@ export function CalendarTab() {
       const res = await fetch("/api/admin/working-hours", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ weekday, open, close }),
+        // Owner edits the schedule of whichever artist's calendar is open;
+        // staff are pinned to their own server-side.
+        body: JSON.stringify({
+          weekday,
+          open,
+          close,
+          ...(role === "owner" && artistView !== 0 ? { staffId: artistView } : {}),
+        }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.message);
@@ -419,13 +458,53 @@ export function CalendarTab() {
     <div className="adm__cal">
       {error && <p className="adm__err" role="alert">{error}</p>}
 
+      {role === "owner" && artists.length > 0 && (
+        <div className="adm__cal-team" role="tablist" aria-label="Kalendari tima">
+          <button
+            type="button"
+            className="adm__cal-artist"
+            role="tab"
+            aria-selected={artistView === 0}
+            onClick={() => setArtistView(0)}
+          >
+            <span className="adm__cal-artist-avatar adm__cal-artist-avatar--all">∀</span>
+            <span className="adm__cal-artist-name">Svi</span>
+          </button>
+          {artists.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              className={`adm__cal-artist${a.role === "owner" ? " adm__cal-artist--owner" : ""}`}
+              role="tab"
+              aria-selected={artistView === a.id}
+              onClick={() => setArtistView(a.id)}
+            >
+              <span className="adm__cal-artist-avatar">
+                {a.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- google-hosted avatar
+                  <img src={a.avatar_url} alt="" />
+                ) : (
+                  a.name.slice(0, 1).toUpperCase()
+                )}
+              </span>
+              <span className="adm__cal-artist-name">
+                {a.name}
+                {a.role === "owner" && <em className="adm__cal-artist-star" aria-label="Head artist">★</em>}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="adm__cal-legend">
         <span className="adm__cal-key adm__cal-key--consult">Konsultacija</span>
         <span className="adm__cal-key adm__cal-key--tattoo">Tattoo sesija</span>
         <span className="adm__cal-key adm__cal-key--manual">Ostalo</span>
-        <button type="button" className="adm__cal-hours-btn" onClick={() => setShowHours((v) => !v)}>
-          {showHours ? "Sakrij radno vreme" : "Radno vreme"}
-        </button>
+        {(role === "staff" || artistView !== 0) && (
+          <button type="button" className="adm__cal-hours-btn" onClick={() => setShowHours((v) => !v)}>
+            {showHours ? "Sakrij radno vreme" : "Radno vreme"}
+          </button>
+        )}
       </div>
 
       {showHours && (
@@ -507,13 +586,28 @@ export function CalendarTab() {
             <button type="button" className="adm__chip" aria-pressed={cKind === "manual"} onClick={() => setCKind("manual")}>
               Ostalo / privatno
             </button>
-            <button type="button" className="adm__chip" aria-pressed={cKind === "tattoo"} onClick={() => setCKind("tattoo")}>
-              Tattoo sesija
-            </button>
+            {role === "owner" && (
+              <button type="button" className="adm__chip" aria-pressed={cKind === "tattoo"} onClick={() => setCKind("tattoo")}>
+                Tattoo sesija
+              </button>
+            )}
             <button type="button" className="adm__chip" aria-pressed={cKind === "block"} onClick={() => setCKind("block")}>
               Blokada
             </button>
           </div>
+
+          {role === "owner" && artists.length > 1 && (
+            <label className="adm__cal-field">
+              Artist
+              <select value={cArtist ?? ""} onChange={(e) => setCArtist(Number(e.target.value) || null)} disabled={busy}>
+                {artists.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}{a.role === "owner" ? " ★" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           {cKind === "manual" && (
             <label className="adm__cal-field">
@@ -591,6 +685,7 @@ export function CalendarTab() {
             {selected.row.kind === "tattoo"
               ? `Tattoo sesija — ${selected.row.user_name ?? selected.row.user_email ?? ""}`
               : selected.row.title ?? "Unos"}
+            {role === "owner" && selected.row.artist_name ? ` · ${selected.row.artist_name}` : ""}
           </h3>
           {selected.row.kind === "tattoo" && selected.row.request_description && (
             <p className="adm__hint">{selected.row.request_description}</p>
@@ -621,6 +716,7 @@ export function CalendarTab() {
             <input type="text" value={eNote} onChange={(e) => setENote(e.target.value)} disabled={busy} />
           </label>
 
+          {role === "owner" && (
           <div className="adm__cal-fin">
             <h4>Naplata</h4>
             <div className="adm__cal-panel-row">
@@ -653,6 +749,7 @@ export function CalendarTab() {
               </label>
             </div>
           </div>
+          )}
 
           {panelError && <p className="adm__err" role="alert">{panelError}</p>}
           <div className="adm__cal-panel-actions">

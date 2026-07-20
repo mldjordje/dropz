@@ -18,6 +18,7 @@ export async function GET() {
   const sql = getSql();
   const requests = (await sql`
     SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.budget, r.image_urls, r.status,
+           r.artist_id, (SELECT s.name FROM staff s WHERE s.id = r.artist_id) AS artist_name,
            r.session_count, r.session_minutes, r.price, r.admin_note, r.sessions_done,
            r.quoted_at, r.created_at,
            (
@@ -83,6 +84,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Neispravne reference slike." }, { status: 400 });
   }
 
+  // Optional artist preference — must be an active team member; absent/empty
+  // means "no preference", the owner assigns one while quoting.
+  let artistId: number | null = null;
+  if (body.artistId !== undefined && body.artistId !== null && body.artistId !== "") {
+    const requested = Number(body.artistId);
+    if (!Number.isInteger(requested)) {
+      return NextResponse.json({ ok: false, message: "Neispravan artist." }, { status: 400 });
+    }
+    const found = (await getSql()`
+      SELECT id FROM staff WHERE id = ${requested} AND active
+    `) as { id: number }[];
+    if (found.length === 0) {
+      return NextResponse.json({ ok: false, message: "Neispravan artist." }, { status: 400 });
+    }
+    artistId = requested;
+  }
+
   const sql = getSql();
   const open = (await sql`
     SELECT count(*)::int AS count FROM tattoo_requests
@@ -96,10 +114,10 @@ export async function POST(request: Request) {
   }
 
   const rows = (await sql`
-    INSERT INTO tattoo_requests (user_id, description, size, body_part, budget, image_urls)
-    VALUES (${user.uid}, ${description}, ${size}, ${bodyPart}, ${budget}, ${imageUrls})
+    INSERT INTO tattoo_requests (user_id, description, size, body_part, budget, image_urls, artist_id)
+    VALUES (${user.uid}, ${description}, ${size}, ${bodyPart}, ${budget}, ${imageUrls}, ${artistId})
     RETURNING id, user_id, description, size, body_part, budget, image_urls, status,
-              session_count, session_minutes, price, admin_note, sessions_done,
+              artist_id, session_count, session_minutes, price, admin_note, sessions_done,
               quoted_at, created_at
   `) as TattooRequest[];
 

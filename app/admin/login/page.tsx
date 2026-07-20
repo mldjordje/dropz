@@ -50,6 +50,10 @@ function LoginForm() {
       <button type="submit" disabled={busy || !password}>
         {busy ? "..." : "Prijavi se"}
       </button>
+      <div className="adm-login__or" aria-hidden="true">ili</div>
+      <a className="adm-login__google" href="/api/auth/google?next=/admin/kalendar">
+        Prijava preko Google (tim)
+      </a>
     </form>
   );
 }

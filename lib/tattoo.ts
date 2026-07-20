@@ -22,6 +22,7 @@ export type TattooRequest = {
   budget: string | null;
   image_urls: string[];
   status: TattooStatus;
+  artist_id: number | null; // null = no preference, owner assigns
   session_count: number | null;
   session_minutes: number | null;
   price: string | null;
@@ -50,7 +51,7 @@ export async function getBookableRequest(
 ): Promise<TattooRequest | null> {
   const rows = (await sql`
     SELECT id, user_id, description, size, body_part, budget, image_urls, status,
-           session_count, session_minutes, price, admin_note, sessions_done,
+           artist_id, session_count, session_minutes, price, admin_note, sessions_done,
            quoted_at, created_at
     FROM tattoo_requests
     WHERE id = ${requestId} AND user_id = ${userId}

@@ -180,6 +180,78 @@ await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS deposit_paid BOOLEAN
 await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS paid BOOLEAN NOT NULL DEFAULT false`;
 await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_method TEXT`;
 
+// --- Roles: staff (owner + artists). Owner adds staff by gmail; on first
+// Google login the row is matched by email and google_id gets filled in. ---
+await sql`
+  CREATE TABLE IF NOT EXISTS staff (
+    id SERIAL PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'staff',
+    active BOOLEAN NOT NULL DEFAULT true,
+    google_id TEXT UNIQUE,
+    avatar_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`;
+
+// Seed the owner (Dragan) once. Set OWNER_EMAIL in .env.local to his gmail so
+// Google login maps to the owner role; the email can also be fixed later in
+// /admin/tim. Only runs when no owner row exists.
+const ownerEmail = (process.env.OWNER_EMAIL ?? "dragan@dropz.local").toLowerCase();
+await sql`
+  INSERT INTO staff (email, name, role)
+  SELECT ${ownerEmail}, 'Dragan', 'owner'
+  WHERE NOT EXISTS (SELECT 1 FROM staff WHERE role = 'owner')
+`;
+
+// Which artist a request/appointment belongs to. NULL on a request means the
+// client had no preference — the owner assigns one when quoting.
+await sql`ALTER TABLE tattoo_requests ADD COLUMN IF NOT EXISTS artist_id INT REFERENCES staff(id)`;
+await sql`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS artist_id INT REFERENCES staff(id)`;
+
+// Per-artist weekly working hours (same shape as working_hours, plus staff_id).
+await sql`
+  CREATE TABLE IF NOT EXISTS staff_working_hours (
+    staff_id INT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
+    weekday INT NOT NULL,
+    open_time TEXT,
+    close_time TEXT,
+    PRIMARY KEY (staff_id, weekday)
+  )
+`;
+
+// Per-date exceptions: an override row wins over the weekly schedule for that
+// date; open/close both NULL = closed that day.
+await sql`
+  CREATE TABLE IF NOT EXISTS staff_day_overrides (
+    staff_id INT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    open_time TEXT,
+    close_time TEXT,
+    PRIMARY KEY (staff_id, date)
+  )
+`;
+
+// Backfill: everything created before roles existed belongs to the owner —
+// his weekly hours start as a copy of the global working_hours, and existing
+// appointments/requests get attributed to him. All idempotent.
+await sql`
+  INSERT INTO staff_working_hours (staff_id, weekday, open_time, close_time)
+  SELECT s.id, w.weekday, w.open_time, w.close_time
+  FROM staff s CROSS JOIN working_hours w
+  WHERE s.role = 'owner'
+  ON CONFLICT (staff_id, weekday) DO NOTHING
+`;
+await sql`
+  UPDATE appointments SET artist_id = (SELECT id FROM staff WHERE role = 'owner' LIMIT 1)
+  WHERE artist_id IS NULL
+`;
+await sql`
+  UPDATE tattoo_requests SET artist_id = (SELECT id FROM staff WHERE role = 'owner' LIMIT 1)
+  WHERE artist_id IS NULL
+`;
+
 // --- CMS: editable site content (key/value, JSONB) ---
 await sql`
   CREATE TABLE IF NOT EXISTS site_content (
@@ -236,6 +308,7 @@ if (existingWorks[0].count === 0) {
   console.log("portfolio_works seeded with 6 default landing images (edit these in /admin/portfolio).");
 }
 
+console.log("staff / staff_working_hours / staff_day_overrides ready (owner seeded).");
 console.log("bookings table ready.");
 console.log("users table ready.");
 console.log("tattoo_requests table ready.");

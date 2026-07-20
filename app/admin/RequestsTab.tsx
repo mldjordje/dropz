@@ -15,6 +15,8 @@ type TattooRequest = {
   budget: string | null;
   image_urls: string[];
   status: TattooStatus;
+  artist_id: number | null;
+  artist_name: string | null;
   session_count: number | null;
   session_minutes: number | null;
   price: string | null;
@@ -57,11 +59,41 @@ function fmtCreated(iso: string) {
   );
 }
 
+type Artist = { id: number; name: string; role: "owner" | "staff"; avatar_url: string | null };
+
 export function RequestsTab() {
   const [requests, setRequests] = useState<TattooRequest[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [filter, setFilter] = useState<FilterKey>("pending");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/artists", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => data.ok && setArtists(data.artists))
+      .catch(() => {});
+  }, []);
+
+  const assignArtist = async (id: number, artistId: number | null) => {
+    const prev = requests;
+    setRequests((rs) =>
+      rs.map((r) =>
+        r.id === id
+          ? { ...r, artist_id: artistId, artist_name: artists.find((a) => a.id === artistId)?.name ?? null }
+          : r,
+      ),
+    );
+    const res = await fetch("/api/admin/tattoo-requests", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, artistId }),
+    });
+    if (!res.ok) {
+      setRequests(prev);
+      setError("Dodela artista nije sačuvana.");
+    }
+  };
 
   const load = useCallback(async () => {
     setError(null);
@@ -186,6 +218,22 @@ export function RequestsTab() {
                 {r.body_part && <span>Deo tela: {r.body_part}</span>}
                 {r.budget && <span>Budžet: {r.budget} €</span>}
               </div>
+              {artists.length > 0 && (
+                <label className="adm__req-artist">
+                  Artist
+                  <select
+                    value={r.artist_id ?? ""}
+                    onChange={(e) => assignArtist(r.id, e.target.value === "" ? null : Number(e.target.value))}
+                  >
+                    <option value="">— nije izabran —</option>
+                    {artists.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}{a.role === "owner" ? " ★" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               {r.image_urls.length > 0 && (
                 <div className="adm__req-thumbs">
                   {r.image_urls.map((url) => (

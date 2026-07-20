@@ -1,27 +1,43 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
+import { getAdminSession } from "@/lib/auth/admin";
 import { isValidTime, type WorkingHours } from "@/lib/schedule";
+import { getStaffWeeklyHours, resolveArtistId } from "@/lib/staff";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Auth for /api/admin/* is enforced by middleware.ts.
+// Per-artist weekly hours. Staff can only read/write their own schedule; the
+// owner can pass ?staffId= / body.staffId to manage anyone's.
 
-export async function GET() {
-  const sql = getSql();
-  const rows = (await sql`
-    SELECT weekday, open_time, close_time FROM working_hours ORDER BY weekday
-  `) as WorkingHours[];
-  return NextResponse.json({ ok: true, hours: rows });
+export async function GET(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+
+  const staffId = await resolveArtistId(getSql(), session, new URL(request.url).searchParams.get("staffId") ?? undefined);
+  if (!staffId) {
+    return NextResponse.json({ ok: false, message: "Nedostaje staffId." }, { status: 400 });
+  }
+
+  const rows = await getStaffWeeklyHours(getSql(), staffId);
+  return NextResponse.json({ ok: true, hours: rows as WorkingHours[], staffId });
 }
 
-// PUT { weekday, open, close } — open/close both "HH:MM", or both null = closed.
+// PUT { staffId?, weekday, open, close } — open/close both "HH:MM", or both null = closed.
 export async function PUT(request: Request) {
+  const session = await getAdminSession();
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ ok: false, message: "Invalid JSON" }, { status: 400 });
+  }
+
+  const staffId = await resolveArtistId(getSql(), session, body.staffId);
+  if (!staffId) {
+    return NextResponse.json({ ok: false, message: "Nedostaje staffId." }, { status: 400 });
   }
 
   const weekday = Number(body.weekday);
@@ -43,9 +59,9 @@ export async function PUT(request: Request) {
 
   const sql = getSql();
   await sql`
-    INSERT INTO working_hours (weekday, open_time, close_time)
-    VALUES (${weekday}, ${open}, ${close})
-    ON CONFLICT (weekday) DO UPDATE SET open_time = ${open}, close_time = ${close}
+    INSERT INTO staff_working_hours (staff_id, weekday, open_time, close_time)
+    VALUES (${staffId}, ${weekday}, ${open}, ${close})
+    ON CONFLICT (staff_id, weekday) DO UPDATE SET open_time = ${open}, close_time = ${close}
   `;
   return NextResponse.json({ ok: true });
 }

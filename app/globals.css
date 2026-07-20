@@ -539,3 +539,18 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 .pf-work__tags li{padding:5px 12px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:11px;letter-spacing:.06em}
 .pf-work__cta{align-self:flex-start;margin-top:8px;padding:12px 26px;border:1px solid var(--neon);border-radius:999px;background:rgba(113,48,255,.16);color:#fff;font-size:11px;letter-spacing:.16em;text-transform:uppercase;transition:background .2s}
 .pf-work__cta:hover{background:rgba(113,48,255,.32)}
+
+/* Artist picker on the tattoo request form — Dragan (owner) featured */
+.treq__artists{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.treq__artist{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 10px;border:1px solid rgba(243,239,250,.18);background:rgba(255,255,255,.02);color:var(--white);font:inherit;font-size:12px;cursor:pointer;transition:border-color .25s,background .25s}
+.treq__artist:hover:not(:disabled){border-color:var(--neon)}
+.treq__artist[aria-pressed="true"]{border-color:var(--neon);background:rgba(113,48,255,.14)}
+.treq__artist--featured{grid-column:1 / -1;flex-direction:row;justify-content:center;gap:12px;padding:16px;border-color:rgba(113,48,255,.5);background:linear-gradient(120deg,rgba(113,48,255,.16),rgba(113,48,255,.03))}
+.treq__artist--featured[aria-pressed="true"]{border-color:var(--neon);background:rgba(113,48,255,.24)}
+.treq__artist-avatar{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;overflow:hidden;background:rgba(113,48,255,.3);color:var(--white);font-size:15px;flex-shrink:0}
+.treq__artist-avatar img{width:100%;height:100%;object-fit:cover}
+.treq__artist-avatar--any{background:rgba(255,255,255,.08);color:var(--muted)}
+.treq__artist--featured .treq__artist-avatar{width:52px;height:52px}
+.treq__artist-name{font-size:13px}
+.treq__artist small{color:var(--muted);font-size:10px}
+.treq__artist-badge{color:#e8c65a;letter-spacing:.1em;text-transform:uppercase}
