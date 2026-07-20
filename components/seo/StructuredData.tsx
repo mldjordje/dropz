@@ -7,7 +7,7 @@ import { SITE, OG_IMAGE } from "@/lib/site";
 
 export function StructuredData() {
   const hasAddress = SITE.street.length > 0;
-  const hasGeo = SITE.geo.lat !== 0 && SITE.geo.lng !== 0;
+  const hasGeo = true; // real GMB pin coordinates present in lib/site.ts
   const hasHours = SITE.hours.length > 0;
   const hasRealInstagram = SITE.instagram.replace(/\/+$/, "") !== "https://instagram.com";
 
@@ -24,7 +24,19 @@ export function StructuredData() {
     email: SITE.email,
     priceRange: "$$",
     currenciesAccepted: "RSD",
-    areaServed: { "@type": "City", name: SITE.city },
+    hasMap: SITE.googleMaps,
+    areaServed: [
+      { "@type": "City", name: SITE.city },
+      { "@type": "Country", name: "Serbia" },
+    ],
+    knowsAbout: [
+      "tetoviranje",
+      "custom tattoo dizajn",
+      "fine line tetovaže",
+      "blackwork",
+      "cover-up tetovaže",
+      "tattoo konsultacije",
+    ],
   };
 
   if (hasAddress) {
@@ -57,9 +69,7 @@ export function StructuredData() {
     }));
   }
 
-  if (hasRealInstagram) {
-    business.sameAs = [SITE.instagram];
-  }
+  business.sameAs = hasRealInstagram ? [SITE.instagram, SITE.googleMaps] : [SITE.googleMaps];
 
   const website = {
     "@context": "https://schema.org",
