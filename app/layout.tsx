@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { SITE, OG_IMAGE } from "@/lib/site";
 import { StructuredData } from "@/components/seo/StructuredData";
 
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <StructuredData />
         {children}
+        <Analytics />
       </body>
     </html>
   );
