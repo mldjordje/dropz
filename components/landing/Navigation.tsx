@@ -14,6 +14,7 @@ type NavigationProps = {
     process: string;
     portfolio: string;
     education: string;
+    aftercare: string;
     booking: string;
     reserve: string;
     account: string;
@@ -29,6 +30,7 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
         <a href="#craft">{labels.process}</a>
         <Link href="/portfolio">{labels.portfolio}</Link>
         <Link href="/edukacija">{labels.education}</Link>
+        <Link href="/aftercare">{labels.aftercare}</Link>
         <a href="#booking">{labels.booking}</a>
         <Link href="/nalog">{labels.account}</Link>
       </nav>

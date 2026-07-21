@@ -4,7 +4,7 @@ export const locales: Locale[] = ["sr", "en", "de"];
 
 export const copy = {
   sr: {
-    nav: { work: "Rad", process: "Proces", portfolio: "Portfolio", education: "Edukacija", booking: "Termini", reserve: "Rezerviši", account: "Nalog" },
+    nav: { work: "Rad", process: "Proces", portfolio: "Portfolio", education: "Edukacija", aftercare: "Nega", booking: "Termini", reserve: "Rezerviši", account: "Nalog" },
     heroLine: "Ink is energy.",
     heroSubline: "Preciznost je jedino pravilo.",
     heroBook: "Zakaži termin",
@@ -80,7 +80,7 @@ export const copy = {
     finalAction: "Rezerviši termin",
   },
   en: {
-    nav: { work: "Work", process: "Process", portfolio: "Portfolio", education: "Education", booking: "Booking", reserve: "Book now", account: "Account" },
+    nav: { work: "Work", process: "Process", portfolio: "Portfolio", education: "Education", aftercare: "Aftercare", booking: "Booking", reserve: "Book now", account: "Account" },
     heroLine: "Ink is energy.",
     heroSubline: "Precision is the only rule.",
     heroBook: "Book a session",
@@ -156,7 +156,7 @@ export const copy = {
     finalAction: "Book a session",
   },
   de: {
-    nav: { work: "Arbeiten", process: "Prozess", portfolio: "Portfolio", education: "Ausbildung", booking: "Termine", reserve: "Termin", account: "Konto" },
+    nav: { work: "Arbeiten", process: "Prozess", portfolio: "Portfolio", education: "Ausbildung", aftercare: "Pflege", booking: "Termine", reserve: "Termin", account: "Konto" },
     heroLine: "Ink is energy.",
     heroSubline: "Praezision ist die einzige Regel.",
     heroBook: "Termin buchen",
