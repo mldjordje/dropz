@@ -9,7 +9,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const sql = getSql();
   const users = (await sql`
-    SELECT id, name, email, avatar_url, admin_note, created_at, last_login_at
+    SELECT id, name, email, avatar_url, admin_note, created_at, last_login_at,
+           phone, birthday::text AS birthday, city,
+           (birthday IS NOT NULL AND EXTRACT(MONTH FROM birthday) = EXTRACT(MONTH FROM CURRENT_DATE)) AS birthday_this_month
     FROM users WHERE id = ${id}
   `) as Record<string, unknown>[];
   if (users.length === 0) {

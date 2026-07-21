@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "Dropz Tattoo Studio",
+  "short_name": "Dropz Tattoo",
+  "description": "Dropz Tattoo Studio u Nišu — autorske tetovaže, custom dizajn, besplatne konsultacije i online rezervacija termina. Najbolje ocenjeni tattoo studio u Nišu (5.0 na Google-u).",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "sr-RS",
+  "icons": [
+    { "src": "/media/dropz%20png%20logo%20original-01.png", "sizes": "any", "type": "image/png", "purpose": "any" }
+  ]
+}

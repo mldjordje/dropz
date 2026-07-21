@@ -42,6 +42,11 @@ export function fmtDate(iso: string) {
   return new Intl.DateTimeFormat("sr-Latn-RS", { weekday: "short", day: "numeric", month: "short" }).format(d);
 }
 
+export function fmtBirthday(iso: string) {
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00`);
+  return new Intl.DateTimeFormat("sr-Latn-RS", { day: "numeric", month: "long", year: "numeric" }).format(d);
+}
+
 export function monthKey(offset: number) {
   const d = new Date();
   const base = new Date(d.getFullYear(), d.getMonth() + offset, 1);

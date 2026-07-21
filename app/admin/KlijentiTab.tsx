@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
-import { fmtDate } from "./shared";
+import { fmtDate, fmtBirthday } from "./shared";
 
 type Client = {
   id: number;
@@ -63,7 +63,16 @@ export function KlijentiTab() {
   const [error, setError] = useState<string | null>(null);
 
   const [openId, setOpenId] = useState<number | null>(null);
-  const [detail, setDetail] = useState<{ requests: ClientRequest[]; appointments: ClientAppointment[] } | null>(null);
+  const [detail, setDetail] = useState<{
+    client: {
+      phone: string | null;
+      birthday: string | null;
+      city: string | null;
+      birthday_this_month: boolean;
+    };
+    requests: ClientRequest[];
+    appointments: ClientAppointment[];
+  } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [note, setNote] = useState("");
   const [noteBusy, setNoteBusy] = useState(false);
@@ -108,7 +117,7 @@ export function KlijentiTab() {
     try {
       const res = await fetch(`/api/admin/clients/${c.id}`, { cache: "no-store" });
       const data = await res.json();
-      if (data.ok) setDetail({ requests: data.requests, appointments: data.appointments });
+      if (data.ok) setDetail({ client: data.client, requests: data.requests, appointments: data.appointments });
     } finally {
       setDetailLoading(false);
     }
@@ -180,6 +189,22 @@ export function KlijentiTab() {
 
                 {detail && (
                   <>
+                    {(detail.client.phone || detail.client.birthday || detail.client.city) && (
+                      <div className="adm__client-contact">
+                        {detail.client.phone && (
+                          <span><em>Tel</em> <a href={`tel:${detail.client.phone}`}>{detail.client.phone}</a></span>
+                        )}
+                        {detail.client.city && <span><em>Grad</em> {detail.client.city}</span>}
+                        {detail.client.birthday && (
+                          <span>
+                            <em>Rođendan</em> {fmtBirthday(detail.client.birthday)}
+                            {detail.client.birthday_this_month && (
+                              <b className="adm__badge adm__badge--override" style={{ marginLeft: 8 }}>🎂 −10% ovog meseca</b>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="adm__client-cols">
                       <section>
                         <h4>Tattoo zahtevi</h4>

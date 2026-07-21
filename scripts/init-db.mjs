@@ -324,6 +324,32 @@ if (existingWorks[0].count === 0) {
   console.log("portfolio_works seeded with 6 default landing images (edit these in /admin/portfolio).");
 }
 
+// --- Per-artist consultations ---
+// Consults can be booked with a specific artist (bookings.artist_id already
+// exists). The old uniqueness `(date, slot)` allowed only ONE consult per slot
+// studio-wide; with per-artist consults two different artists may hold the same
+// clock slot. Re-key uniqueness on (date, slot, artist) — NULL ("svejedno") maps
+// to 0 so at most one no-preference consult per slot survives. The availability
+// layer (getArtistBusyMap treats svejedno as the owner's) is the real gate; this
+// index is the backstop against a double-insert race.
+await sql`DROP INDEX IF EXISTS bookings_active_slot`;
+await sql`
+  CREATE UNIQUE INDEX IF NOT EXISTS bookings_active_slot
+  ON bookings (date, slot, COALESCE(artist_id, 0))
+  WHERE status <> 'canceled'
+`;
+
+// --- Client profile (Faza: optional profile completion) ---
+// All optional; a client never has to fill these to use the app. birthday drives
+// a 10% birthday discount the studio honors manually. birthday_locked_at pins the
+// date once set so the discount can't be gamed by editing it every month.
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday DATE`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday_locked_at TIMESTAMPTZ`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS city TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed_at TIMESTAMPTZ`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_prompt_dismissed_at TIMESTAMPTZ`;
+
 console.log("staff / staff_working_hours / staff_day_overrides ready (owner seeded).");
 console.log("bookings table ready.");
 console.log("users table ready.");

@@ -12,8 +12,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/booking" },
 };
 
-export default function BookingPage() {
+export default async function BookingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ artist?: string }>;
+}) {
   const t = copy.sr;
+  const { artist } = await searchParams;
+  // ?artist=<id> (from an artist's profile) pre-opens the consult calendar on
+  // that artist and shows their real availability.
+  const preselectArtist = artist && /^\d+$/.test(artist) ? Number(artist) : null;
   return (
     <main className="route-shell">
       <RouteChrome />
@@ -22,7 +30,7 @@ export default function BookingPage() {
       <h1>Rezerviši<br />svoje mesto.</h1>
       <p>{t.bookingBody}</p>
       <div className="route-booking">
-        <BookingChoice labels={t.bookingForm} locale="sr" />
+        <BookingChoice labels={t.bookingForm} locale="sr" preselectArtist={preselectArtist} />
       </div>
     </main>
   );

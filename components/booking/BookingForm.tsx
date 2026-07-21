@@ -45,7 +45,17 @@ function isoKey(d: Date) {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
-export function BookingForm({ labels, locale }: { labels: BookingFormLabels; locale: Locale }) {
+export function BookingForm({
+  labels,
+  locale,
+  preselectArtist = null,
+}: {
+  labels: BookingFormLabels;
+  locale: Locale;
+  /** Pre-chooses an artist (e.g. arriving from that artist's profile), so the
+   * calendar shows their real availability from the start. */
+  preselectArtist?: number | null;
+}) {
   const tag = INTL_TAG[locale];
   const today = startOfDay(new Date());
 
@@ -63,7 +73,7 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
   const [taken, setTaken] = useState<string[]>([]);
   const [openDays, setOpenDays] = useState<Record<string, string[]>>({});
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [artistId, setArtistId] = useState<number | null>(null);
+  const [artistId, setArtistId] = useState<number | null>(preselectArtist);
 
   // Team roster for the "kod koga" picker; empty list hides the field.
   useEffect(() => {
@@ -79,27 +89,48 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
     };
   }, []);
 
-  // which days are open this month, so the calendar can enable/disable them
+  // Switching artist changes the whole calendar — drop any picked day/slot.
+  useEffect(() => {
+    setSelected(null);
+    setSlot(null);
+  }, [artistId]);
+
+  // Which days are open this month. No preference -> the studio consult-days
+  // calendar; a chosen artist -> that artist's own free consult slots.
   useEffect(() => {
     let cancelled = false;
     const base = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
     const monthKey = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}`;
-    fetch(`/api/bookings/availability?month=${monthKey}`)
+    const url =
+      artistId === null
+        ? `/api/bookings/availability?month=${monthKey}`
+        : `/api/bookings/artist-availability?artistId=${artistId}&month=${monthKey}`;
+    fetch(url)
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled && d.ok) setOpenDays(d.days);
+        else if (!cancelled) setOpenDays({});
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setOpenDays({});
+      });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monthOffset]);
+  }, [monthOffset, artistId]);
 
-  // available + already-booked slots for the selected day
+  // Slots for the selected day. For a chosen artist the month payload already
+  // carries free start times per date (busy times excluded), so no per-day
+  // request or "taken" list is needed; no preference queries the day endpoint.
   useEffect(() => {
     if (!selected) {
       setSlots([]);
+      setTaken([]);
+      return;
+    }
+    if (artistId !== null) {
+      setSlots(openDays[isoKey(selected)] ?? []);
       setTaken([]);
       return;
     }
@@ -116,7 +147,7 @@ export function BookingForm({ labels, locale }: { labels: BookingFormLabels; loc
     return () => {
       cancelled = true;
     };
-  }, [selected]);
+  }, [selected, artistId, openDays]);
 
   const monthStart = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
 
