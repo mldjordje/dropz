@@ -476,3 +476,29 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
   .adm__timerange{margin-left:0;width:100%;justify-content:space-between}
   .adm__timerange input[type=time]{flex:1}
 }
+
+/* ===== Availability month calendar (owner + staff) ===== */
+.adm__wk-toggle{display:flex;align-items:center;gap:12px;width:100%;padding:2px 0;border:0;background:none;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.adm__wk-toggle .adm__wk-count{margin-left:auto;font-style:normal;color:var(--neon)}
+.adm__wk-toggle:hover{color:#fff}
+.adm__wk .adm__wk-days{margin-top:14px}
+
+.adm__scal{margin-top:6px}
+.adm__scal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.adm__scal-wd{padding:2px 0 6px;text-align:center;color:var(--muted);font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.adm__scal-day{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;padding:6px 2px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);color:#e6dff2;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+.adm__scal-day:hover:not(:disabled){border-color:rgba(166,114,255,.6)}
+.adm__scal-day:disabled{opacity:.3;cursor:default}
+.adm__scal-day[aria-pressed=true]{border-color:var(--neon);background:rgba(113,48,255,.18);box-shadow:0 0 14px rgba(113,48,255,.25)}
+.adm__scal-num{font-size:13px;font-weight:600;line-height:1}
+.adm__scal-hours{font-size:9.5px;color:var(--neon);line-height:1;white-space:nowrap}
+.adm__scal-day--closed .adm__scal-hours{color:var(--muted)}
+.adm__scal-day--override{border-color:rgba(166,114,255,.55)}
+.adm__scal-dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--neon)}
+.adm__scal-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;color:var(--muted);font-size:11px}
+.adm__scal-legend span{display:inline-flex;align-items:center;gap:6px}
+.adm__scal-swatch{width:11px;height:11px;border-radius:3px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.adm__scal-swatch--closed{opacity:.4}
+.adm__scal-swatch--override{border-color:var(--neon);background:rgba(113,48,255,.3)}
+.adm__scal-editor{margin-top:20px}
+@media(max-width:560px){.adm__scal-day{min-height:50px;border-radius:6px}.adm__scal-hours{font-size:9px}}
