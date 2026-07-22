@@ -29,6 +29,26 @@ export type Appointment = {
   created_at: string;
 };
 
+export type TattooAppointmentWrite = {
+  requestId: number;
+  userId: number;
+  artistId: number;
+  date: string;
+  start: string;
+  end: string;
+  note?: string | null;
+};
+
+export type TattooAppointmentUpdate = {
+  id: number;
+  date: string;
+  start: string;
+  end: string;
+  title: string | null;
+  note: string | null;
+  status: AppointmentStatus;
+};
+
 export type WorkingHours = {
   weekday: number; // 0 = Monday ... 6 = Sunday
   open_time: string | null; // null = closed
@@ -66,6 +86,134 @@ export function weekdayIndex(date: string): number {
 // Half-open interval overlap: [aStart, aEnd) vs [bStart, bEnd), both "HH:MM".
 export function timesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
   return aStart < bEnd && bStart < aEnd;
+}
+
+export const TATTOO_STATION_CAPACITY = 3;
+
+// Keep only starts for which adding one tattoo session never raises the
+// studio-wide concurrency above the three physical chairs/equipment sets.
+export function filterStartsByTattooCapacity(
+  starts: string[],
+  durationMinutes: number,
+  busy: { start_time: string; end_time: string }[],
+): string[] {
+  return starts.filter((start) => {
+    const candidateStart = timeToMinutes(start);
+    const candidateEnd = candidateStart + durationMinutes;
+    const events: [number, number][] = [];
+    for (const interval of busy) {
+      const busyStart = timeToMinutes(interval.start_time);
+      const busyEnd = timeToMinutes(interval.end_time);
+      if (candidateStart < busyEnd && busyStart < candidateEnd) {
+        events.push([Math.max(candidateStart, busyStart), 1]);
+        events.push([Math.min(candidateEnd, busyEnd), -1]);
+      }
+    }
+    events.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+    let concurrent = 0;
+    for (const [, delta] of events) {
+      concurrent += delta;
+      if (concurrent >= TATTOO_STATION_CAPACITY) return false;
+    }
+    return true;
+  });
+}
+
+export async function getTattooBusyMap(
+  sql: Sql,
+  from: string,
+  to: string,
+): Promise<Record<string, { start_time: string; end_time: string }[]>> {
+  const rows = (await sql`
+    SELECT date::text AS date, start_time, end_time FROM appointments
+    WHERE kind = 'tattoo' AND date >= ${from} AND date <= ${to} AND status <> 'canceled'
+  `) as { date: string; start_time: string; end_time: string }[];
+
+  const map: Record<string, { start_time: string; end_time: string }[]> = {};
+  for (const row of rows) {
+    (map[row.date] ??= []).push({ start_time: row.start_time, end_time: row.end_time });
+  }
+  return map;
+}
+
+export async function createTattooAppointmentWithinCapacity(
+  sql: Sql,
+  input: TattooAppointmentWrite,
+): Promise<(Appointment & { artist_id: number }) | null> {
+  // Every tattoo write for the same date takes the same transaction lock.
+  // The capacity query therefore sees the preceding committed write even when
+  // clients submit at almost exactly the same time.
+  const results = await sql.transaction((tx) => [
+    tx`SELECT pg_advisory_xact_lock(hashtextextended(${input.date}, 0))`,
+    tx`
+      INSERT INTO appointments (kind, request_id, user_id, artist_id, date, start_time, end_time, note)
+      SELECT 'tattoo', ${input.requestId}, ${input.userId}, ${input.artistId},
+             ${input.date}, ${input.start}, ${input.end}, ${input.note ?? null}
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM (
+          SELECT ${input.start}::text AS point
+          UNION
+          SELECT a.start_time AS point
+          FROM appointments a
+          WHERE a.kind = 'tattoo' AND a.status <> 'canceled' AND a.date = ${input.date}
+            AND a.start_time >= ${input.start} AND a.start_time < ${input.end}
+        ) points
+        WHERE (
+          SELECT count(*)
+          FROM appointments current
+          WHERE current.kind = 'tattoo' AND current.status <> 'canceled'
+            AND current.date = ${input.date}
+            AND current.start_time <= points.point AND current.end_time > points.point
+        ) >= ${TATTOO_STATION_CAPACITY}
+      )
+      RETURNING id, kind, title, request_id, user_id, artist_id, date::text AS date,
+                start_time, end_time, note, status, created_at
+    `,
+  ]);
+  const inserted = results[1] as (Appointment & { artist_id: number })[];
+  return inserted[0] ?? null;
+}
+
+export async function updateTattooAppointmentWithinCapacity(
+  sql: Sql,
+  input: TattooAppointmentUpdate,
+): Promise<boolean> {
+  const results = await sql.transaction((tx) => [
+    tx`SELECT pg_advisory_xact_lock(hashtextextended(${input.date}, 0))`,
+    tx`
+      UPDATE appointments target
+      SET date = ${input.date}, start_time = ${input.start}, end_time = ${input.end},
+          title = ${input.title}, note = ${input.note}, status = ${input.status}
+      WHERE target.id = ${input.id}
+        AND (
+          ${input.status === "canceled"}
+          OR NOT EXISTS (
+            SELECT 1
+            FROM (
+              SELECT ${input.start}::text AS point
+              UNION
+              SELECT a.start_time AS point
+              FROM appointments a
+              WHERE a.id <> ${input.id} AND a.kind = 'tattoo' AND a.status <> 'canceled'
+                AND a.date = ${input.date}
+                AND a.start_time >= ${input.start} AND a.start_time < ${input.end}
+            ) points
+            WHERE (
+              SELECT count(*)
+              FROM appointments current
+              WHERE current.id <> ${input.id} AND current.kind = 'tattoo'
+                AND current.status <> 'canceled' AND current.date = ${input.date}
+                AND current.start_time <= points.point AND current.end_time > points.point
+            ) >= ${TATTOO_STATION_CAPACITY}
+          )
+        )
+      RETURNING target.id
+    `,
+  ]);
+  const updated = results[1] as { id: number }[];
+  return updated.length > 0;
 }
 
 // Busy [start, end) intervals per date across the whole calendar: appointments

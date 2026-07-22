@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/user-session";
 import { MONTH_RE } from "@/lib/availability";
 import { getBookableRequest } from "@/lib/tattoo";
-import { freeStartTimes } from "@/lib/schedule";
+import { filterStartsByTattooCapacity, freeStartTimes, getTattooBusyMap } from "@/lib/schedule";
 import {
   getArtistBusyMap,
   getOwner,
@@ -65,10 +65,11 @@ export async function GET(
   const last = `${month}-${String(daysTotal).padStart(2, "0")}`;
   const today = todayIso();
 
-  const [weekly, overrides, busy] = await Promise.all([
+  const [weekly, overrides, busy, studioBusy] = await Promise.all([
     getStaffWeeklyHours(sql, artist.id),
     getStaffOverrides(sql, artist.id, first, last),
     getArtistBusyMap(sql, artist, first, last),
+    getTattooBusyMap(sql, first, last),
   ]);
 
   const days: Record<string, string[]> = {};
@@ -76,7 +77,8 @@ export async function GET(
     const date = `${month}-${String(day).padStart(2, "0")}`;
     if (date <= today) continue;
     const wh = hoursForDate(weekly, overrides, date);
-    const starts = freeStartTimes(wh, busy[date] ?? [], duration);
+    const artistStarts = freeStartTimes(wh, busy[date] ?? [], duration);
+    const starts = filterStartsByTattooCapacity(artistStarts, duration, studioBusy[date] ?? []);
     if (starts.length > 0) days[date] = starts;
   }
 
