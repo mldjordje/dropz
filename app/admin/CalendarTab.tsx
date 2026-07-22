@@ -6,6 +6,11 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin, { type DateClickArg } from "@fullcalendar/interaction";
 import srLocale from "@fullcalendar/core/locales/sr";
+import {
+  TATTOO_STATION_CAPACITY,
+  tattooCapacityStatus,
+  type TattooCapacityInterval,
+} from "./shared";
 
 // FullCalendar's `sr` locale has Latin button texts but its code makes Intl
 // render day/month names in Cyrillic; force the Latin script variant.
@@ -89,9 +94,48 @@ function isoTime(d: Date): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+function TattooCapacityMeter({
+  status,
+  start,
+  end,
+}: {
+  status: ReturnType<typeof tattooCapacityStatus>;
+  start: string;
+  end: string;
+}) {
+  const overbooked = "overbooked" in status && status.overbooked;
+  const tone = overbooked ? "overbooked" : status.full ? "full" : status.available === 1 ? "warn" : "ok";
+  const label = overbooked
+    ? `Greška: ${status.occupied} termina na ${TATTOO_STATION_CAPACITY} mesta`
+    : status.full
+      ? "Sva 3 tattoo mesta su zauzeta"
+      : status.occupied === 0
+        ? "Sva 3 tattoo mesta su slobodna"
+        : status.occupied === 1
+          ? "1/3 zauzeto · 2 slobodna"
+          : "2/3 zauzeta · 1 slobodno";
+
+  return (
+    <div className={`adm__capacity adm__capacity--${tone}`} role={status.full ? "alert" : "status"}>
+      <div className="adm__capacity-copy">
+        <span>Kapacitet · {start}–{end}</span>
+        <strong>{label}</strong>
+      </div>
+      <div className="adm__capacity-stations" aria-label={`${status.occupied} od 3 mesta zauzeto`}>
+        {Array.from({ length: TATTOO_STATION_CAPACITY }, (_, index) => (
+          <span key={index} className={index < Math.min(status.occupied, 3) ? "is-busy" : "is-free"}>
+            {index + 1}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function CalendarTab() {
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
+  const [tattooCapacity, setTattooCapacity] = useState<TattooCapacityInterval[]>([]);
   const [consults, setConsults] = useState<ConsultRow[]>([]);
   const [hours, setHours] = useState<WorkingHoursRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +157,7 @@ export function CalendarTab() {
       const data = await res.json();
       if (!data.ok) throw new Error(data.message);
       setAppointments(data.appointments);
+      setTattooCapacity(data.tattooCapacity ?? []);
       setConsults(data.consults);
       setHours(data.hours);
       setRole(data.role);
@@ -188,6 +233,10 @@ export function CalendarTab() {
   const [openRequests, setOpenRequests] = useState<QuotedRequest[]>([]);
   const [busy, setBusy] = useState(false);
   const [panelError, setPanelError] = useState<string | null>(null);
+  const createCapacity = useMemo(
+    () => createSel ? tattooCapacityStatus(tattooCapacity, createSel.date, cStart, cEnd) : null,
+    [tattooCapacity, createSel, cStart, cEnd],
+  );
 
   // Single entry point for the create popup — called from both drag-select and
   // plain single clicks (dateClick), so every slot is clickable (drigic pattern).
@@ -247,6 +296,10 @@ export function CalendarTab() {
       setPanelError("Izaberi tattoo zahtev.");
       return;
     }
+    if (cKind === "tattoo" && createCapacity?.full) {
+      setPanelError("Sva tri tattoo mesta su zauzeta. Izaberi drugi period.");
+      return;
+    }
     setBusy(true);
     setPanelError(null);
     try {
@@ -295,6 +348,12 @@ export function CalendarTab() {
   const [eDepositPaid, setEDepositPaid] = useState(false);
   const [ePaid, setEPaid] = useState(false);
   const [eMethod, setEMethod] = useState("");
+  const editCapacity = useMemo(
+    () => selected?.type === "appointment" && selected.row.kind === "tattoo"
+      ? tattooCapacityStatus(tattooCapacity, eDate, eStart, eEnd, selected.row.id)
+      : null,
+    [tattooCapacity, selected, eDate, eStart, eEnd],
+  );
 
   // Close any open popup with Escape.
   useEffect(() => {
@@ -355,6 +414,10 @@ export function CalendarTab() {
 
   const saveEdit = async () => {
     if (!selected || selected.type !== "appointment") return;
+    if (selected.row.kind === "tattoo" && editCapacity?.full) {
+      setPanelError("Sva tri tattoo mesta su zauzeta. Izaberi drugi period.");
+      return;
+    }
     setBusy(true);
     setPanelError(null);
     try {
@@ -650,6 +713,10 @@ export function CalendarTab() {
             </label>
           </div>
 
+          {cKind === "tattoo" && createCapacity && (
+            <TattooCapacityMeter status={createCapacity} start={cStart} end={cEnd} />
+          )}
+
           <label className="adm__cal-field">
             Napomena (opciono)
             <input type="text" value={cNote} onChange={(e) => setCNote(e.target.value)} disabled={busy} />
@@ -657,7 +724,12 @@ export function CalendarTab() {
 
           {panelError && <p className="adm__err" role="alert">{panelError}</p>}
           <div className="adm__cal-panel-actions">
-            <button type="button" className="adm__resched-confirm" onClick={create} disabled={busy}>
+            <button
+              type="button"
+              className="adm__resched-confirm"
+              onClick={create}
+              disabled={busy || (cKind === "tattoo" && Boolean(createCapacity?.full))}
+            >
               {busy ? "Čuvanje…" : "Sačuvaj"}
             </button>
             <button type="button" onClick={() => setCreateSel(null)} disabled={busy}>Otkaži</button>
@@ -718,6 +790,9 @@ export function CalendarTab() {
               <input type="time" value={eEnd} step={900} onChange={(e) => setEEnd(e.target.value)} disabled={busy} />
             </label>
           </div>
+          {selected.row.kind === "tattoo" && editCapacity && (
+            <TattooCapacityMeter status={editCapacity} start={eStart} end={eEnd} />
+          )}
           <label className="adm__cal-field">
             Napomena
             <input type="text" value={eNote} onChange={(e) => setENote(e.target.value)} disabled={busy} />
@@ -760,7 +835,12 @@ export function CalendarTab() {
 
           {panelError && <p className="adm__err" role="alert">{panelError}</p>}
           <div className="adm__cal-panel-actions">
-            <button type="button" className="adm__resched-confirm" onClick={saveEdit} disabled={busy}>
+            <button
+              type="button"
+              className="adm__resched-confirm"
+              onClick={saveEdit}
+              disabled={busy || (selected.row.kind === "tattoo" && Boolean(editCapacity?.full))}
+            >
               {busy ? "Čuvanje…" : "Sačuvaj izmene"}
             </button>
             {selected.row.status !== "done" && (

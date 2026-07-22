@@ -203,6 +203,18 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__cal-panel-actions button{padding:9px 18px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .adm__cal-panel-actions button:hover:not(:disabled){border-color:var(--neon);color:#fff}
 .adm__cal-panel-actions .adm__resched-confirm{border-color:var(--neon);background:rgba(113,48,255,.14);color:#fff}
+.adm__capacity{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:2px 0 14px;padding:13px 14px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.025)}
+.adm__capacity-copy{display:flex;flex-direction:column;gap:4px}
+.adm__capacity-copy span{color:var(--muted);font-size:9px;letter-spacing:.13em;text-transform:uppercase}
+.adm__capacity-copy strong{font-size:12px;font-weight:600;color:#dcefe5}
+.adm__capacity-stations{display:flex;gap:7px;flex-shrink:0}
+.adm__capacity-stations span{display:grid;place-items:center;width:30px;height:30px;border:1px solid var(--line);border-radius:7px;font-size:10px;font-weight:700}
+.adm__capacity-stations .is-free{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.1);color:#7ee2a0}
+.adm__capacity-stations .is-busy{border-color:rgba(245,158,11,.55);background:rgba(245,158,11,.14);color:#f0c069}
+.adm__capacity--warn{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.06)}
+.adm__capacity--full,.adm__capacity--overbooked{border-color:rgba(220,60,60,.55);background:rgba(220,60,60,.09)}
+.adm__capacity--full .adm__capacity-copy strong,.adm__capacity--overbooked .adm__capacity-copy strong{color:#e0837f}
+.adm__capacity--full .adm__capacity-stations .is-busy,.adm__capacity--overbooked .adm__capacity-stations .is-busy{border-color:rgba(220,60,60,.65);background:rgba(220,60,60,.18);color:#e0837f}
 
 /* FullCalendar dark theme */
 .adm__fc-wrap{--fc-border-color:rgba(243,239,250,.12);--fc-page-bg-color:transparent;--fc-neutral-bg-color:rgba(255,255,255,.03);--fc-today-bg-color:rgba(113,48,255,.08);--fc-now-indicator-color:#ff5a8a;--fc-event-border-color:transparent}
@@ -394,6 +406,7 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
   .adm__fc-wrap .fc .fc-toolbar{flex-wrap:wrap;gap:8px}
   .adm__fc-wrap .fc .fc-toolbar-title{font-size:14px}
   .adm__fc-wrap .fc .fc-button{padding:9px 13px;font-size:12px}
+  .adm__capacity{align-items:flex-start;flex-direction:column}
 }
 
 /* Artist assignment on a request (zahtevi) */
