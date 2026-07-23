@@ -6,7 +6,7 @@ import { RouteChrome } from "@/components/layout/RouteChrome";
 export const metadata: Metadata = {
   title: "Nega tetovaže — uputstvo",
   description:
-    "Kompletno uputstvo za negu tetovaže posle šišanja u Dropz Tattoo Studiju u Nišu — kako da tetovaža pravilno zaraste, faza po faza, i kada da se javiš lekaru.",
+    "Kompletno uputstvo za negu tetovaže posle tetoviranja u Dropz Tattoo Studiju u Nišu — kako da tetovaža pravilno zaraste, faza po faza, i kada da se javiš lekaru.",
   alternates: { canonical: "/aftercare" },
 };
 
@@ -51,7 +51,7 @@ export default function AftercarePage() {
             faza po faza, od prvih sati do potpunog zarastanja.
           </p>
           <p className="edu-intro__note">
-            Svaki artista ti daje i usmeno uputstvo posle šišanja — ono ima prednost ako se u nečemu
+            Svaki artista ti daje i usmeno uputstvo posle tetoviranja — ono ima prednost ako se u nečemu
             razlikuje od ovog teksta.
           </p>
         </div>

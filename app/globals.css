@@ -157,10 +157,23 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 /* ============================== V3 — FLUID INK ============================== */
 .v3-shell{position:relative;isolation:isolate;background:#000}
 .v3-fluid{position:fixed;inset:0;z-index:0;width:100vw;height:100vh;display:block;background:#000}
-.v3-fluid--fallback{background:
-  radial-gradient(42vw 42vw at 30% 38%,rgba(113,48,255,.5),transparent 65%),
-  radial-gradient(30vw 30vw at 68% 60%,rgba(166,114,255,.42),transparent 62%),
-  radial-gradient(16vw 16vw at 55% 45%,rgba(243,239,250,.28),transparent 60%),#000}
+/* No-WebGL fallback: layered ink blobs. Static by default; on machines that
+   allow motion they drift/scale slowly so the background still feels alive
+   without any GL (works even with hardware acceleration off). Reduced-motion
+   users — who are routed here on purpose — keep the still version. */
+.v3-fluid--fallback{background:#000;overflow:hidden}
+.v3-fluid--fallback::before,.v3-fluid--fallback::after{content:"";position:absolute;inset:-25%;background-repeat:no-repeat;will-change:transform}
+.v3-fluid--fallback::before{background:
+  radial-gradient(42vw 42vw at 32% 40%,rgba(113,48,255,.5),transparent 64%),
+  radial-gradient(30vw 30vw at 66% 58%,rgba(166,114,255,.42),transparent 62%)}
+.v3-fluid--fallback::after{background:
+  radial-gradient(18vw 18vw at 54% 46%,rgba(243,239,250,.3),transparent 60%);mix-blend-mode:screen}
+@media(prefers-reduced-motion:no-preference){
+  .v3-fluid--fallback::before{animation:fluidDriftA 34s ease-in-out infinite alternate}
+  .v3-fluid--fallback::after{animation:fluidDriftB 26s ease-in-out infinite alternate}
+}
+@keyframes fluidDriftA{from{transform:translate3d(-4%,-3%,0) scale(1.05)}to{transform:translate3d(5%,4%,0) scale(1.16)}}
+@keyframes fluidDriftB{from{transform:translate3d(4%,3%,0) scale(1.12)}to{transform:translate3d(-6%,-4%,0) scale(1)}}
 .v3-content{position:relative;z-index:1;font-family:var(--font-body,var(--ui))}
 /* needle tracer — glowing needle-point that draws ink through the scene while scrolling */
 /* the One Line — hero lettering draw + page-long scroll-scrubbed stroke */
