@@ -203,6 +203,18 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__cal-panel-actions button{padding:9px 18px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .adm__cal-panel-actions button:hover:not(:disabled){border-color:var(--neon);color:#fff}
 .adm__cal-panel-actions .adm__resched-confirm{border-color:var(--neon);background:rgba(113,48,255,.14);color:#fff}
+.adm__capacity{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:2px 0 14px;padding:13px 14px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.025)}
+.adm__capacity-copy{display:flex;flex-direction:column;gap:4px}
+.adm__capacity-copy span{color:var(--muted);font-size:9px;letter-spacing:.13em;text-transform:uppercase}
+.adm__capacity-copy strong{font-size:12px;font-weight:600;color:#dcefe5}
+.adm__capacity-stations{display:flex;gap:7px;flex-shrink:0}
+.adm__capacity-stations span{display:grid;place-items:center;width:30px;height:30px;border:1px solid var(--line);border-radius:7px;font-size:10px;font-weight:700}
+.adm__capacity-stations .is-free{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.1);color:#7ee2a0}
+.adm__capacity-stations .is-busy{border-color:rgba(245,158,11,.55);background:rgba(245,158,11,.14);color:#f0c069}
+.adm__capacity--warn{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.06)}
+.adm__capacity--full,.adm__capacity--overbooked{border-color:rgba(220,60,60,.55);background:rgba(220,60,60,.09)}
+.adm__capacity--full .adm__capacity-copy strong,.adm__capacity--overbooked .adm__capacity-copy strong{color:#e0837f}
+.adm__capacity--full .adm__capacity-stations .is-busy,.adm__capacity--overbooked .adm__capacity-stations .is-busy{border-color:rgba(220,60,60,.65);background:rgba(220,60,60,.18);color:#e0837f}
 
 /* FullCalendar dark theme */
 .adm__fc-wrap{--fc-border-color:rgba(243,239,250,.12);--fc-page-bg-color:transparent;--fc-neutral-bg-color:rgba(255,255,255,.03);--fc-today-bg-color:rgba(113,48,255,.08);--fc-now-indicator-color:#ff5a8a;--fc-event-border-color:transparent}
@@ -285,6 +297,10 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__client-meta{color:var(--muted);font-size:11px;white-space:nowrap}
 .adm__client-meta em{color:#fff;font-style:normal}
 .adm__client-detail{padding:0 18px 18px;border-top:1px dashed var(--line);margin-top:2px;padding-top:16px}
+.adm__client-contact{display:flex;flex-wrap:wrap;gap:10px 22px;margin:0 0 16px;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.02);font-size:12.5px}
+.adm__client-contact span{display:inline-flex;align-items:center;gap:6px}
+.adm__client-contact em{color:var(--muted);font-style:normal;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.adm__client-contact a{color:var(--neon)}
 .adm__client-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .adm__client-cols h4,.adm__client-note h4{margin:0 0 10px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .adm__client-item{margin-bottom:12px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.02)}
@@ -390,6 +406,7 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
   .adm__fc-wrap .fc .fc-toolbar{flex-wrap:wrap;gap:8px}
   .adm__fc-wrap .fc .fc-toolbar-title{font-size:14px}
   .adm__fc-wrap .fc .fc-button{padding:9px 13px;font-size:12px}
+  .adm__capacity{align-items:flex-start;flex-direction:column}
 }
 
 /* Artist assignment on a request (zahtevi) */
@@ -413,3 +430,88 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__myworks-item figcaption span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .adm__myworks-item figcaption button{margin-left:auto;display:grid;place-items:center;padding:6px;border:0;background:none;color:var(--muted);cursor:pointer}
 .adm__myworks-item figcaption button:hover{color:#ff5a8a}
+
+/* ===== Availability redesign (Task 2) ===== */
+/* Owner switcher between studio consults and each artist's schedule */
+.adm__avail-switch{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.adm__switch-chip{padding:9px 16px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:11px;letter-spacing:.04em;cursor:pointer;transition:all .2s}
+.adm__switch-chip:hover{border-color:rgba(166,114,255,.6);color:#fff}
+.adm__switch-chip--on{border-color:var(--neon);color:var(--neon);background:rgba(113,48,255,.14)}
+.adm__avail-note{margin-bottom:16px}
+
+/* Tap-to-toggle consult hour grid */
+.adm__hour-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;margin:14px 0 18px}
+.adm__hour-cell{padding:12px 8px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s}
+.adm__hour-cell:hover:not(:disabled){border-color:rgba(166,114,255,.6);color:#fff}
+.adm__hour-cell[aria-pressed=true]{border-color:var(--neon);color:#fff;background:rgba(113,48,255,.22);box-shadow:0 0 14px rgba(113,48,255,.25)}
+.adm__hour-cell:disabled{opacity:.5;cursor:default}
+
+/* Weekly template (mobile-first rows) */
+.adm__wk{padding:16px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
+.adm__wk-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
+.adm__wk-head h2{margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.adm__wk-count{font-size:11px;color:var(--neon)}
+.adm__wk-days{display:flex;flex-direction:column;gap:10px}
+.adm__wk-day{padding:12px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.015)}
+.adm__wk-day--off{opacity:.72}
+.adm__wk-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.adm__wk-name{min-width:96px;font-size:13px;color:#fff}
+.adm__wk-name-short{display:none}
+.adm__toggle{display:inline-flex;align-items:center;gap:8px;padding:7px 12px 7px 8px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:11px;letter-spacing:.06em;cursor:pointer;transition:all .2s}
+.adm__toggle i{width:30px;height:18px;border-radius:999px;background:rgba(255,255,255,.14);position:relative;transition:background .2s;flex-shrink:0}
+.adm__toggle i::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
+.adm__toggle--on{border-color:var(--neon);color:#fff}
+.adm__toggle--on i{background:var(--neon)}
+.adm__toggle--on i::after{transform:translateX(12px)}
+.adm__toggle:disabled{opacity:.5;cursor:default}
+.adm__timerange{display:inline-flex;align-items:center;gap:8px;margin-left:auto}
+.adm__timerange input[type=time]{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:#fff;font:inherit;font-size:14px;color-scheme:dark;min-width:96px}
+.adm__timerange input[type=time]:focus{outline:none;border-color:var(--neon)}
+.adm__timerange em{color:var(--muted);font-style:normal}
+.adm__wk-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.adm__preset{padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s}
+.adm__preset:hover:not(:disabled){border-color:rgba(166,114,255,.6);color:#fff}
+.adm__preset--on{border-color:var(--neon);color:var(--neon);background:rgba(113,48,255,.14)}
+.adm__preset:disabled{opacity:.5;cursor:default}
+.adm__copyall{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px dashed rgba(166,114,255,.5);border-radius:999px;background:none;color:#c9a8ff;font-size:11px;cursor:pointer;transition:all .15s}
+.adm__copyall:hover:not(:disabled){border-color:var(--neon);color:#fff}
+.adm__copyall:disabled{opacity:.5;cursor:default}
+
+/* Upcoming-days exceptions */
+.adm__exc{margin-top:6px}
+.adm__exc>h2{margin:0 0 12px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.adm__sched-edit-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+
+@media(max-width:560px){
+  .adm__wk-name{min-width:0}
+  .adm__wk-name-full{display:none}
+  .adm__wk-name-short{display:inline}
+  .adm__timerange{margin-left:0;width:100%;justify-content:space-between}
+  .adm__timerange input[type=time]{flex:1}
+}
+
+/* ===== Availability month calendar (owner + staff) ===== */
+.adm__wk-toggle{display:flex;align-items:center;gap:12px;width:100%;padding:2px 0;border:0;background:none;color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.adm__wk-toggle .adm__wk-count{margin-left:auto;font-style:normal;color:var(--neon)}
+.adm__wk-toggle:hover{color:#fff}
+.adm__wk .adm__wk-days{margin-top:14px}
+
+.adm__scal{margin-top:6px}
+.adm__scal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.adm__scal-wd{padding:2px 0 6px;text-align:center;color:var(--muted);font-size:9px;letter-spacing:.06em;text-transform:uppercase}
+.adm__scal-day{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;padding:6px 2px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.02);color:#e6dff2;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+.adm__scal-day:hover:not(:disabled){border-color:rgba(166,114,255,.6)}
+.adm__scal-day:disabled{opacity:.3;cursor:default}
+.adm__scal-day[aria-pressed=true]{border-color:var(--neon);background:rgba(113,48,255,.18);box-shadow:0 0 14px rgba(113,48,255,.25)}
+.adm__scal-num{font-size:13px;font-weight:600;line-height:1}
+.adm__scal-hours{font-size:9.5px;color:var(--neon);line-height:1;white-space:nowrap}
+.adm__scal-day--closed .adm__scal-hours{color:var(--muted)}
+.adm__scal-day--override{border-color:rgba(166,114,255,.55)}
+.adm__scal-dot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--neon)}
+.adm__scal-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;color:var(--muted);font-size:11px}
+.adm__scal-legend span{display:inline-flex;align-items:center;gap:6px}
+.adm__scal-swatch{width:11px;height:11px;border-radius:3px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.adm__scal-swatch--closed{opacity:.4}
+.adm__scal-swatch--override{border-color:var(--neon);background:rgba(113,48,255,.3)}
+.adm__scal-editor{margin-top:20px}
+@media(max-width:560px){.adm__scal-day{min-height:50px;border-radius:6px}.adm__scal-hours{font-size:9px}}

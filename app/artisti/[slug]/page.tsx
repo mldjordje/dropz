@@ -54,9 +54,14 @@ export default async function ArtistPage({ params }: Props) {
           <h1>{artist.name}</h1>
         </div>
       </header>
-      <Link className="route-contact artist-page__cta" href={`/nalog?novi=1&artist=${artist.id}`}>
-        Pošalji upit ovom artistu <ArrowUpRight />
-      </Link>
+      <div className="artist-page__ctas">
+        <Link className="route-contact artist-page__cta" href={`/nalog?novi=1&artist=${artist.id}`}>
+          Pošalji upit ovom artistu <ArrowUpRight />
+        </Link>
+        <Link className="artist-page__cta-alt" href={`/booking?artist=${artist.id}`}>
+          Zakaži konsultaciju <ArrowUpRight size={16} />
+        </Link>
+      </div>
       {works.length ? (
         <div className="artist-works">
           {works.map((work) => (

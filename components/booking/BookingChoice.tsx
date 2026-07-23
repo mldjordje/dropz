@@ -24,14 +24,18 @@ export function BookingChoice({
   labels,
   locale,
   initialMode = null,
+  preselectArtist = null,
 }: {
   labels: BookingFormLabels;
   locale: Locale;
   /** "consult" pre-opens the calendar (used on the landing, so the hero CTA
    * still lands on something actionable while the inquiry tab stays visible). */
   initialMode?: Mode | null;
+  /** Pre-chosen artist (arriving from an artist's profile) — forces the consult
+   * tab open and shows that artist's availability. */
+  preselectArtist?: number | null;
 }) {
-  const [mode, setMode] = useState<Mode | null>(initialMode);
+  const [mode, setMode] = useState<Mode | null>(preselectArtist !== null ? "consult" : initialMode);
 
   return (
     <div className="bkc">
@@ -60,7 +64,7 @@ export function BookingChoice({
 
       {mode === "consult" && (
         <div className="bkc__panel">
-          <BookingForm labels={labels} locale={locale} />
+          <BookingForm labels={labels} locale={locale} preselectArtist={preselectArtist} />
         </div>
       )}
 

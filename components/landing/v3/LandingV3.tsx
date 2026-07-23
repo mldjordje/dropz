@@ -17,7 +17,7 @@ import { CursorV3 } from "./CursorV3";
 import { FluidStage } from "./FluidStage";
 import { VoltmeterV3 } from "./VoltmeterV3";
 import { buildLogoMask } from "./logoMask";
-import { BookingV3, CraftV3, EduV3, FinaleV3, HeroV3, PathsV3, ProcessV3, VoicesV3, WorkV3 } from "./Sections";
+import { AftercareV3, BookingV3, CraftV3, EduV3, FinaleV3, HeroV3, PathsV3, ProcessV3, VoicesV3, WorkV3 } from "./Sections";
 
 export function LandingV3({ copyData }: { copyData?: typeof copy }) {
   const [locale, setLocale] = useState<Locale>("sr");
@@ -403,7 +403,7 @@ export function LandingV3({ copyData }: { copyData?: typeof copy }) {
         },
       ];
       const patternSeed = Math.floor(Math.random() * inkPatterns.length);
-      [".v3-work", ".v3-craft", ".v3-process", ".v3-voices", ".v3-edu", ".v3-paths", ".v3-booking", ".v3-finale"].forEach((selector, idx) => {
+      [".v3-work", ".v3-craft", ".v3-process", ".v3-voices", ".v3-edu", ".v3-aftercare", ".v3-paths", ".v3-booking", ".v3-finale"].forEach((selector, idx) => {
         ScrollTrigger.create({
           trigger: selector,
           start: "top 75%",
@@ -440,6 +440,13 @@ export function LandingV3({ copyData }: { copyData?: typeof copy }) {
           start={text.eduStart}
           pro={text.eduPro}
           action={text.eduAction}
+        />
+        <AftercareV3
+          index={text.aftercareIndex}
+          title={text.aftercareTitle}
+          body={text.aftercareBody}
+          tips={text.aftercareTips}
+          action={text.aftercareAction}
         />
         <PathsV3
           index={text.pathsIndex}

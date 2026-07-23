@@ -58,12 +58,12 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  let size: string | null = null;
-  if (typeof body.size === "string" && body.size.trim() !== "") {
-    size = cleanText(body.size, 120);
-    if (!size) {
-      return NextResponse.json({ ok: false, message: "Veličina je predugačka." }, { status: 400 });
-    }
+  const size = cleanText(body.size, 120);
+  if (!size) {
+    return NextResponse.json(
+      { ok: false, message: "Veličina je obavezna (do 120 znakova)." },
+      { status: 400 },
+    );
   }
   let bodyPart: string | null = null;
   if (typeof body.bodyPart === "string" && body.bodyPart.trim() !== "") {

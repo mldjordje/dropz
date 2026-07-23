@@ -94,6 +94,16 @@ export async function GET(request: Request) {
       `;
   const appointments = appointmentsRaw as AppointmentRow[];
 
+  // Capacity is studio-wide, even while the calendar is filtered to one
+  // artist. Only anonymous intervals are returned; the UI needs no client data
+  // to show how many of the three tattoo stations are occupied.
+  const tattooCapacity = await sql`
+    SELECT id, date::text AS date, start_time, end_time, status
+    FROM appointments
+    WHERE kind = 'tattoo' AND status <> 'canceled' AND date >= ${from} AND date < ${to}
+    ORDER BY date, start_time
+  `;
+
   // Consult bookings follow the chosen artist; "svejedno" (null) is the
   // owner's. Owner in the "all" view sees every consult; a specific-artist
   // view (owner or staff) shows only that artist's.
@@ -122,6 +132,7 @@ export async function GET(request: Request) {
     staffId: session.staffId,
     artistId: artistId ?? 0,
     appointments,
+    tattooCapacity,
     consults,
     hours,
     artists: artists.map((a) => ({ id: a.id, name: a.name, role: a.role, avatar_url: a.avatar_url })),

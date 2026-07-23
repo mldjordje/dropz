@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { getSessionUser } from "@/lib/auth/user-session";
 import { LogoutButton } from "@/components/account/LogoutButton";
+import { ProfileCard } from "@/components/account/ProfileCard";
 import { TattooRequests } from "@/components/account/TattooRequests";
 import { RouteChrome } from "@/components/layout/RouteChrome";
 
@@ -60,6 +61,7 @@ export default async function NalogPage({
                 <span>{user.email}</span>
               </div>
             </div>
+            <ProfileCard />
             <TattooRequests autoOpenForm={openForm} preselectArtist={preselectArtist} />
             <LogoutButton />
           </>

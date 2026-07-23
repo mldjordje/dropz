@@ -1,0 +1,16 @@
+{
+  "id": "/admin",
+  "name": "Dropz Admin",
+  "short_name": "Dropz Admin",
+  "description": "Kalendar, termini i dostupnost — radni panel Dropz Tattoo studija.",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "sr-RS",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/media/dropz%20png%20logo%20original-01.png", "sizes": "any", "type": "image/png", "purpose": "any" }
+  ]
+}

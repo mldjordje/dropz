@@ -330,6 +330,10 @@ export function TattooRequests({
       setFormError("Opiši tetovažu (bar par reči).");
       return;
     }
+    if (!size.trim()) {
+      setFormError("Upiši okvirnu veličinu tetovaže.");
+      return;
+    }
     setBusy(true);
     setFormError(null);
     try {
@@ -446,13 +450,15 @@ export function TattooRequests({
             />
           </div>
           <div className="bkf__field">
-            <label htmlFor="treq-size">Okvirna veličina</label>
+            <label htmlFor="treq-size">Okvirna veličina *</label>
             <input
               id="treq-size"
               type="text"
               value={size}
               onChange={(e) => setSize(e.target.value)}
               placeholder="npr. 15cm"
+              maxLength={120}
+              required
               disabled={busy}
             />
           </div>

@@ -3,7 +3,13 @@ import { getSql } from "@/lib/db";
 import { getAdminSession, type AdminSession } from "@/lib/auth/admin";
 import { DATE_RE } from "@/lib/availability";
 import { cleanText } from "@/lib/tattoo";
-import { isAppointmentStatus, isValidTime, type Appointment } from "@/lib/schedule";
+import {
+  createTattooAppointmentWithinCapacity,
+  isAppointmentStatus,
+  isValidTime,
+  updateTattooAppointmentWithinCapacity,
+  type Appointment,
+} from "@/lib/schedule";
 import { getOwner, resolveArtistId } from "@/lib/staff";
 
 export const runtime = "nodejs";
@@ -83,16 +89,25 @@ export async function POST(request: Request) {
     const sessionArtist =
       body.artistId !== undefined ? artistId : reqRows[0].artist_id ?? (await getOwner(sql))?.id ?? artistId;
 
-    const rows = (await sql`
-      INSERT INTO appointments (kind, request_id, user_id, artist_id, date, start_time, end_time, note)
-      VALUES ('tattoo', ${requestId}, ${reqRows[0].user_id}, ${sessionArtist}, ${date}, ${start}, ${end}, ${note})
-      RETURNING id, kind, title, request_id, user_id, artist_id, date::text AS date,
-                start_time, end_time, note, status, created_at
-    `) as Appointment[];
+    const appointment = await createTattooAppointmentWithinCapacity(sql, {
+      requestId,
+      userId: reqRows[0].user_id,
+      artistId: sessionArtist,
+      date,
+      start,
+      end,
+      note,
+    });
+    if (!appointment) {
+      return NextResponse.json(
+        { ok: false, code: "studio_full", message: "Sva tri tattoo mesta su zauzeta u tom periodu." },
+        { status: 409 },
+      );
+    }
     await sql`
       UPDATE tattoo_requests SET status = 'scheduled' WHERE id = ${requestId} AND status = 'quoted'
     `;
-    return NextResponse.json({ ok: true, appointment: rows[0] }, { status: 201 });
+    return NextResponse.json({ ok: true, appointment }, { status: 201 });
   }
 
   // Manual entry path.
@@ -170,12 +185,30 @@ export async function PATCH(request: Request) {
     status = body.status;
   }
 
-  await sql`
-    UPDATE appointments
-    SET date = ${date}, start_time = ${start}, end_time = ${end},
-        title = ${title}, note = ${note}, status = ${status}
-    WHERE id = ${id}
-  `;
+  if (current.kind === "tattoo") {
+    const updated = await updateTattooAppointmentWithinCapacity(sql, {
+      id,
+      date,
+      start,
+      end,
+      title,
+      note,
+      status,
+    });
+    if (!updated) {
+      return NextResponse.json(
+        { ok: false, code: "studio_full", message: "Sva tri tattoo mesta su zauzeta u tom periodu." },
+        { status: 409 },
+      );
+    }
+  } else {
+    await sql`
+      UPDATE appointments
+      SET date = ${date}, start_time = ${start}, end_time = ${end},
+          title = ${title}, note = ${note}, status = ${status}
+      WHERE id = ${id}
+    `;
+  }
 
   // Tattoo bookkeeping on status transitions.
   if (current.kind === "tattoo" && current.request_id && status !== current.status) {

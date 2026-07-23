@@ -3,7 +3,15 @@ import { getSql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/user-session";
 import { DATE_RE } from "@/lib/availability";
 import { getBookableRequest } from "@/lib/tattoo";
-import { freeStartTimes, isValidTime, minutesToTime, timeToMinutes } from "@/lib/schedule";
+import {
+  createTattooAppointmentWithinCapacity,
+  filterStartsByTattooCapacity,
+  freeStartTimes,
+  getTattooBusyMap,
+  isValidTime,
+  minutesToTime,
+  timeToMinutes,
+} from "@/lib/schedule";
 import {
   getArtistBusyMap,
   getOwner,
@@ -70,13 +78,15 @@ export async function POST(
     return NextResponse.json({ ok: false, message: "Artist nije podešen." }, { status: 500 });
   }
 
-  const [weekly, overrides, busyMap] = await Promise.all([
+  const [weekly, overrides, busyMap, studioBusyMap] = await Promise.all([
     getStaffWeeklyHours(sql, artist.id),
     getStaffOverrides(sql, artist.id, date, date),
     getArtistBusyMap(sql, artist, date, date),
+    getTattooBusyMap(sql, date, date),
   ]);
   const wh = hoursForDate(weekly, overrides, date);
-  const free = freeStartTimes(wh, busyMap[date] ?? [], duration);
+  const artistFree = freeStartTimes(wh, busyMap[date] ?? [], duration);
+  const free = filterStartsByTattooCapacity(artistFree, duration, studioBusyMap[date] ?? []);
   if (!free.includes(start)) {
     return NextResponse.json(
       { ok: false, code: "slot_taken", message: "Taj termin više nije slobodan. Izaberi drugi." },
@@ -85,14 +95,23 @@ export async function POST(
   }
 
   const end = minutesToTime(timeToMinutes(start) + duration);
-  const rows = (await sql`
-    INSERT INTO appointments (kind, request_id, user_id, artist_id, date, start_time, end_time)
-    VALUES ('tattoo', ${requestId}, ${user.uid}, ${artist.id}, ${date}, ${start}, ${end})
-    RETURNING id, date::text AS date, start_time, end_time
-  `) as { id: number; date: string; start_time: string; end_time: string }[];
+  const session = await createTattooAppointmentWithinCapacity(sql, {
+    requestId,
+    userId: user.uid,
+    artistId: artist.id,
+    date,
+    start,
+    end,
+  });
+  if (!session) {
+    return NextResponse.json(
+      { ok: false, code: "studio_full", message: "Sva tri tattoo mesta su zauzeta. Izaberi drugi termin." },
+      { status: 409 },
+    );
+  }
   await sql`
     UPDATE tattoo_requests SET status = 'scheduled' WHERE id = ${requestId} AND status = 'quoted'
   `;
 
-  return NextResponse.json({ ok: true, session: rows[0] }, { status: 201 });
+  return NextResponse.json({ ok: true, session }, { status: 201 });
 }

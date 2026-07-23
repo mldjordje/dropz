@@ -342,6 +342,38 @@ export function EduV3({ index, title, body, start, pro, action }: EduProps) {
   );
 }
 
+// ---------- Aftercare ----------
+
+type AftercareProps = {
+  index: string;
+  title: string;
+  body: string;
+  tips: readonly string[];
+  action: string;
+};
+
+export function AftercareV3({ index, title, body, tips, action }: AftercareProps) {
+  return (
+    <section className="v3-aftercare" id="aftercare">
+      <span className="v3-index">{index}</span>
+      <h2 className="v3-aftercare__title v3-blur-title">{title}</h2>
+      <p className="v3-aftercare__body">{body}</p>
+      <ul className="v3-aftercare__tips">
+        {tips.map((tip, i) => (
+          <li key={tip}>
+            <em>{String(i + 1).padStart(2, "0")}</em>
+            <span>{tip}</span>
+          </li>
+        ))}
+      </ul>
+      <Link href="/aftercare" className="v3-aftercare__cta" data-magnetic>
+        <span>{action}</span>
+        <ArrowUpRight size={15} strokeWidth={1.6} />
+      </Link>
+    </section>
+  );
+}
+
 // ---------- Paths ----------
 
 type PathsProps = {

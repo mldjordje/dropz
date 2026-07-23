@@ -10,7 +10,6 @@ export function DostupnostTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [addHour, setAddHour] = useState(HOURS[0]);
   const [busy, setBusy] = useState(false);
   const editorRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,13 +42,6 @@ export function DostupnostTab() {
 
   const visibleDays = useMemo(() => days.filter((d) => d.date >= today), [days, today]);
   const day = visibleDays.find((d) => d.date === selected) ?? null;
-
-  useEffect(() => {
-    if (!day) return;
-    const free = HOURS.find((h) => !day.slots.includes(h));
-    if (free) setAddHour(free);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [day?.date, day?.slots.length]);
 
   useEffect(() => {
     if (day) editorRef.current?.scrollIntoView({ block: "start" });
@@ -93,14 +85,12 @@ export function DostupnostTab() {
     }
   };
 
-  const addSlot = () => {
-    if (!day || day.slots.includes(addHour)) return;
-    putSlots(day.date, [...day.slots, addHour].sort());
-  };
-
-  const removeSlot = (hour: string) => {
-    if (!day) return;
-    putSlots(day.date, day.slots.filter((s) => s !== hour));
+  const toggleHour = (hour: string) => {
+    if (!day || busy) return;
+    const next = day.slots.includes(hour)
+      ? day.slots.filter((s) => s !== hour)
+      : [...day.slots, hour].sort();
+    putSlots(day.date, next);
   };
 
   const closeDay = () => {
@@ -151,28 +141,26 @@ export function DostupnostTab() {
       {day && (
         <div className="adm__editor" ref={editorRef}>
           <h3>{fmtDayLabel(day.date)}</h3>
-          <div className="adm__chips">
-            {day.slots.length === 0 && <span className="adm__hint">Dan je zatvoren.</span>}
-            {day.slots.map((s) => (
-              <span key={s} className="adm__chip">
-                {s}
-                <button type="button" onClick={() => removeSlot(s)} disabled={busy} aria-label={`Ukloni ${s}`}>
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="adm__hour-row">
-            <select value={addHour} onChange={(e) => setAddHour(e.target.value)} disabled={busy}>
-              {HOURS.filter((h) => !day.slots.includes(h)).map((h) => (
-                <option key={h} value={h}>
+          <p className="adm__hint">
+            Dodirni satnicu da ponudiš ili ukloniš termin za konsultaciju.
+            {day.slots.length === 0 && " Dan je trenutno zatvoren."}
+          </p>
+          <div className="adm__hour-grid">
+            {HOURS.map((h) => {
+              const on = day.slots.includes(h);
+              return (
+                <button
+                  key={h}
+                  type="button"
+                  className="adm__hour-cell"
+                  aria-pressed={on}
+                  disabled={busy}
+                  onClick={() => toggleHour(h)}
+                >
                   {h}
-                </option>
-              ))}
-            </select>
-            <button type="button" onClick={addSlot} disabled={busy || day.slots.length >= HOURS.length}>
-              Dodaj sat
-            </button>
+                </button>
+              );
+            })}
           </div>
           <div className="adm__editor-actions">
             <button type="button" onClick={closeDay} disabled={busy || day.slots.length === 0}>

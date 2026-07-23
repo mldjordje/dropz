@@ -14,6 +14,7 @@ type MobileMenuProps = {
     process: string;
     portfolio: string;
     education: string;
+    aftercare: string;
     booking: string;
     reserve: string;
     account: string;
@@ -62,6 +63,7 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
     { key: "process", label: labels.process, href: `${prefix}#craft` },
     { key: "portfolio", label: labels.portfolio, href: "/portfolio" },
     { key: "education", label: labels.education, href: "/edukacija" },
+    { key: "aftercare", label: labels.aftercare, href: "/aftercare" },
     { key: "booking", label: labels.booking, href: `${prefix}#booking` },
     { key: "account", label: labels.account, href: "/nalog" },
   ];
@@ -87,7 +89,21 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
       aria-modal="true"
       aria-hidden={!open}
       inert={!open ? true : undefined}
+      // Tapping the backdrop (outside the panel) closes. The in-nav trigger's
+      // "X" sits under this portal on the homepage (site-nav owns a lower
+      // stacking context), so the overlay must carry its own way to close.
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setOpen(false);
+      }}
     >
+      <button
+        type="button"
+        className="mnav__close"
+        aria-label="Zatvori meni"
+        onClick={() => setOpen(false)}
+      >
+        <X size={22} strokeWidth={1.6} />
+      </button>
       <nav className="mnav__panel" aria-label="Glavna navigacija">
         <ol className="mnav__list">
           {links.map((link, i) => {

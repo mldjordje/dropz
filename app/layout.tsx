@@ -10,6 +10,10 @@ const body = Space_Grotesk({ subsets: ["latin", "latin-ext"], variable: "--font-
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
+  // Static manifest via metadata (not the app/manifest.ts file convention) so a
+  // nested segment — /admin — can override it with its own manifest. The file
+  // convention injects globally and cannot be overridden per-route.
+  manifest: "/site.webmanifest",
   title: {
     default: `${SITE.name} | ${SITE.city} — tetovaže i konsultacije`,
     template: `%s | ${SITE.shortName}`,
