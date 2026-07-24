@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { getSessionUser } from "@/lib/auth/user-session";
+import { optimizeToWebp, toWebpFilename } from "@/lib/images/optimize";
 
-export const runtime = "nodejs";
+export const runtime = "nodejs"; // sharp needs the Node runtime
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8MB
+const MAX_BYTES = 25 * 1024 * 1024; // 25MB in — everything is re-encoded anyway
+
+// Reference photos are only ever viewed in a small preview / lightbox.
+const REFERENCE_MAX_WIDTH = 1600;
 
 // Client: upload a reference image for a tattoo request. Mirrors the admin
 // portfolio upload; degrades to 501 while blob storage isn't configured (the
@@ -37,13 +41,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Fajl mora biti slika" }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ ok: false, message: "Slika je prevelika (max 8MB)" }, { status: 400 });
+    return NextResponse.json({ ok: false, message: "Slika je prevelika (max 25MB)" }, { status: 400 });
   }
 
-  const blob = await put(`requests/${user.uid}/${Date.now()}-${file.name}`, file, {
-    access: "public",
-    addRandomSuffix: true,
-  });
+  // Clients upload straight from a phone camera roll — downscale and re-encode
+  // to WebP so the admin request list stays light.
+  let optimized: Buffer;
+  try {
+    optimized = await optimizeToWebp(await file.arrayBuffer(), { maxWidth: REFERENCE_MAX_WIDTH });
+  } catch {
+    return NextResponse.json({ ok: false, message: "Sliku nije moguce obraditi." }, { status: 400 });
+  }
+
+  const blob = await put(
+    `requests/${user.uid}/${Date.now()}-${toWebpFilename(file.name)}`,
+    optimized,
+    { access: "public", addRandomSuffix: true, contentType: "image/webp" },
+  );
 
   return NextResponse.json({ ok: true, url: blob.url }, { status: 201 });
 }

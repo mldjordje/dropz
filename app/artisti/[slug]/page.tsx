@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { RouteChrome } from "@/components/layout/RouteChrome";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { getSql } from "@/lib/db";
 import { getStaffBySlug } from "@/lib/staff";
 import { SITE } from "@/lib/site";
@@ -72,6 +73,7 @@ export default async function ArtistPage({ params }: Props) {
           ))}
         </div>
       ) : <p className="artist-page__empty">Portfolio ovog artista uskoro stiže.</p>}
+      <SiteFooter />
     </main>
   );
 }

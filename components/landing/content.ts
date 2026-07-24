@@ -4,7 +4,7 @@ export const locales: Locale[] = ["sr", "en", "de"];
 
 export const copy = {
   sr: {
-    nav: { work: "Rad", process: "Proces", portfolio: "Portfolio", education: "Edukacija", aftercare: "Nega", booking: "Termini", reserve: "Rezerviši", account: "Nalog" },
+    nav: { work: "Rad", process: "Proces", portfolio: "Portfolio", education: "Edukacija", aftercare: "Nega", booking: "Termini", contact: "Kontakt", reserve: "Rezerviši", account: "Nalog" },
     heroLine: "Ink is energy.",
     heroSubline: "Preciznost je jedino pravilo.",
     heroBook: "Zakaži termin",
@@ -80,7 +80,7 @@ export const copy = {
     finalAction: "Rezerviši termin",
   },
   en: {
-    nav: { work: "Work", process: "Process", portfolio: "Portfolio", education: "Education", aftercare: "Aftercare", booking: "Booking", reserve: "Book now", account: "Account" },
+    nav: { work: "Work", process: "Process", portfolio: "Portfolio", education: "Education", aftercare: "Aftercare", booking: "Booking", contact: "Contact", reserve: "Book now", account: "Account" },
     heroLine: "Ink is energy.",
     heroSubline: "Precision is the only rule.",
     heroBook: "Book a session",
@@ -156,7 +156,7 @@ export const copy = {
     finalAction: "Book a session",
   },
   de: {
-    nav: { work: "Arbeiten", process: "Prozess", portfolio: "Portfolio", education: "Ausbildung", aftercare: "Pflege", booking: "Termine", reserve: "Termin", account: "Konto" },
+    nav: { work: "Arbeiten", process: "Prozess", portfolio: "Portfolio", education: "Ausbildung", aftercare: "Pflege", booking: "Termine", contact: "Kontakt", reserve: "Termin", account: "Konto" },
     heroLine: "Ink is energy.",
     heroSubline: "Praezision ist die einzige Regel.",
     heroBook: "Termin buchen",
@@ -234,14 +234,14 @@ export const copy = {
 } as const;
 
 export const portfolio = [
-  { src: "/media/DSC04808.jpeg", alt: "Blackwork tattoo detail", className: "tunnel-card tunnel-card--one", number: "001" },
-  { src: "/media/IMG_8123.jpeg", alt: "Dropz Tattoo finished piece", className: "tunnel-card tunnel-card--two", number: "002" },
-  { src: "/media/IMG_5691.jpeg", alt: "Fine tattoo detail", className: "tunnel-card tunnel-card--three", number: "003" },
-  { src: "/media/IMG_2288.jpeg", alt: "Custom tattoo composition", className: "tunnel-card tunnel-card--four", number: "004" },
-  { src: "/media/IMG_0941.jpeg", alt: "Dropz Tattoo artwork", className: "tunnel-card tunnel-card--five", number: "005" },
-  { src: "/media/FullSizeRender.jpeg", alt: "Dropz Tattoo line work", className: "tunnel-card tunnel-card--six", number: "006" },
-  { src: "/media/IMG_0451.jpeg", alt: "Detailed tattoo shading", className: "tunnel-card tunnel-card--seven", number: "007" },
-  { src: "/media/IMG_0617.jpeg", alt: "Custom blackwork piece", className: "tunnel-card tunnel-card--eight", number: "008" },
-  { src: "/media/IMG_1098.jpeg", alt: "Dropz Tattoo composition", className: "tunnel-card tunnel-card--nine", number: "009" },
-  { src: "/media/IMG_4676.jpeg", alt: "Fine line tattoo detail", className: "tunnel-card tunnel-card--ten", number: "010" },
+  { src: "/media/DSC04808.webp", alt: "Blackwork tattoo detail", className: "tunnel-card tunnel-card--one", number: "001" },
+  { src: "/media/IMG_8123.webp", alt: "Dropz Tattoo finished piece", className: "tunnel-card tunnel-card--two", number: "002" },
+  { src: "/media/IMG_5691.webp", alt: "Fine tattoo detail", className: "tunnel-card tunnel-card--three", number: "003" },
+  { src: "/media/IMG_2288.webp", alt: "Custom tattoo composition", className: "tunnel-card tunnel-card--four", number: "004" },
+  { src: "/media/IMG_0941.webp", alt: "Dropz Tattoo artwork", className: "tunnel-card tunnel-card--five", number: "005" },
+  { src: "/media/FullSizeRender.webp", alt: "Dropz Tattoo line work", className: "tunnel-card tunnel-card--six", number: "006" },
+  { src: "/media/IMG_0451.webp", alt: "Detailed tattoo shading", className: "tunnel-card tunnel-card--seven", number: "007" },
+  { src: "/media/IMG_0617.webp", alt: "Custom blackwork piece", className: "tunnel-card tunnel-card--eight", number: "008" },
+  { src: "/media/IMG_1098.webp", alt: "Dropz Tattoo composition", className: "tunnel-card tunnel-card--nine", number: "009" },
+  { src: "/media/IMG_4676.webp", alt: "Fine line tattoo detail", className: "tunnel-card tunnel-card--ten", number: "010" },
 ] as const;

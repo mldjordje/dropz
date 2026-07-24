@@ -16,6 +16,7 @@ type MobileMenuProps = {
     education: string;
     aftercare: string;
     booking: string;
+    contact: string;
     reserve: string;
     account: string;
   };
@@ -65,6 +66,7 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
     { key: "education", label: labels.education, href: "/edukacija" },
     { key: "aftercare", label: labels.aftercare, href: "/aftercare" },
     { key: "booking", label: labels.booking, href: `${prefix}#booking` },
+    { key: "contact", label: labels.contact, href: "/kontakt" },
     { key: "account", label: labels.account, href: "/nalog" },
   ];
 

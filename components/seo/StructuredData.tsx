@@ -9,7 +9,6 @@ export function StructuredData() {
   const hasAddress = SITE.street.length > 0;
   const hasGeo = true; // real GMB pin coordinates present in lib/site.ts
   const hasHours = SITE.hours.length > 0;
-  const hasRealInstagram = SITE.instagram.replace(/\/+$/, "") !== "https://instagram.com";
 
   const business: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -69,7 +68,24 @@ export function StructuredData() {
     }));
   }
 
-  business.sameAs = hasRealInstagram ? [SITE.instagram, SITE.googleMaps] : [SITE.googleMaps];
+  business.sameAs = [SITE.instagram, SITE.googleMaps];
+
+  // Declare that booking happens online — this is what an assistant looks for to
+  // answer "can I book an appointment there online".
+  business.potentialAction = {
+    "@type": "ReserveAction",
+    name: "Rezerviši termin",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE.url}/booking`,
+      inLanguage: "sr-RS",
+      actionPlatform: [
+        "http://schema.org/DesktopWebPlatform",
+        "http://schema.org/MobileWebPlatform",
+      ],
+    },
+    result: { "@type": "Reservation", name: "Termin za tetoviranje ili konsultaciju" },
+  };
 
   const website = {
     "@context": "https://schema.org",

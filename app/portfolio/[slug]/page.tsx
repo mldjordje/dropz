@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getSql } from "@/lib/db";
 import type { PortfolioWork } from "@/lib/portfolio";
 import { SITE } from "@/lib/site";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const revalidate = 300;
 
@@ -86,6 +87,7 @@ export default async function PortfolioWorkPage({ params }: Props) {
         )}
         <Link href="/booking" className="pf-work__cta">Zakaži termin</Link>
       </div>
+      <SiteFooter />
     </main>
   );
 }

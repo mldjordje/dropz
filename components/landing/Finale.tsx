@@ -7,7 +7,7 @@ export function Finale({ title, action }: { title: string; action: string }) {
     <section className="finale">
       <div className="finale__glow" aria-hidden="true" />
       <p className="finale__line reveal">{title}</p>
-      <div className="finale__logo reveal"><Image src="/media/dropz%20logo%20vektor%20OKVIR-01.png" alt="Dropz Tattoo" fill sizes="80vw" /></div>
+      <div className="finale__logo reveal"><Image src="/media/dropz%20logo%20vektor%20OKVIR-01.webp" alt="Dropz Tattoo" fill sizes="80vw" /></div>
       <Link className="finale__cta reveal" href="/booking"><span>{action}</span><ArrowUpRight /></Link>
       <footer>
         <span>Dropz Tattoo / Niš</span>

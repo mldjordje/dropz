@@ -51,6 +51,16 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  // Site-ownership verification. Set the codes as env vars in Vercel and the
+  // meta tags appear automatically — no code change, nothing secret in git.
+  // Bing matters beyond Bing itself: it is the retrieval index behind ChatGPT
+  // search and Copilot, so verifying there is an AI-visibility lever.
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+      : undefined,
+  },
   openGraph: {
     type: "website",
     locale: SITE.locale,

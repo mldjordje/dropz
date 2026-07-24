@@ -22,7 +22,7 @@ const EMPTY: Settings = {
 
 const FIELDS: { key: keyof Settings; label: string; placeholder?: string }[] = [
   { key: "name", label: "Naziv studija", placeholder: "Dropz Tattoo Studio" },
-  { key: "logo_url", label: "Logo URL", placeholder: "/media/logo.png" },
+  { key: "logo_url", label: "Logo URL", placeholder: "/media/logo.webp" },
   { key: "phone", label: "Telefon", placeholder: "+381 60 ..." },
   { key: "email", label: "Email", placeholder: "studio@..." },
   { key: "address", label: "Adresa", placeholder: "Ulica i broj, grad" },

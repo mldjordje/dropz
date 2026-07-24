@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { RouteChrome } from "@/components/layout/RouteChrome";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Edukacija — tattoo obuke",
@@ -38,7 +39,7 @@ export default function EducationPage() {
         className="edu-bg"
         aria-hidden="true"
         dangerouslySetInnerHTML={{
-          __html: `<video class="edu-bg__video" autoplay muted loop playsinline preload="metadata" poster="/media/dragan-skola-bg-poster.jpg"><source src="/media/dragan-skola-bg.mp4" type="video/mp4" /></video>`,
+          __html: `<video class="edu-bg__video" autoplay muted loop playsinline preload="metadata" poster="/media/dragan-skola-bg-poster.webp"><source src="/media/dragan-skola-bg.mp4" type="video/mp4" /></video>`,
         }}
       />
       <div className="edu-bg__shade" aria-hidden="true" />
@@ -123,6 +124,7 @@ export default function EducationPage() {
           </a>
         </div>
       </section>
+      <SiteFooter />
     </main>
   );
 }

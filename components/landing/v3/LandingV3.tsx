@@ -29,7 +29,7 @@ export function LandingV3({ copyData }: { copyData?: typeof copy }) {
   const handleEngine = useCallback((engine: FluidEngine | null) => {
     engineRef.current = engine;
     if (!engine) return;
-    buildLogoMask("/media/dropz%20png%20logo%20original-01.png", window.innerWidth / window.innerHeight)
+    buildLogoMask("/media/dropz%20png%20logo%20original-01.webp", window.innerWidth / window.innerHeight)
       .then((mask) => engineRef.current === engine && engine.setMask(mask))
       .catch(() => {}); // no mask -> finale still works, just without the settle
   }, []);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Check, AlertTriangle } from "lucide-react";
 import { RouteChrome } from "@/components/layout/RouteChrome";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Nega tetovaže — uputstvo",
@@ -208,6 +209,7 @@ export default function AftercarePage() {
           <Link className="edu-apply__alt" href="/booking">Zakaži termin</Link>
         </div>
       </section>
+      <SiteFooter />
     </main>
   );
 }

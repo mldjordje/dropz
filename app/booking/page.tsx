@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { BookingChoice } from "@/components/booking/BookingChoice";
 import { RouteChrome } from "@/components/layout/RouteChrome";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 import { copy } from "@/components/landing/content";
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default async function BookingPage({
       <div className="route-booking">
         <BookingChoice labels={t.bookingForm} locale="sr" preselectArtist={preselectArtist} />
       </div>
+      <SiteFooter />
     </main>
   );
 }

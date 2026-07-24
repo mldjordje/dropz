@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { RouteChrome } from "@/components/layout/RouteChrome";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Upit za tattoo",
@@ -54,6 +55,7 @@ export default function InquiryPage() {
         Radije da ne praviš nalog? Besplatna konsultacija uživo u studiju ne traži prijavu —{" "}
         <Link href="/booking">zakaži termin ovde</Link>.
       </p>
+      <SiteFooter />
     </main>
   );
 }

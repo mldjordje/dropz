@@ -96,7 +96,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       <i className="preloader__seam" />
       <div className="preloader__inner">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="preloader__logo" ref={logoRef} src="/media/dropz%20logo%20vektor%20OKVIR-01.png" alt="Dropz Tattoo" />
+        <img className="preloader__logo" ref={logoRef} src="/media/dropz%20logo%20vektor%20OKVIR-01.webp" alt="Dropz Tattoo" />
         <div className="preloader__meter">
           <span className="preloader__count" ref={countRef}>000</span>
           <span className="preloader__word" ref={wordRef} />

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import { optimizeToWebp, toWebpFilename } from "@/lib/images/optimize";
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8MB
+export const runtime = "nodejs"; // sharp needs the Node runtime
+
+const MAX_BYTES = 25 * 1024 * 1024; // 25MB in — everything is re-encoded anyway
 
 // Admin: upload a portfolio image via Vercel Blob. Auth is enforced by
 // middleware.ts for the /api/admin/:path* matcher. Degrades gracefully when
@@ -30,12 +33,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Fajl mora biti slika" }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ ok: false, message: "Slika je prevelika (max 8MB)" }, { status: 400 });
+    return NextResponse.json({ ok: false, message: "Slika je prevelika (max 25MB)" }, { status: 400 });
   }
 
-  const blob = await put(`portfolio/${Date.now()}-${file.name}`, file, {
+  // Phone photos are 3-5MB each and were shipped to visitors untouched — every
+  // upload is now downscaled and re-encoded to WebP before it hits storage.
+  let optimized: Buffer;
+  try {
+    optimized = await optimizeToWebp(await file.arrayBuffer());
+  } catch {
+    return NextResponse.json(
+      { ok: false, message: "Sliku nije moguće obraditi (nepodrzan format?)" },
+      { status: 400 },
+    );
+  }
+
+  const blob = await put(`portfolio/${Date.now()}-${toWebpFilename(file.name)}`, optimized, {
     access: "public",
     addRandomSuffix: true,
+    contentType: "image/webp",
   });
 
   return NextResponse.json({ ok: true, url: blob.url }, { status: 201 });

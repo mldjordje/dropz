@@ -12,18 +12,21 @@ export const SITE = {
   city: "Niš",
   country: "RS",
   phone: "+381601453087", // 060 145 3087 in international form
-  // TODO(confirm): real inbox. Domain is dropz.rs, so likely studio@dropz.rs.
-  email: "studio@dropz.rs",
-  // TODO(confirm): real handle. Placeholder points at instagram.com root.
-  instagram: "https://instagram.com/",
+  phoneDisplay: "060 145 3087",
+  email: "ignjatovicdragannn@gmail.com",
+  instagram: "https://www.instagram.com/dropz.tattoo/",
   street: "Generala Černjajeva",
   postalCode: "18108",
   // From the Google Business Profile map pin.
   geo: { lat: 43.3176334, lng: 21.9051088 },
   googleMaps:
     "https://www.google.com/maps/place/Dropz+Tattoo+Studio+Ni%C5%A1/@43.3176334,21.9051088,17z/data=!3m1!4b1!4m6!3m5!1s0x4755b1975546d89b:0x26c50da0852f15ca!8m2!3d43.3176334!4d21.9051088!16s%2Fg%2F11zcxpvjj2",
-  // Mirrors GMB. NOTE: Wednesday closes at 01:00 on GMB — looks like a typo
-  // there; fix on GMB first, then update here to match.
+  // SINGLE SOURCE OF TRUTH for opening hours — footer, /kontakt and JSON-LD all
+  // render from here (see lib/hours.ts). Never hardcode hours in a component:
+  // footer and schema drifting apart is a documented local-ranking negative.
+  // TODO(confirm): owner has not yet confirmed which is right — GMB/this file
+  // say 11:00–15:00, the old hardcoded footer said 11–19h. Wednesday closing at
+  // 01:00 also looks like a GMB typo. Fix GMB first, then update here to match.
   hours: [
     { days: ["Tuesday", "Thursday", "Friday", "Saturday"], opens: "11:00", closes: "15:00" },
     { days: ["Wednesday"], opens: "11:00", closes: "01:00" },

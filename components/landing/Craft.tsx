@@ -20,9 +20,9 @@ export function Craft({ index, title, body }: CraftProps) {
   return (
     <section className="craft craft-v2" id="craft">
       <div className="craft-v2__stage">
-      <div className="craft-v2__portrait"><Image src="/media/A4_09892.jpeg" alt="Dragan, tattoo artist and owner of Dropz Tattoo" fill sizes="45vw" priority={false} /></div>
+      <div className="craft-v2__portrait"><Image src="/media/A4_09892.webp" alt="Dragan, tattoo artist and owner of Dropz Tattoo" fill sizes="45vw" priority={false} /></div>
       <div className="craft__media">
-        <video ref={videoRef} autoPlay muted loop playsInline poster="/media/dragan-poster.jpg">
+        <video ref={videoRef} autoPlay muted loop playsInline poster="/media/dragan-poster.webp">
           <source src="/media/dragan-loop.webm" type="video/webm" />
           <source src="/media/dragan-loop.mp4" type="video/mp4" />
         </video>

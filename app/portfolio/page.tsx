@@ -5,6 +5,7 @@ import { getSql } from "@/lib/db";
 import type { PortfolioCategory, PortfolioWork } from "@/lib/portfolio";
 import { PortfolioGallery } from "@/components/portfolio/PortfolioGallery";
 import { RouteChrome } from "@/components/layout/RouteChrome";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Portfolio",
@@ -42,6 +43,7 @@ export default async function PortfolioPage() {
       <p>Izbor autorskih radova po stilovima. Za termin ili procenu — pošalji zahtev preko naloga.</p>
       <Link className="route-contact portfolio-artists-link" href="/artisti">Upoznaj artiste</Link>
       <PortfolioGallery categories={categories} works={works} />
+      <SiteFooter />
     </main>
   );
 }

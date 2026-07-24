@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { RouteChrome } from "@/components/layout/RouteChrome";
 import { getSql } from "@/lib/db";
 import { getActiveArtists, type StaffMember } from "@/lib/staff";
+import { SiteFooter } from "@/components/layout/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Tattoo artisti",
@@ -54,6 +55,7 @@ export default async function ArtistsPage() {
           </Link>
         ))}
       </div>
+      <SiteFooter />
     </main>
   );
 }

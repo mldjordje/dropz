@@ -8,6 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Phone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { SITE } from "@/lib/site";
+import { shortHours } from "@/lib/hours";
 
 // ---------- Hero ----------
 
@@ -21,14 +23,20 @@ type HeroProps = {
 export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) {
   return (
     <section className="v3-hero" id="top">
+      {/* The wordmark stays the visual hero, but the H1 — the strongest on-page
+          signal there is — has to carry the service and the city, not a slogan. */}
+      <h1 className="sr-only">
+        Tattoo studio u Nišu — Dropz Tattoo Studio: autorske tetovaže, custom dizajn i
+        besplatne konsultacije
+      </h1>
       <p className="v3-hero__meta">
-        <span>Dropz Tattoo — Niš</span>
+        <span>Dropz Tattoo — tattoo studio u Nišu</span>
         <span>Custom ink only</span>
       </p>
-      <h1 className="v3-hero__title" aria-label="Ink is energy.">
+      <p className="v3-hero__title" aria-label="Ink is energy.">
         <span className="v3-line"><i>INK IS</i></span>
         <span className="v3-line"><i>ENERGY.</i></span>
-      </h1>
+      </p>
       <p className="v3-hero__sub">{subline}</p>
       <div className="v3-hero__actions">
         {/* primary: rotating conic border + ink fill rising on hover */}
@@ -42,7 +50,7 @@ export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) 
           <ArrowUpRight className="v3-cta__icon" size={15} strokeWidth={1.6} />
         </a>
         {/* secondary: ghost with live pulsing dot */}
-        <a href="tel:0601453087" className="v3-cta v3-cta--call" data-magnetic>
+        <a href={`tel:${SITE.phone}`} className="v3-cta v3-cta--call" data-magnetic>
           <span className="v3-cta__pulse" aria-hidden="true" />
           <span className="v3-cta__label">
             <i>{callLabel}</i>
@@ -66,12 +74,12 @@ export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) 
 // Captions stay style-neutral here — real titles come from the admin
 // (portfolio works with the "Landing" flag), where each caption is editable.
 const pieces = [
-  { src: "/media/DSC04808.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 001", cls: "v3-piece--a", speed: 0.4 },
-  { src: "/media/IMG_2288.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 002", cls: "v3-piece--b", speed: -0.6 },
-  { src: "/media/IMG_8123.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 003", cls: "v3-piece--c", speed: 0.8 },
-  { src: "/media/IMG_0941.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 004", cls: "v3-piece--d", speed: -0.4 },
-  { src: "/media/FullSizeRender.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 005", cls: "v3-piece--e", speed: 0.6 },
-  { src: "/media/IMG_4676.jpeg", alt: "Dropz tattoo rad", cap: "Dropz — 006", cls: "v3-piece--f", speed: -0.8 },
+  { src: "/media/DSC04808.webp", alt: "Dropz tattoo rad", cap: "Dropz — 001", cls: "v3-piece--a", speed: 0.4 },
+  { src: "/media/IMG_2288.webp", alt: "Dropz tattoo rad", cap: "Dropz — 002", cls: "v3-piece--b", speed: -0.6 },
+  { src: "/media/IMG_8123.webp", alt: "Dropz tattoo rad", cap: "Dropz — 003", cls: "v3-piece--c", speed: 0.8 },
+  { src: "/media/IMG_0941.webp", alt: "Dropz tattoo rad", cap: "Dropz — 004", cls: "v3-piece--d", speed: -0.4 },
+  { src: "/media/FullSizeRender.webp", alt: "Dropz tattoo rad", cap: "Dropz — 005", cls: "v3-piece--e", speed: 0.6 },
+  { src: "/media/IMG_4676.webp", alt: "Dropz tattoo rad", cap: "Dropz — 006", cls: "v3-piece--f", speed: -0.8 },
 ] as const;
 
 // Positional layout classes cycle for DB-sourced works so the scattered
@@ -224,7 +232,7 @@ export function CraftV3({ index, title, body }: { index: string; title: string; 
       <div className="v3-craft__stage">
         <video
           className="v3-craft__video"
-          poster="/media/dragan-poster.jpg"
+          poster="/media/dragan-poster.webp"
           autoPlay
           muted
           loop
@@ -309,7 +317,7 @@ export function EduV3({ index, title, body, start, pro, action }: EduProps) {
       <div className="v3-edu__media" aria-hidden="true">
         <video
           className="v3-edu__video"
-          poster="/media/dragan-skola-poster.jpg"
+          poster="/media/dragan-skola-poster.webp"
           autoPlay
           muted
           loop
@@ -441,17 +449,19 @@ export function FinaleV3({ title, action }: { title: string; action: string }) {
       <div className="v3-finale__stage">
         <p className="v3-finale__line">{title}</p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="v3-finale__logo" src="/media/dropz%20logo%20vektor%20OKVIR-01.png" alt="Dropz Tattoo" loading="lazy" />
+        <img className="v3-finale__logo" src="/media/dropz%20logo%20vektor%20OKVIR-01.webp" alt="Dropz Tattoo" loading="lazy" />
         <a className="v3-finale__cta" data-magnetic href="#booking">
           <span>{action}</span>
           <ArrowUpRight size={16} strokeWidth={1.5} />
         </a>
+        {/* NAP rendered from lib/site.ts — the address here has to match the
+            Google Business Profile character for character. */}
         <footer className="v3-finale__footer">
-          <span>Niš, Srbija</span>
-          <span>Uto–Sub · 11–19h</span>
-          <a href="tel:0601453087">060 1453087</a>
-          <a href="https://www.instagram.com/dropz.tattoo/" target="_blank" rel="noreferrer">Instagram</a>
-          <span>© Dropz Tattoo</span>
+          <span>{SITE.street}, {SITE.postalCode} {SITE.city}</span>
+          <span>{shortHours()}</span>
+          <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a>
+          <a href={SITE.instagram} target="_blank" rel="noreferrer">Instagram</a>
+          <span>© {SITE.shortName}</span>
         </footer>
       </div>
     </section>

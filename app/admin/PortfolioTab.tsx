@@ -424,7 +424,7 @@ export function PortfolioTab() {
             <div className="adm__pf-upload">
               <input
                 type="text"
-                placeholder="https://... ili /media/slika.jpg"
+                placeholder="https://... ili /media/slika.webp"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 disabled={workBusy}
@@ -550,7 +550,7 @@ export function PortfolioTab() {
                 </label>
                 <input
                   type="text"
-                  placeholder="https://... ili /media/slika.jpg"
+                  placeholder="https://... ili /media/slika.webp"
                   value={edImage}
                   onChange={(e) => setEdImage(e.target.value)}
                   disabled={edBusy}
