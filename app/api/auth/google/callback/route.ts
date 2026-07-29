@@ -91,8 +91,16 @@ export async function GET(request: NextRequest) {
         name = EXCLUDED.name,
         avatar_url = EXCLUDED.avatar_url,
         last_login_at = now()
-    RETURNING id, email, name, avatar_url
-  `) as { id: number; email: string; name: string | null; avatar_url: string | null }[];
+    RETURNING id, email, name, avatar_url, phone, birthday::text AS birthday, gender
+  `) as {
+    id: number;
+    email: string;
+    name: string | null;
+    avatar_url: string | null;
+    phone: string | null;
+    birthday: string | null;
+    gender: string | null;
+  }[];
   const user = rows[0];
 
   const token = await signUserSessionToken({
@@ -132,7 +140,15 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  const response = NextResponse.redirect(new URL(txn.next, origin));
+  const completeProfile = Boolean(
+    user.phone &&
+    user.birthday &&
+    (user.gender === "male" || user.gender === "female"),
+  );
+  const destination = completeProfile
+    ? txn.next
+    : `/nalog?profil=obavezan&next=${encodeURIComponent(txn.next)}`;
+  const response = NextResponse.redirect(new URL(destination, origin));
   clearOAuthTxnCookie(response);
   setUserSessionCookie(response, token);
   return response;

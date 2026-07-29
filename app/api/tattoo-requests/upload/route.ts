@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { getSessionUser } from "@/lib/auth/user-session";
+import { hasCompleteProfile } from "@/lib/auth/profile";
 import { optimizeToWebp, toWebpFilename } from "@/lib/images/optimize";
 
 export const runtime = "nodejs"; // sharp needs the Node runtime
@@ -17,6 +18,12 @@ export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+  }
+  if (!(await hasCompleteProfile(user.uid))) {
+    return NextResponse.json(
+      { ok: false, code: "profile_required", message: "Dopuni profil pre slanja slika." },
+      { status: 428 },
+    );
   }
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {

@@ -17,6 +17,7 @@ type ProfileRow = {
   email: string;
   phone: string | null;
   birthday: string | null;
+  gender: string | null;
   city: string | null;
   birthday_locked_at: string | null;
   profile_completed_at: string | null;
@@ -29,16 +30,21 @@ function shapeProfile(row: ProfileRow) {
     email: row.email,
     phone: row.phone,
     birthday: row.birthday, // YYYY-MM-DD or null
+    gender: row.gender === "male" || row.gender === "female" ? row.gender : null,
     city: row.city,
     birthdayLocked: row.birthday_locked_at !== null,
-    completed: row.profile_completed_at !== null,
-    dismissed: row.profile_prompt_dismissed_at !== null,
+    completed: Boolean(
+      row.phone &&
+      row.birthday &&
+      (row.gender === "male" || row.gender === "female"),
+    ),
+    dismissed: false,
   };
 }
 
 async function loadProfile(uid: number): Promise<ProfileRow | null> {
   const rows = (await getSql()`
-    SELECT name, email, phone, birthday::text AS birthday, city,
+    SELECT name, email, phone, birthday::text AS birthday, gender, city,
            birthday_locked_at, profile_completed_at, profile_prompt_dismissed_at
     FROM users WHERE id = ${uid} LIMIT 1
   `) as ProfileRow[];
@@ -91,12 +97,11 @@ export async function PUT(request: Request) {
 
   const sql = getSql();
 
-  // "dismiss" just records that the client closed the prompt — non-blocking,
-  // they can still complete it later from their account.
   if (body.action === "dismiss") {
-    await sql`UPDATE users SET profile_prompt_dismissed_at = now() WHERE id = ${user.uid}`;
-    const row = await loadProfile(user.uid);
-    return NextResponse.json({ ok: true, profile: row ? shapeProfile(row) : null });
+    return NextResponse.json(
+      { ok: false, code: "profile_required", message: "Profil mora biti dopunjen." },
+      { status: 409 },
+    );
   }
 
   const current = await loadProfile(user.uid);
@@ -104,16 +109,17 @@ export async function PUT(request: Request) {
     return NextResponse.json({ ok: false, message: "Not found" }, { status: 404 });
   }
 
-  // Phone (optional).
+  // Phone is mandatory.
   let phone: string | null = current.phone;
   if (body.phone !== undefined) {
-    if (body.phone === null || body.phone === "") {
-      phone = null;
-    } else if (typeof body.phone === "string" && PHONE_RE.test(body.phone.trim())) {
+    if (typeof body.phone === "string" && PHONE_RE.test(body.phone.trim())) {
       phone = body.phone.trim().slice(0, 40);
     } else {
       return NextResponse.json({ ok: false, message: "Broj telefona nije ispravan." }, { status: 400 });
     }
+  }
+  if (!phone) {
+    return NextResponse.json({ ok: false, message: "Broj telefona je obavezan." }, { status: 400 });
   }
 
   // City (optional).
@@ -147,14 +153,30 @@ export async function PUT(request: Request) {
       return NextResponse.json({ ok: false, message: "Datum rođenja nije ispravan." }, { status: 400 });
     }
   }
+  if (!birthday) {
+    return NextResponse.json({ ok: false, message: "Datum rođenja je obavezan." }, { status: 400 });
+  }
+
+  let gender = current.gender;
+  if (body.gender !== undefined) {
+    if (body.gender !== "male" && body.gender !== "female") {
+      return NextResponse.json({ ok: false, message: "Izaberi pol." }, { status: 400 });
+    }
+    gender = body.gender;
+  }
+  if (gender !== "male" && gender !== "female") {
+    return NextResponse.json({ ok: false, message: "Pol je obavezan." }, { status: 400 });
+  }
 
   await sql`
     UPDATE users SET
       phone = ${phone},
       city = ${city},
       birthday = ${birthday},
+      gender = ${gender},
       birthday_locked_at = CASE WHEN ${lockBirthday} THEN now() ELSE birthday_locked_at END,
-      profile_completed_at = COALESCE(profile_completed_at, now())
+      profile_completed_at = COALESCE(profile_completed_at, now()),
+      profile_prompt_dismissed_at = NULL
     WHERE id = ${user.uid}
   `;
 

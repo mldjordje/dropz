@@ -2,108 +2,136 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type TattooStatus = "pending" | "quoted" | "scheduled" | "done" | "canceled";
+type TattooStatus =
+  | "pending"
+  | "revision_requested"
+  | "quoted"
+  | "accepted"
+  | "scheduled"
+  | "done"
+  | "canceled";
 
 type TattooRequest = {
   id: number;
   user_id: number;
   user_email: string;
   user_name: string | null;
+  user_phone: string | null;
+  user_gender: "male" | "female" | null;
   description: string;
   size: string | null;
   body_part: string | null;
   budget: string | null;
   image_urls: string[];
   status: TattooStatus;
-  artist_id: number | null;
-  artist_name: string | null;
   session_count: number | null;
   session_minutes: number | null;
   price: string | null;
   admin_note: string | null;
+  quote_revision_note: string | null;
   sessions_done: number;
-  quoted_at: string | null;
   created_at: string;
 };
 
+type SlotRequest = {
+  id: number;
+  request_id: number;
+  session_number: number;
+  requested_date: string;
+  requested_start: string;
+  requested_end: string;
+  proposed_date: string | null;
+  proposed_start: string | null;
+  proposed_end: string | null;
+  assigned_staff_id: number | null;
+  assigned_staff_name: string | null;
+  appointment_id: number | null;
+  status: "pending_owner" | "alternative_proposed" | "confirmed" | "rejected" | "declined";
+  owner_note: string | null;
+  description: string;
+  session_minutes: number;
+  user_name: string | null;
+  user_email: string;
+  user_phone: string | null;
+  created_at: string;
+};
+
+type StaffMember = {
+  id: number;
+  name: string;
+  role: "owner" | "staff";
+  active: boolean;
+};
+
 const FILTERS = [
-  { key: "pending", label: "Novi" },
-  { key: "quoted", label: "Procenjeni" },
+  { key: "attention", label: "Za obradu" },
+  { key: "quoted", label: "Čeka klijenta" },
+  { key: "active", label: "Aktivni" },
   { key: "all", label: "Svi" },
   { key: "canceled", label: "Otkazani" },
 ] as const;
-
 type FilterKey = (typeof FILTERS)[number]["key"];
 
 const STATUS_LABEL: Record<TattooStatus, string> = {
   pending: "Čeka procenu",
-  quoted: "Procenjeno",
-  scheduled: "Zakazano",
+  revision_requested: "Traži novu procenu",
+  quoted: "Čeka klijenta",
+  accepted: "Procena prihvaćena",
+  scheduled: "Aktivno",
   done: "Završeno",
   canceled: "Otkazano",
 };
 
-// 30-min steps, 30min–8h.
+const SLOT_STATUS_LABEL: Record<SlotRequest["status"], string> = {
+  pending_owner: "Čeka ownera",
+  alternative_proposed: "Čeka klijenta",
+  confirmed: "Potvrđeno",
+  rejected: "Odbijeno",
+  declined: "Klijent odbio",
+};
+
 const DURATIONS = Array.from({ length: 16 }, (_, i) => (i + 1) * 30);
 
 function fmtDuration(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m}min`;
-  return m === 0 ? `${h}h` : `${h}h ${m}min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest}min`;
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}min`;
 }
 
 function fmtCreated(iso: string) {
-  return new Intl.DateTimeFormat("sr-Latn-RS", { day: "numeric", month: "short", year: "numeric" }).format(
-    new Date(iso),
-  );
+  return new Intl.DateTimeFormat("sr-Latn-RS", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(iso));
 }
-
-type Artist = { id: number; name: string; role: "owner" | "staff"; avatar_url: string | null };
 
 export function RequestsTab() {
   const [requests, setRequests] = useState<TattooRequest[]>([]);
-  const [artists, setArtists] = useState<Artist[]>([]);
-  const [filter, setFilter] = useState<FilterKey>("pending");
+  const [slotRequests, setSlotRequests] = useState<SlotRequest[]>([]);
+  const [filter, setFilter] = useState<FilterKey>("attention");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/artists", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => data.ok && setArtists(data.artists))
-      .catch(() => {});
-  }, []);
-
-  const assignArtist = async (id: number, artistId: number | null) => {
-    const prev = requests;
-    setRequests((rs) =>
-      rs.map((r) =>
-        r.id === id
-          ? { ...r, artist_id: artistId, artist_name: artists.find((a) => a.id === artistId)?.name ?? null }
-          : r,
-      ),
-    );
-    const res = await fetch("/api/admin/tattoo-requests", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, artistId }),
-    });
-    if (!res.ok) {
-      setRequests(prev);
-      setError("Dodela artista nije sačuvana.");
-    }
-  };
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await fetch("/api/admin/tattoo-requests", { cache: "no-store" });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.message);
-      setRequests(data.requests);
+      const [requestRes, slotRes] = await Promise.all([
+        fetch("/api/admin/tattoo-requests", { cache: "no-store" }),
+        fetch("/api/admin/tattoo-slot-requests", { cache: "no-store" }),
+      ]);
+      const [requestData, slotData] = await Promise.all([
+        requestRes.json(),
+        slotRes.json(),
+      ]);
+      if (!requestData.ok || !slotData.ok) {
+        throw new Error("load");
+      }
+      setRequests(requestData.requests);
+      setSlotRequests(slotData.slotRequests);
     } catch {
-      setError("Ne mogu da učitam zahteve.");
+      setError("Ne mogu da učitam tattoo zahteve.");
     } finally {
       setLoading(false);
     }
@@ -115,30 +143,47 @@ export function RequestsTab() {
 
   const visible = useMemo(() => {
     switch (filter) {
-      case "all":
-        return requests;
+      case "attention":
+        return requests.filter((item) =>
+          item.status === "pending" || item.status === "revision_requested",
+        );
+      case "quoted":
+        return requests.filter((item) => item.status === "quoted");
+      case "active":
+        return requests.filter((item) =>
+          item.status === "accepted" || item.status === "scheduled",
+        );
       case "canceled":
-        return requests.filter((r) => r.status === "canceled");
+        return requests.filter((item) => item.status === "canceled");
       default:
-        return requests.filter((r) => r.status === filter);
+        return requests;
     }
-  }, [requests, filter]);
+  }, [filter, requests]);
 
-  const setStatus = async (id: number, status: TattooStatus) => {
-    const prev = requests;
-    setRequests((rs) => rs.map((r) => (r.id === id ? { ...r, status } : r)));
-    const res = await fetch("/api/admin/tattoo-requests", {
+  const activeSlots = useMemo(
+    () =>
+      slotRequests.filter(
+        (item) =>
+          item.status === "pending_owner" ||
+          item.status === "alternative_proposed",
+      ),
+    [slotRequests],
+  );
+
+  const setStatus = async (id: number, status: "pending" | "canceled") => {
+    const response = await fetch("/api/admin/tattoo-requests", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });
-    if (!res.ok) {
-      setRequests(prev);
-      setError("Izmena statusa nije sačuvana.");
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setError(data.message ?? "Status nije sačuvan.");
+      return;
     }
+    await load();
   };
 
-  // ---- inline quote form ----
   const [quoteId, setQuoteId] = useState<number | null>(null);
   const [qSessions, setQSessions] = useState(1);
   const [qMinutes, setQMinutes] = useState(120);
@@ -147,12 +192,12 @@ export function RequestsTab() {
   const [qBusy, setQBusy] = useState(false);
   const [qError, setQError] = useState<string | null>(null);
 
-  const openQuote = (r: TattooRequest) => {
-    setQuoteId(r.id);
-    setQSessions(r.session_count ?? 1);
-    setQMinutes(r.session_minutes ?? 120);
-    setQPrice(r.price ?? "");
-    setQNote(r.admin_note ?? "");
+  const openQuote = (item: TattooRequest) => {
+    setQuoteId(item.id);
+    setQSessions(item.session_count ?? 1);
+    setQMinutes(item.session_minutes ?? 120);
+    setQPrice(item.price ?? "");
+    setQNote(item.admin_note ?? "");
     setQError(null);
   };
 
@@ -164,7 +209,7 @@ export function RequestsTab() {
     setQBusy(true);
     setQError(null);
     try {
-      const res = await fetch("/api/admin/tattoo-requests", {
+      const response = await fetch("/api/admin/tattoo-requests", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -175,8 +220,8 @@ export function RequestsTab() {
           adminNote: qNote.trim() || undefined,
         }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
         setQError(data.message ?? "Slanje procene nije uspelo.");
         return;
       }
@@ -189,14 +234,266 @@ export function RequestsTab() {
     }
   };
 
+  const [slotBusy, setSlotBusy] = useState<number | null>(null);
+  const [artistBySlot, setArtistBySlot] = useState<Record<number, string>>({});
+  const [alternativeId, setAlternativeId] = useState<number | null>(null);
+  const [alternativeDate, setAlternativeDate] = useState("");
+  const [alternativeStart, setAlternativeStart] = useState("");
+  const [alternativeNote, setAlternativeNote] = useState("");
+  const [availableBySlot, setAvailableBySlot] = useState<Record<number, StaffMember[]>>({});
+  const [alternativeStaff, setAlternativeStaff] = useState<StaffMember[]>([]);
+
+  useEffect(() => {
+    let live = true;
+    Promise.all(
+      activeSlots.map(async (item) => {
+        const query = new URLSearchParams({
+          date: item.requested_date,
+          start: item.requested_start,
+          duration: String(item.session_minutes),
+        });
+        const response = await fetch(
+          `/api/admin/tattoo-slot-requests/availability?${query}`,
+          { cache: "no-store" },
+        );
+        const data = await response.json();
+        return [item.id, data.ok ? data.artists : []] as const;
+      }),
+    )
+      .then((entries) => {
+        if (live) setAvailableBySlot(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (live) setAvailableBySlot({});
+      });
+    return () => {
+      live = false;
+    };
+  }, [activeSlots]);
+
+  const alternativeItem = activeSlots.find((item) => item.id === alternativeId) ?? null;
+  useEffect(() => {
+    if (!alternativeItem || !alternativeDate || !alternativeStart) {
+      setAlternativeStaff([]);
+      return;
+    }
+    let live = true;
+    const query = new URLSearchParams({
+      date: alternativeDate,
+      start: alternativeStart,
+      duration: String(alternativeItem.session_minutes),
+    });
+    fetch(`/api/admin/tattoo-slot-requests/availability?${query}`, { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (live) setAlternativeStaff(data.ok ? data.artists : []);
+      })
+      .catch(() => {
+        if (live) setAlternativeStaff([]);
+      });
+    return () => {
+      live = false;
+    };
+  }, [alternativeDate, alternativeItem, alternativeStart]);
+
+  const runSlotAction = async (
+    item: SlotRequest,
+    action: "confirm" | "reject" | "propose_alternative",
+  ) => {
+    const artistId = Number(artistBySlot[item.id]);
+    if (action !== "reject" && !Number.isInteger(artistId)) {
+      setError("Izaberi radnika za termin.");
+      return;
+    }
+    if (action === "propose_alternative" && (!alternativeDate || !alternativeStart)) {
+      setError("Izaberi novi datum i vreme.");
+      return;
+    }
+    setSlotBusy(item.id);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/tattoo-slot-requests", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: item.id,
+          action,
+          artistId: action === "reject" ? undefined : artistId,
+          date: action === "propose_alternative" ? alternativeDate : undefined,
+          start: action === "propose_alternative" ? alternativeStart : undefined,
+          note: action === "propose_alternative" ? alternativeNote.trim() || undefined : undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        setError(data.message ?? "Odluka nije sačuvana.");
+        return;
+      }
+      setAlternativeId(null);
+      setAlternativeDate("");
+      setAlternativeStart("");
+      setAlternativeNote("");
+      await load();
+    } catch {
+      setError("Odluka nije sačuvana.");
+    } finally {
+      setSlotBusy(null);
+    }
+  };
+
   return (
     <>
       {error && <p className="adm__err" role="alert">{error}</p>}
 
+      <section className="adm__slot-requests">
+        <div className="adm__section-head">
+          <div>
+            <h2>Zahtevi termina</h2>
+            <p className="adm__hint">Radnik se dodeljuje tek pri potvrdi ili slanju alternative.</p>
+          </div>
+          {activeSlots.length > 0 && <em className="adm__nav-badge">{activeSlots.length}</em>}
+        </div>
+        {activeSlots.length === 0 && !loading && (
+          <p className="adm__empty">Nema zahteva termina koji čekaju odluku.</p>
+        )}
+        <div className="adm__list">
+          {activeSlots.map((item) => (
+            <article key={item.id} className="adm__row adm__row--request">
+              <div className="adm__who">
+                <strong>
+                  {item.user_name ?? item.user_email}
+                  <span className="adm__kind">Sesija {item.session_number}</span>
+                </strong>
+                <a href={`mailto:${item.user_email}`}>{item.user_email}</a>
+                {item.user_phone && <a href={`tel:${item.user_phone}`}>{item.user_phone}</a>}
+                <p>{item.description}</p>
+                <div className="adm__req-quote-info">
+                  Klijent traži: {item.requested_date} · {item.requested_start}–{item.requested_end}
+                </div>
+                {item.status === "alternative_proposed" && item.proposed_date && (
+                  <div className="adm__req-quote-info">
+                    Poslata alternativa: {item.proposed_date} · {item.proposed_start}–{item.proposed_end}
+                    {item.assigned_staff_name ? ` · ${item.assigned_staff_name}` : ""}
+                  </div>
+                )}
+              </div>
+              <div className="adm__actions">
+                <span className={`adm__status adm__status--req-${item.status}`}>
+                  {SLOT_STATUS_LABEL[item.status]}
+                </span>
+                <label className="adm__req-artist">
+                  Radnik
+                  <select
+                    value={artistBySlot[item.id] ?? item.assigned_staff_id ?? ""}
+                    onChange={(event) =>
+                      setArtistBySlot((current) => ({
+                        ...current,
+                        [item.id]: event.target.value,
+                      }))
+                    }
+                    disabled={slotBusy === item.id}
+                  >
+                    <option value="">— izaberi —</option>
+                    {(alternativeId === item.id
+                      ? alternativeStaff
+                      : availableBySlot[item.id] ?? []
+                    ).map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}{member.role === "owner" ? " ★" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="adm__btns">
+                  {item.status === "pending_owner" && (
+                    <button
+                      type="button"
+                      disabled={slotBusy === item.id}
+                      onClick={() => runSlotAction(item, "confirm")}
+                    >
+                      Potvrdi
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={slotBusy === item.id}
+                    onClick={() => {
+                      setAlternativeId((current) => current === item.id ? null : item.id);
+                    setAlternativeDate(item.proposed_date ?? item.requested_date);
+                    setAlternativeStart(item.proposed_start ?? item.requested_start);
+                    setAlternativeNote(item.owner_note ?? "");
+                    setArtistBySlot((current) => ({ ...current, [item.id]: "" }));
+                    }}
+                  >
+                    Predloži drugo vreme
+                  </button>
+                  <button
+                    type="button"
+                    disabled={slotBusy === item.id}
+                    onClick={() => runSlotAction(item, "reject")}
+                  >
+                    Odbij
+                  </button>
+                </div>
+              </div>
+              {alternativeId === item.id && (
+                <div className="adm__quote">
+                  <div className="adm__quote-grid">
+                    <label>
+                      Novi datum
+                      <input
+                        type="date"
+                        value={alternativeDate}
+                        onChange={(event) => setAlternativeDate(event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Novo vreme
+                      <input
+                        type="time"
+                        step={1800}
+                        value={alternativeStart}
+                        onChange={(event) => setAlternativeStart(event.target.value)}
+                      />
+                    </label>
+                    <label>
+                      Trajanje
+                      <input value={fmtDuration(item.session_minutes)} disabled />
+                    </label>
+                  </div>
+                  <label className="adm__quote-note">
+                    Napomena klijentu (opciono)
+                    <textarea
+                      rows={2}
+                      maxLength={500}
+                      value={alternativeNote}
+                      onChange={(event) => setAlternativeNote(event.target.value)}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="adm__resched-confirm"
+                    disabled={slotBusy === item.id}
+                    onClick={() => runSlotAction(item, "propose_alternative")}
+                  >
+                    Pošalji alternativu
+                  </button>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div className="adm__filters">
-        {FILTERS.map((f) => (
-          <button key={f.key} className="adm__filter" aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}>
-            {f.label}
+        {FILTERS.map((item) => (
+          <button
+            key={item.key}
+            className="adm__filter"
+            aria-pressed={filter === item.key}
+            onClick={() => setFilter(item.key)}
+          >
+            {item.label}
           </button>
         ))}
       </div>
@@ -204,84 +501,86 @@ export function RequestsTab() {
       <div className="adm__list">
         {loading && <p className="adm__empty">Učitavanje…</p>}
         {!loading && visible.length === 0 && <p className="adm__empty">Nema zahteva za ovaj filter.</p>}
-        {visible.map((r) => (
-          <article key={r.id} className="adm__row adm__row--request">
+        {visible.map((item) => (
+          <article key={item.id} className="adm__row adm__row--request">
             <div className="adm__who">
               <strong>
-                {r.user_name ?? r.user_email}
-                <span className="adm__kind">{fmtCreated(r.created_at)}</span>
+                {item.user_name ?? item.user_email}
+                <span className="adm__kind">{fmtCreated(item.created_at)}</span>
               </strong>
-              <a href={`mailto:${r.user_email}`}>{r.user_email}</a>
-              <p>{r.description}</p>
+              <a href={`mailto:${item.user_email}`}>{item.user_email}</a>
+              {item.user_phone && <a href={`tel:${item.user_phone}`}>{item.user_phone}</a>}
+              <span className="adm__kind">
+                {item.user_gender === "male" ? "Muški" : item.user_gender === "female" ? "Ženski" : "Profil nepotpun"}
+              </span>
+              <p>{item.description}</p>
               <div className="adm__req-meta">
-                {r.size && <span>Veličina: {r.size}</span>}
-                {r.body_part && <span>Deo tela: {r.body_part}</span>}
-                {r.budget && <span>Budžet: {r.budget} €</span>}
+                {item.size && <span>Veličina: {item.size}</span>}
+                {item.body_part && <span>Deo tela: {item.body_part}</span>}
+                {item.budget && <span>Budžet: {item.budget} €</span>}
               </div>
-              {artists.length > 0 && (
-                <label className="adm__req-artist">
-                  Artist
-                  <select
-                    value={r.artist_id ?? ""}
-                    onChange={(e) => assignArtist(r.id, e.target.value === "" ? null : Number(e.target.value))}
-                  >
-                    <option value="">— nije izabran —</option>
-                    {artists.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name}{a.role === "owner" ? " ★" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {r.image_urls.length > 0 && (
+              {item.image_urls.length > 0 && (
                 <div className="adm__req-thumbs">
-                  {r.image_urls.map((url) => (
+                  {item.image_urls.map((url) => (
                     <a key={url} href={url} target="_blank" rel="noreferrer">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary reference hosts */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={url} alt="Referenca" loading="lazy" />
                     </a>
                   ))}
                 </div>
               )}
-              {r.status !== "pending" && r.session_count && r.session_minutes && (
+              {item.status === "revision_requested" && item.quote_revision_note && (
+                <div className="adm__req-revision">
+                  <strong>Klijent traži novu procenu:</strong> {item.quote_revision_note}
+                </div>
+              )}
+              {item.session_count && item.session_minutes && (
                 <div className="adm__req-quote-info">
-                  Procena: {r.session_count} × {fmtDuration(r.session_minutes)} — {r.price}
-                  {r.session_count > 1 && ` (odrađeno ${r.sessions_done}/${r.session_count})`}
+                  Procena: {item.session_count} × {fmtDuration(item.session_minutes)} — {item.price}
+                  {item.session_count > 1 && ` (odrađeno ${item.sessions_done}/${item.session_count})`}
                 </div>
               )}
             </div>
             <div className="adm__actions">
-              <span className={`adm__status adm__status--req-${r.status}`}>{STATUS_LABEL[r.status]}</span>
+              <span className={`adm__status adm__status--req-${item.status}`}>
+                {STATUS_LABEL[item.status]}
+              </span>
               <div className="adm__btns">
-                {(r.status === "pending" || r.status === "quoted") && (
-                  <button onClick={() => (quoteId === r.id ? setQuoteId(null) : openQuote(r))}>
-                    {quoteId === r.id ? "Zatvori" : r.status === "pending" ? "Proceni" : "Izmeni procenu"}
+                {(item.status === "pending" ||
+                  item.status === "revision_requested" ||
+                  item.status === "quoted") && (
+                  <button onClick={() => quoteId === item.id ? setQuoteId(null) : openQuote(item)}>
+                    {quoteId === item.id
+                      ? "Zatvori"
+                      : item.status === "quoted"
+                        ? "Izmeni procenu"
+                        : "Proceni"}
                   </button>
                 )}
-                {r.status !== "canceled" && r.status !== "done" && (
-                  <button onClick={() => setStatus(r.id, "canceled")}>Otkaži</button>
+                {item.status !== "canceled" && item.status !== "done" && (
+                  <button onClick={() => setStatus(item.id, "canceled")}>Otkaži upit</button>
                 )}
-                {r.status === "canceled" && <button onClick={() => setStatus(r.id, "pending")}>Vrati</button>}
+                {item.status === "canceled" && (
+                  <button onClick={() => setStatus(item.id, "pending")}>Vrati</button>
+                )}
               </div>
             </div>
-
-            {quoteId === r.id && (
+            {quoteId === item.id && (
               <div className="adm__quote">
                 <div className="adm__quote-grid">
                   <label>
                     Broj termina
-                    <select value={qSessions} onChange={(e) => setQSessions(Number(e.target.value))} disabled={qBusy}>
-                      {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                        <option key={n} value={n}>{n}</option>
+                    <select value={qSessions} onChange={(event) => setQSessions(Number(event.target.value))}>
+                      {Array.from({ length: 10 }, (_, index) => index + 1).map((count) => (
+                        <option key={count} value={count}>{count}</option>
                       ))}
                     </select>
                   </label>
                   <label>
                     Trajanje termina
-                    <select value={qMinutes} onChange={(e) => setQMinutes(Number(e.target.value))} disabled={qBusy}>
-                      {DURATIONS.map((m) => (
-                        <option key={m} value={m}>{fmtDuration(m)}</option>
+                    <select value={qMinutes} onChange={(event) => setQMinutes(Number(event.target.value))}>
+                      {DURATIONS.map((minutes) => (
+                        <option key={minutes} value={minutes}>{fmtDuration(minutes)}</option>
                       ))}
                     </select>
                   </label>
@@ -290,24 +589,22 @@ export function RequestsTab() {
                     <input
                       type="text"
                       value={qPrice}
-                      onChange={(e) => setQPrice(e.target.value)}
+                      onChange={(event) => setQPrice(event.target.value)}
                       placeholder="npr. 250€ ili 30.000 RSD"
-                      disabled={qBusy}
                     />
                   </label>
                 </div>
                 <label className="adm__quote-note">
                   Napomena klijentu (opciono)
-                  <textarea
-                    value={qNote}
-                    onChange={(e) => setQNote(e.target.value)}
-                    rows={2}
-                    disabled={qBusy}
-                    placeholder="npr. cena uključuje korekciju posle zarastanja"
-                  />
+                  <textarea rows={2} value={qNote} onChange={(event) => setQNote(event.target.value)} />
                 </label>
                 {qError && <p className="adm__err" role="alert">{qError}</p>}
-                <button type="button" className="adm__resched-confirm" disabled={qBusy} onClick={sendQuote}>
+                <button
+                  type="button"
+                  className="adm__resched-confirm"
+                  disabled={qBusy}
+                  onClick={sendQuote}
+                >
                   {qBusy ? "Slanje…" : "Pošalji procenu"}
                 </button>
               </div>

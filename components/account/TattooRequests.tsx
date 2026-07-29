@@ -3,14 +3,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Bell, ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 
-type TattooStatus = "pending" | "quoted" | "scheduled" | "done" | "canceled";
+type TattooStatus =
+  | "pending"
+  | "revision_requested"
+  | "quoted"
+  | "accepted"
+  | "scheduled"
+  | "done"
+  | "canceled";
 
-type Artist = {
+type SlotRequest = {
   id: number;
-  name: string;
-  role: "owner" | "staff";
-  avatar_url: string | null;
-  slug: string | null;
+  session_number: number;
+  requested_date: string;
+  requested_start: string;
+  requested_end: string;
+  proposed_date: string | null;
+  proposed_start: string | null;
+  proposed_end: string | null;
+  status: "pending_owner" | "alternative_proposed" | "confirmed" | "rejected" | "declined";
+  owner_note: string | null;
+  created_at: string;
 };
 
 type TattooRequest = {
@@ -21,15 +34,16 @@ type TattooRequest = {
   budget: string | null;
   image_urls: string[];
   status: TattooStatus;
-  artist_id: number | null;
-  artist_name: string | null;
   session_count: number | null;
   session_minutes: number | null;
   price: string | null;
   admin_note: string | null;
   sessions_done: number;
+  quote_revision_note: string | null;
+  quote_accepted_at: string | null;
   created_at: string;
   next_session: { date: string; start: string; end: string } | null;
+  slot_request: SlotRequest | null;
 };
 
 type Notification = {
@@ -42,7 +56,9 @@ type Notification = {
 
 const STATUS_LABEL: Record<TattooStatus, string> = {
   pending: "Čeka procenu",
+  revision_requested: "Tražena nova procena",
   quoted: "Procena stigla",
+  accepted: "Procena prihvaćena",
   scheduled: "Zakazano",
   done: "Završeno",
   canceled: "Otkazano",
@@ -73,7 +89,13 @@ function canBook(r: TattooRequest): boolean {
   if (!r.session_count || !r.session_minutes) return false;
   if (r.sessions_done >= r.session_count) return false;
   if (r.next_session) return false;
-  return r.status === "quoted" || r.status === "scheduled";
+  if (
+    r.slot_request?.status === "pending_owner" ||
+    r.slot_request?.status === "alternative_proposed"
+  ) {
+    return false;
+  }
+  return r.status === "accepted" || r.status === "scheduled";
 }
 
 const MAX_MONTHS_AHEAD = 3;
@@ -101,9 +123,9 @@ function leadBlanks(key: string) {
 
 const WEEKDAYS = ["Pon", "Uto", "Sre", "Čet", "Pet", "Sub", "Ned"];
 
-// Calendar for picking the next session of a quoted request: only days with a
+// Calendar for requesting the next session after accepting the estimate.
 // free contiguous block of the estimated duration are enabled.
-function BookSession({ request, onBooked }: { request: TattooRequest; onBooked: () => Promise<void> }) {
+function BookSession({ request, onRequested }: { request: TattooRequest; onRequested: () => Promise<void> }) {
   const [offset, setOffset] = useState(1); // slots start tomorrow; current month still useful
   const [days, setDays] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
@@ -146,15 +168,15 @@ function BookSession({ request, onBooked }: { request: TattooRequest; onBooked: 
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setError(data.message ?? "Zakazivanje nije uspelo.");
+        setError(data.message ?? "Slanje zahteva nije uspelo.");
         if (data.code === "slot_taken") {
           setRefresh((v) => v + 1); // refetch current month
         }
         return;
       }
-      await onBooked();
+      await onRequested();
     } catch {
-      setError("Zakazivanje nije uspelo.");
+      setError("Slanje zahteva nije uspelo.");
     } finally {
       setBusy(false);
     }
@@ -224,9 +246,9 @@ function BookSession({ request, onBooked }: { request: TattooRequest; onBooked: 
       <button type="button" className="bkf__submit" onClick={confirm} disabled={!date || !start || busy}>
         <span>
           {busy
-            ? "Zakazivanje…"
+            ? "Slanje…"
             : date && start
-              ? `Potvrdi ${fmtDay(date)} u ${start}`
+              ? `Pošalji zahtev za ${fmtDay(date)} u ${start}`
               : "Izaberi dan i vreme"}
         </span>
         <ArrowUpRight size={16} strokeWidth={1.5} />
@@ -237,12 +259,9 @@ function BookSession({ request, onBooked }: { request: TattooRequest; onBooked: 
 
 export function TattooRequests({
   autoOpenForm = false,
-  preselectArtist = null,
 }: {
   /** Open the new-request form immediately (?novi=1 deep link). */
   autoOpenForm?: boolean;
-  /** Artist id to preselect in the picker (?artist=N, from artist pages). */
-  preselectArtist?: number | null;
 }) {
   const [requests, setRequests] = useState<TattooRequest[] | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -273,19 +292,9 @@ export function TattooRequests({
     load();
   }, [load]);
 
-  // Team roster for the artist picker (loaded once; empty list hides the field).
-  useEffect(() => {
-    fetch("/api/artists", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => data.ok && setArtists(data.artists))
-      .catch(() => {});
-  }, []);
-
   // ---- new request form ----
   const [showForm, setShowForm] = useState(autoOpenForm);
   const [bookId, setBookId] = useState<number | null>(null);
-  const [artists, setArtists] = useState<Artist[]>([]);
-  const [artistId, setArtistId] = useState<number | null>(preselectArtist);
   const [description, setDescription] = useState("");
   const [size, setSize] = useState("");
   const [bodyPart, setBodyPart] = useState("");
@@ -296,6 +305,9 @@ export function TattooRequests({
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState<number | null>(null);
+  const [revisionId, setRevisionId] = useState<number | null>(null);
+  const [revisionMessage, setRevisionMessage] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const uploadFiles = async (files: FileList) => {
@@ -346,7 +358,6 @@ export function TattooRequests({
           bodyPart: bodyPart.trim() || undefined,
           budget: budget.trim() || undefined,
           imageUrls: images,
-          artistId: artistId ?? undefined,
         }),
       });
       const data = await res.json();
@@ -359,7 +370,6 @@ export function TattooRequests({
       setBodyPart("");
       setBudget("");
       setImages([]);
-      setArtistId(null);
       setShowForm(false);
       setOkMsg("Zahtev je poslat. Javićemo ti se sa procenom termina i cene.");
       await load();
@@ -367,6 +377,75 @@ export function TattooRequests({
       setFormError("Slanje nije uspelo. Pokušaj ponovo.");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const respondToEstimate = async (
+    requestId: number,
+    action: "accept" | "request_revision",
+  ) => {
+    if (action === "request_revision" && revisionMessage.trim().length < 5) {
+      setError("Napiši kratko šta želiš da promenimo u proceni.");
+      return;
+    }
+    setActionBusy(requestId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/tattoo-requests/${requestId}/estimate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          message: action === "request_revision" ? revisionMessage.trim() : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setError(data.message ?? "Odgovor nije sačuvan.");
+        return;
+      }
+      setRevisionId(null);
+      setRevisionMessage("");
+      setOkMsg(
+        action === "accept"
+          ? "Procena je prihvaćena. Sada izaberi željeni termin."
+          : "Zahtev za novu procenu je poslat.",
+      );
+      await load();
+    } catch {
+      setError("Odgovor nije sačuvan.");
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const respondToAlternative = async (
+    slotRequestId: number,
+    action: "accept" | "decline",
+  ) => {
+    setActionBusy(slotRequestId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/tattoo-slot-requests/${slotRequestId}/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setError(data.message ?? "Odgovor nije sačuvan.");
+        return;
+      }
+      setOkMsg(
+        action === "accept"
+          ? "Termin je potvrđen. Vidimo se!"
+          : "Predlog je odbijen. Možeš izabrati drugi termin.",
+      );
+      await load();
+    } catch {
+      setError("Odgovor nije sačuvan.");
+    } finally {
+      setActionBusy(null);
     }
   };
 
@@ -399,45 +478,6 @@ export function TattooRequests({
 
       {showForm && (
         <div className="bkf treq__form">
-          {artists.length > 0 && (
-            <div className="bkf__field">
-              <span className="bkf__label">Izaberi artista (opciono)</span>
-              <div className="treq__artists">
-                <button
-                  type="button"
-                  className="treq__artist"
-                  aria-pressed={artistId === null}
-                  onClick={() => setArtistId(null)}
-                  disabled={busy}
-                >
-                  <span className="treq__artist-avatar treq__artist-avatar--any">?</span>
-                  <span className="treq__artist-name">Svejedno mi je</span>
-                  <small>studio bira</small>
-                </button>
-                {artists.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    className={`treq__artist${a.role === "owner" ? " treq__artist--featured" : ""}`}
-                    aria-pressed={artistId === a.id}
-                    onClick={() => setArtistId(a.id)}
-                    disabled={busy}
-                  >
-                    <span className="treq__artist-avatar">
-                      {a.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- google-hosted avatar
-                        <img src={a.avatar_url} alt="" />
-                      ) : (
-                        a.name.slice(0, 1).toUpperCase()
-                      )}
-                    </span>
-                    <span className="treq__artist-name">{a.name}</span>
-                    {a.role === "owner" && <small className="treq__artist-badge">★ Head artist</small>}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
           <div className="bkf__field">
             <label htmlFor="treq-desc">Opis tetovaže *</label>
             <textarea
@@ -552,9 +592,8 @@ export function TattooRequests({
               <small>{fmtDate(r.created_at)}</small>
             </div>
             <p className="treq__desc">{r.description}</p>
-            {(r.size || r.body_part || r.budget || r.artist_name) && (
+            {(r.size || r.body_part || r.budget) && (
               <div className="treq__meta">
-                {r.artist_name && <span>Artist: {r.artist_name}</span>}
                 {r.size && <span>Veličina: {r.size}</span>}
                 {r.body_part && <span>Deo tela: {r.body_part}</span>}
                 {r.budget && <span>Budžet: {r.budget} €</span>}
@@ -580,6 +619,101 @@ export function TattooRequests({
                 )}
               </div>
             )}
+            {r.status === "quoted" && (
+              <div className="treq__decision">
+                <button
+                  type="button"
+                  className="bkf__submit"
+                  disabled={actionBusy === r.id}
+                  onClick={() => respondToEstimate(r.id, "accept")}
+                >
+                  <span>{actionBusy === r.id ? "Čuvam…" : "Prihvati cenu i trajanje"}</span>
+                  <ArrowUpRight size={16} strokeWidth={1.5} />
+                </button>
+                <button
+                  type="button"
+                  className="treq__new"
+                  disabled={actionBusy === r.id}
+                  onClick={() => {
+                    setRevisionId((current) => (current === r.id ? null : r.id));
+                    setRevisionMessage("");
+                  }}
+                >
+                  Traži novu procenu
+                </button>
+                {revisionId === r.id && (
+                  <div className="treq__revision">
+                    <label htmlFor={`revision-${r.id}`}>Šta želiš da promenimo? *</label>
+                    <textarea
+                      id={`revision-${r.id}`}
+                      rows={3}
+                      maxLength={500}
+                      value={revisionMessage}
+                      onChange={(event) => setRevisionMessage(event.target.value)}
+                      placeholder="Na primer: potreban mi je niži budžet ili kraći termin…"
+                    />
+                    <button
+                      type="button"
+                      className="treq__new"
+                      disabled={actionBusy === r.id || revisionMessage.trim().length < 5}
+                      onClick={() => respondToEstimate(r.id, "request_revision")}
+                    >
+                      Pošalji zahtev za novu procenu
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {r.status === "revision_requested" && (
+              <div className="treq__slot-state">
+                <strong>Čeka se nova procena studija</strong>
+                {r.quote_revision_note && <span>Tvoja poruka: {r.quote_revision_note}</span>}
+              </div>
+            )}
+            {r.slot_request?.status === "pending_owner" && (
+              <div className="treq__slot-state">
+                <strong>Zahtev termina je poslat</strong>
+                <span>
+                  {fmtDay(r.slot_request.requested_date)} u {r.slot_request.requested_start} — čeka potvrdu studija.
+                </span>
+              </div>
+            )}
+            {r.slot_request?.status === "alternative_proposed" &&
+              r.slot_request.proposed_date &&
+              r.slot_request.proposed_start && (
+                <div className="treq__slot-state treq__slot-state--action">
+                  <strong>Studio predlaže drugo vreme</strong>
+                  <span>
+                    {fmtDay(r.slot_request.proposed_date)} u {r.slot_request.proposed_start}
+                  </span>
+                  {r.slot_request.owner_note && <em>{r.slot_request.owner_note}</em>}
+                  <div className="treq__decision">
+                    <button
+                      type="button"
+                      className="bkf__submit"
+                      disabled={actionBusy === r.slot_request.id}
+                      onClick={() => respondToAlternative(r.slot_request!.id, "accept")}
+                    >
+                      <span>Prihvati termin</span>
+                      <ArrowUpRight size={16} strokeWidth={1.5} />
+                    </button>
+                    <button
+                      type="button"
+                      className="treq__new"
+                      disabled={actionBusy === r.slot_request.id}
+                      onClick={() => respondToAlternative(r.slot_request!.id, "decline")}
+                    >
+                      Odbij i izaberi drugi
+                    </button>
+                  </div>
+                </div>
+              )}
+            {r.slot_request?.status === "rejected" && !r.next_session && (
+              <div className="treq__slot-state">
+                <strong>Izaberi drugi termin</strong>
+                <span>{r.slot_request.owner_note ?? "Traženi termin nije bio dostupan."}</span>
+              </div>
+            )}
             {canBook(r) && (
               <>
                 <button
@@ -592,9 +726,9 @@ export function TattooRequests({
                 {bookId === r.id && (
                   <BookSession
                     request={r}
-                    onBooked={async () => {
+                    onRequested={async () => {
                       setBookId(null);
-                      setOkMsg("Termin je zakazan. Vidimo se!");
+                      setOkMsg("Zahtev termina je poslat i čeka potvrdu studija.");
                       await load();
                     }}
                   />

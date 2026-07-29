@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/user-session";
+import { hasCompleteProfile } from "@/lib/auth/profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,12 @@ export async function GET() {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+  }
+  if (!(await hasCompleteProfile(user.uid))) {
+    return NextResponse.json(
+      { ok: false, code: "profile_required", message: "Dopuni profil." },
+      { status: 428 },
+    );
   }
 
   const sql = getSql();
@@ -47,6 +54,12 @@ export async function PATCH() {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+  }
+  if (!(await hasCompleteProfile(user.uid))) {
+    return NextResponse.json(
+      { ok: false, code: "profile_required", message: "Dopuni profil." },
+      { status: 428 },
+    );
   }
 
   const sql = getSql();

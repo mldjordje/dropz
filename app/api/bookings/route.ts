@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { DATE_RE, getSlotsForDate } from "@/lib/availability";
-import { getActiveArtistById, getArtistConsultSlotsForDate } from "@/lib/consult";
 
 function isFutureDate(date: string) {
   if (!DATE_RE.test(date)) return false;
@@ -49,39 +48,17 @@ export async function POST(request: Request) {
 
   const sql = getSql();
 
-  // Optional artist preference — must be an active team member; absent means
-  // "svejedno" (the owner takes it). When an artist is chosen the valid slots
-  // come from THAT artist's schedule (working hours + exceptions, minus their
-  // calendar); no preference falls back to the studio consult-days calendar.
-  let artistId: number | null = null;
-  if (body.artistId !== undefined && body.artistId !== null && body.artistId !== "") {
-    const requested = Number(body.artistId);
-    if (!Number.isInteger(requested)) {
-      return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
-    }
-    const artist = await getActiveArtistById(sql, requested);
-    if (!artist) {
-      return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
-    }
-    artistId = artist.id;
-    const slots = await getArtistConsultSlotsForDate(sql, artist, date);
-    if (!slots.includes(slot)) {
-      return NextResponse.json({ ok: false, message: "Slot taken", code: "slot_taken" }, { status: 409 });
-    }
-  } else {
-    const slots = await getSlotsForDate(sql, date);
-    if (!slots.includes(slot)) {
-      return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
-    }
+  const slots = await getSlotsForDate(sql, date);
+  if (!slots.includes(slot)) {
+    return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
   }
 
-  // Slots are unique per (date, slot, artist) — a no-preference consult maps to
-  // the owner's bucket. Check the matching bucket, then let the unique index be
-  // the final backstop for a concurrent insert.
+  // Public consultations are studio-owned. NULL is the private owner bucket;
+  // no public request may choose or reveal a team member.
   const taken = (await sql`
     SELECT id FROM bookings
     WHERE date = ${date} AND slot = ${slot} AND status <> 'canceled'
-      AND COALESCE(artist_id, 0) = COALESCE(${artistId}, 0)
+      AND artist_id IS NULL
     LIMIT 1
   `) as { id: number }[];
   if (taken.length > 0) {
@@ -92,7 +69,7 @@ export async function POST(request: Request) {
   try {
     inserted = (await sql`
       INSERT INTO bookings (name, contact, kind, note, date, slot, locale, artist_id)
-      VALUES (${name}, ${contact}, 'consult', ${note || null}, ${date}, ${slot}, ${locale}, ${artistId})
+      VALUES (${name}, ${contact}, 'consult', ${note || null}, ${date}, ${slot}, ${locale}, NULL)
       RETURNING id
     `) as { id: number }[];
   } catch (err) {

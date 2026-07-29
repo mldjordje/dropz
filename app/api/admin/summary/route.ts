@@ -25,7 +25,11 @@ export async function GET() {
   const [counts] = (await sql`
     SELECT
       (SELECT COUNT(*)::int FROM bookings WHERE status = 'new') AS bookings_new,
-      (SELECT COUNT(*)::int FROM tattoo_requests WHERE status = 'pending') AS requests_pending,
+      (
+        (SELECT COUNT(*)::int FROM tattoo_requests WHERE status IN ('pending', 'revision_requested'))
+        +
+        (SELECT COUNT(*)::int FROM tattoo_slot_requests WHERE status = 'pending_owner')
+      ) AS requests_pending,
       (SELECT COUNT(*)::int FROM appointments WHERE date >= ${today} AND date < ${weekEnd} AND status = 'scheduled') AS week_appointments,
       (SELECT COUNT(*)::int FROM bookings WHERE date >= ${today} AND date < ${weekEnd} AND status IN ('new','confirmed')) AS week_bookings
   `) as {

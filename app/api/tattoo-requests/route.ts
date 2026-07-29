@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/user-session";
+import { hasCompleteProfile } from "@/lib/auth/profile";
 import { cleanImageUrls, cleanText, type TattooRequest } from "@/lib/tattoo";
 
 export const runtime = "nodejs";
@@ -14,20 +15,45 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
+  if (!(await hasCompleteProfile(user.uid))) {
+    return NextResponse.json(
+      { ok: false, code: "profile_required", message: "Dopuni profil pre korišćenja naloga." },
+      { status: 428 },
+    );
+  }
 
   const sql = getSql();
   const requests = (await sql`
     SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.budget, r.image_urls, r.status,
-           r.artist_id, (SELECT s.name FROM staff s WHERE s.id = r.artist_id) AS artist_name,
            r.session_count, r.session_minutes, r.price, r.admin_note, r.sessions_done,
-           r.quoted_at, r.created_at,
+           r.quoted_at, r.quote_revision_note, r.quote_revision_requested_at,
+           r.quote_accepted_at, r.created_at,
            (
              SELECT json_build_object('date', a.date::text, 'start', a.start_time, 'end', a.end_time)
              FROM appointments a
              WHERE a.request_id = r.id AND a.status = 'scheduled' AND a.date >= CURRENT_DATE
              ORDER BY a.date, a.start_time
              LIMIT 1
-           ) AS next_session
+           ) AS next_session,
+           (
+             SELECT json_build_object(
+               'id', sr.id,
+               'session_number', sr.session_number,
+               'requested_date', sr.requested_date::text,
+               'requested_start', sr.requested_start,
+               'requested_end', sr.requested_end,
+               'proposed_date', sr.proposed_date::text,
+               'proposed_start', sr.proposed_start,
+               'proposed_end', sr.proposed_end,
+               'status', sr.status,
+               'owner_note', sr.owner_note,
+               'created_at', sr.created_at
+             )
+             FROM tattoo_slot_requests sr
+             WHERE sr.request_id = r.id
+             ORDER BY sr.created_at DESC
+             LIMIT 1
+           ) AS slot_request
     FROM tattoo_requests r
     WHERE r.user_id = ${user.uid}
     ORDER BY r.created_at DESC
@@ -84,27 +110,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Neispravne reference slike." }, { status: 400 });
   }
 
-  // Optional artist preference — must be an active team member; absent/empty
-  // means "no preference", the owner assigns one while quoting.
-  let artistId: number | null = null;
-  if (body.artistId !== undefined && body.artistId !== null && body.artistId !== "") {
-    const requested = Number(body.artistId);
-    if (!Number.isInteger(requested)) {
-      return NextResponse.json({ ok: false, message: "Neispravan artist." }, { status: 400 });
-    }
-    const found = (await getSql()`
-      SELECT id FROM staff WHERE id = ${requested} AND active
-    `) as { id: number }[];
-    if (found.length === 0) {
-      return NextResponse.json({ ok: false, message: "Neispravan artist." }, { status: 400 });
-    }
-    artistId = requested;
+  if (!(await hasCompleteProfile(user.uid))) {
+    return NextResponse.json(
+      { ok: false, code: "profile_required", message: "Dopuni profil pre slanja zahteva." },
+      { status: 428 },
+    );
   }
 
   const sql = getSql();
   const open = (await sql`
     SELECT count(*)::int AS count FROM tattoo_requests
-    WHERE user_id = ${user.uid} AND status IN ('pending', 'quoted')
+    WHERE user_id = ${user.uid}
+      AND status IN ('pending', 'revision_requested', 'quoted', 'accepted', 'scheduled')
   `) as { count: number }[];
   if (open[0].count >= MAX_OPEN_REQUESTS) {
     return NextResponse.json(
@@ -115,10 +132,11 @@ export async function POST(request: Request) {
 
   const rows = (await sql`
     INSERT INTO tattoo_requests (user_id, description, size, body_part, budget, image_urls, artist_id)
-    VALUES (${user.uid}, ${description}, ${size}, ${bodyPart}, ${budget}, ${imageUrls}, ${artistId})
+    VALUES (${user.uid}, ${description}, ${size}, ${bodyPart}, ${budget}, ${imageUrls}, NULL)
     RETURNING id, user_id, description, size, body_part, budget, image_urls, status,
-              artist_id, session_count, session_minutes, price, admin_note, sessions_done,
-              quoted_at, created_at
+              session_count, session_minutes, price, admin_note, sessions_done,
+              quoted_at, quote_revision_note, quote_revision_requested_at,
+              quote_accepted_at, created_at
   `) as TattooRequest[];
 
   return NextResponse.json({ ok: true, request: rows[0] }, { status: 201 });

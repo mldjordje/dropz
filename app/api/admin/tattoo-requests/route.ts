@@ -17,6 +17,8 @@ export const dynamic = "force-dynamic";
 export type AdminTattooRequest = TattooRequest & {
   user_email: string;
   user_name: string | null;
+  user_phone: string | null;
+  user_gender: "male" | "female" | null;
   artist_name: string | null;
 };
 
@@ -30,8 +32,10 @@ export async function GET(request: Request) {
       SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.budget, r.image_urls,
              r.status, r.artist_id, s.name AS artist_name,
              r.session_count, r.session_minutes, r.price, r.admin_note,
-             r.sessions_done, r.quoted_at, r.created_at,
-             u.email AS user_email, u.name AS user_name
+             r.sessions_done, r.quoted_at, r.quote_revision_note,
+             r.quote_revision_requested_at, r.quote_accepted_at, r.created_at,
+             u.email AS user_email, u.name AS user_name,
+             u.phone AS user_phone, u.gender AS user_gender
       FROM tattoo_requests r
       JOIN users u ON u.id = r.user_id
       LEFT JOIN staff s ON s.id = r.artist_id
@@ -43,8 +47,10 @@ export async function GET(request: Request) {
       SELECT r.id, r.user_id, r.description, r.size, r.body_part, r.budget, r.image_urls,
              r.status, r.artist_id, s.name AS artist_name,
              r.session_count, r.session_minutes, r.price, r.admin_note,
-             r.sessions_done, r.quoted_at, r.created_at,
-             u.email AS user_email, u.name AS user_name
+             r.sessions_done, r.quoted_at, r.quote_revision_note,
+             r.quote_revision_requested_at, r.quote_accepted_at, r.created_at,
+             u.email AS user_email, u.name AS user_name,
+             u.phone AS user_phone, u.gender AS user_gender
       FROM tattoo_requests r
       JOIN users u ON u.id = r.user_id
       LEFT JOIN staff s ON s.id = r.artist_id
@@ -73,33 +79,6 @@ export async function PATCH(request: Request) {
   }
   const sql = getSql();
 
-  // Artist (re)assignment — alone or together with an estimate. null clears
-  // the assignment back to "no preference".
-  if (body.artistId !== undefined) {
-    let artistId: number | null = null;
-    if (body.artistId !== null && body.artistId !== "") {
-      const requested = Number(body.artistId);
-      if (!Number.isInteger(requested)) {
-        return NextResponse.json({ ok: false, message: "Neispravan artist." }, { status: 400 });
-      }
-      const found = (await sql`SELECT id FROM staff WHERE id = ${requested} AND active`) as { id: number }[];
-      if (found.length === 0) {
-        return NextResponse.json({ ok: false, message: "Neispravan artist." }, { status: 400 });
-      }
-      artistId = requested;
-    }
-    const updated = (await sql`
-      UPDATE tattoo_requests SET artist_id = ${artistId} WHERE id = ${id} RETURNING id
-    `) as { id: number }[];
-    if (updated.length === 0) {
-      return NextResponse.json({ ok: false, message: "Zahtev nije nađen." }, { status: 404 });
-    }
-    // Assignment can come alone — done unless an estimate rides along.
-    if (body.sessionCount === undefined && body.sessionMinutes === undefined && body.price === undefined && body.status === undefined) {
-      return NextResponse.json({ ok: true });
-    }
-  }
-
   // Estimate path.
   if (body.sessionCount !== undefined || body.sessionMinutes !== undefined || body.price !== undefined) {
     const sessionCount = Number(body.sessionCount);
@@ -127,8 +106,8 @@ export async function PATCH(request: Request) {
       UPDATE tattoo_requests
       SET session_count = ${sessionCount}, session_minutes = ${sessionMinutes},
           price = ${price}, admin_note = ${adminNote},
-          status = 'quoted', quoted_at = now()
-      WHERE id = ${id} AND status IN ('pending', 'quoted')
+          status = 'quoted', quoted_at = now(), quote_accepted_at = NULL
+      WHERE id = ${id} AND status IN ('pending', 'revision_requested', 'quoted')
       RETURNING id, user_id, session_count
     `) as { id: number; user_id: number; session_count: number }[];
     if (rows.length === 0) {
@@ -141,7 +120,7 @@ export async function PATCH(request: Request) {
         ${rows[0].user_id},
         'quote',
         'Stigla je procena za tvoju tetovažu',
-        ${`Procena: ${sessionCount} ${sessionCount === 1 ? "termin" : "termina"}, cena ${price}. Pogledaj detalje na svom nalogu.`},
+        ${`Procena: ${sessionCount} ${sessionCount === 1 ? "termin" : "termina"} po ${sessionMinutes} min, cena ${price}. Prihvati je ili zatraži izmenu na svom nalogu.`},
         '/nalog'
       )
     `;
@@ -153,13 +132,32 @@ export async function PATCH(request: Request) {
   if (!isTattooStatus(body.status)) {
     return NextResponse.json({ ok: false, message: "Invalid status" }, { status: 400 });
   }
+  if (body.status !== "canceled" && body.status !== "pending") {
+    return NextResponse.json({ ok: false, message: "Status se ne može ručno postaviti." }, { status: 400 });
+  }
   const rows = (await sql`
     UPDATE tattoo_requests SET status = ${body.status}
     WHERE id = ${id}
+      AND (
+        (${body.status === "canceled"} AND status NOT IN ('done', 'canceled'))
+        OR
+        (${body.status === "pending"} AND status = 'canceled')
+      )
     RETURNING id
   `) as { id: number }[];
   if (rows.length === 0) {
     return NextResponse.json({ ok: false, message: "Zahtev nije nađen." }, { status: 404 });
+  }
+  if (body.status === "canceled") {
+    await sql`
+      UPDATE tattoo_slot_requests
+      SET status = 'rejected',
+          owner_note = COALESCE(owner_note, 'Tattoo upit je otkazan.'),
+          updated_at = now(),
+          decided_at = now()
+      WHERE request_id = ${id}
+        AND status IN ('pending_owner', 'alternative_proposed')
+    `;
   }
   return NextResponse.json({ ok: true });
 }

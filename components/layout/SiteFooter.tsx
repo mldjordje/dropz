@@ -9,7 +9,6 @@ import { isOpenDay, weekHours } from "@/lib/hours";
 
 const LINKS = [
   { href: "/portfolio", label: "Portfolio" },
-  { href: "/artisti", label: "Artisti" },
   { href: "/booking", label: "Termini" },
   { href: "/upit", label: "Upit" },
   { href: "/edukacija", label: "Edukacija" },

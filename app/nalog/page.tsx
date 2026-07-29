@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { getSessionUser } from "@/lib/auth/user-session";
+import { hasCompleteProfile } from "@/lib/auth/profile";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import { ProfileCard } from "@/components/account/ProfileCard";
 import { TattooRequests } from "@/components/account/TattooRequests";
@@ -24,17 +25,17 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default async function NalogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ greska?: string; novi?: string; artist?: string }>;
+    searchParams: Promise<{ greska?: string; novi?: string; profil?: string; next?: string }>;
 }) {
   const user = await getSessionUser();
-  const { greska, novi, artist } = await searchParams;
+  const { greska, novi } = await searchParams;
   const error = greska ? ERROR_MESSAGES[greska] ?? ERROR_MESSAGES.prijava : null;
+  const profileComplete = user ? await hasCompleteProfile(user.uid) : false;
 
   // "?novi=1" (from the landing / /upit CTAs) drops the visitor straight into
   // the request form — through the Google login too, via the next param.
   const openForm = novi === "1";
-  const preselectArtist = artist && /^\d+$/.test(artist) ? Number(artist) : null;
-  const nextPath = `/nalog${openForm ? `?novi=1${preselectArtist ? `&artist=${preselectArtist}` : ""}` : ""}`;
+  const nextPath = `/nalog${openForm ? "?novi=1" : ""}`;
 
   return (
     <main className="route-shell">
@@ -61,8 +62,8 @@ export default async function NalogPage({
                 <span>{user.email}</span>
               </div>
             </div>
-            <ProfileCard />
-            <TattooRequests autoOpenForm={openForm} preselectArtist={preselectArtist} />
+            <ProfileCard mandatory={!profileComplete} />
+            {profileComplete ? <TattooRequests autoOpenForm={openForm} /> : null}
             <LogoutButton />
           </>
         ) : (

@@ -31,8 +31,6 @@ export type BookingFormLabels = {
 const STUDIO_EMAIL = "studio@dropz.tattoo";
 const MAX_MONTHS_AHEAD = 2;
 
-type Artist = { id: number; name: string; role: "owner" | "staff"; avatar_url: string | null };
-
 const INTL_TAG: Record<Locale, string> = { sr: "sr-Latn-RS", en: "en-GB", de: "de-DE" };
 
 function startOfDay(d: Date) {
@@ -48,13 +46,9 @@ function isoKey(d: Date) {
 export function BookingForm({
   labels,
   locale,
-  preselectArtist = null,
 }: {
   labels: BookingFormLabels;
   locale: Locale;
-  /** Pre-chooses an artist (e.g. arriving from that artist's profile), so the
-   * calendar shows their real availability from the start. */
-  preselectArtist?: number | null;
 }) {
   const tag = INTL_TAG[locale];
   const today = startOfDay(new Date());
@@ -72,40 +66,13 @@ export function BookingForm({
   const [slots, setSlots] = useState<string[]>([]);
   const [taken, setTaken] = useState<string[]>([]);
   const [openDays, setOpenDays] = useState<Record<string, string[]>>({});
-  const [artists, setArtists] = useState<Artist[]>([]);
-  const [artistId, setArtistId] = useState<number | null>(preselectArtist);
 
-  // Team roster for the "kod koga" picker; empty list hides the field.
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/artists", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => {
-        if (!cancelled && d.ok) setArtists(d.artists);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Switching artist changes the whole calendar — drop any picked day/slot.
-  useEffect(() => {
-    setSelected(null);
-    setSlot(null);
-  }, [artistId]);
-
-  // Which days are open this month. No preference -> the studio consult-days
-  // calendar; a chosen artist -> that artist's own free consult slots.
+  // Which days are open this month in the studio consultation calendar.
   useEffect(() => {
     let cancelled = false;
     const base = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
     const monthKey = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}`;
-    const url =
-      artistId === null
-        ? `/api/bookings/availability?month=${monthKey}`
-        : `/api/bookings/artist-availability?artistId=${artistId}&month=${monthKey}`;
-    fetch(url)
+    fetch(`/api/bookings/availability?month=${monthKey}`)
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled && d.ok) setOpenDays(d.days);
@@ -118,19 +85,12 @@ export function BookingForm({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monthOffset, artistId]);
+  }, [monthOffset]);
 
-  // Slots for the selected day. For a chosen artist the month payload already
-  // carries free start times per date (busy times excluded), so no per-day
-  // request or "taken" list is needed; no preference queries the day endpoint.
+  // Slots for the selected studio day.
   useEffect(() => {
     if (!selected) {
       setSlots([]);
-      setTaken([]);
-      return;
-    }
-    if (artistId !== null) {
-      setSlots(openDays[isoKey(selected)] ?? []);
       setTaken([]);
       return;
     }
@@ -147,7 +107,7 @@ export function BookingForm({
     return () => {
       cancelled = true;
     };
-  }, [selected, artistId, openDays]);
+  }, [selected, openDays]);
 
   const monthStart = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
 
@@ -212,7 +172,6 @@ export function BookingForm({
           date: isoKey(selected),
           slot,
           locale,
-          artistId: artistId ?? undefined,
         }),
       });
       if (res.status === 409) {
@@ -247,32 +206,6 @@ export function BookingForm({
           <input id="bkf-contact" type="text" autoComplete="email" value={contact} onChange={(e) => setContact(e.target.value)} />
         </div>
         <p className="bkf__notice">{labels.consultNotice}</p>
-        {artists.length > 0 && (
-          <div className="bkf__field">
-            <span className="bkf__label">Kod koga? (opciono)</span>
-            <div className="bkf__slots bkf__artists">
-              <button
-                type="button"
-                className="bkf__pill"
-                aria-pressed={artistId === null}
-                onClick={() => setArtistId(null)}
-              >
-                Svejedno
-              </button>
-              {artists.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  className={`bkf__pill${a.role === "owner" ? " bkf__pill--featured" : ""}`}
-                  aria-pressed={artistId === a.id}
-                  onClick={() => setArtistId(a.id)}
-                >
-                  {a.name}{a.role === "owner" ? " ★" : ""}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         <div className="bkf__field">
           <label htmlFor="bkf-note">{labels.note}</label>
           <textarea id="bkf-note" rows={4} placeholder={labels.notePlaceholder} value={note} onChange={(e) => setNote(e.target.value)} />

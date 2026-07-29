@@ -15,7 +15,7 @@ type Mode = "consult" | "inquiry";
 
 const INQUIRY_STEPS = [
   { title: "Pošalješ upit", body: "Opis tetovaže, veličina, deo tela, budžet i reference — sve iz svog naloga." },
-  { title: "Stigne procena", body: "Artist odgovara kroz aplikaciju: cena i koliko sesija/sati je potrebno." },
+  { title: "Stigne procena", body: "Studio odgovara kroz aplikaciju: cena i koliko sesija/sati je potrebno." },
   { title: "Biraš termin", body: "Kad procena stigne, otvara ti se kalendar sa slobodnim blokovima baš za to trajanje." },
   { title: "Potvrda", body: "Admin potvrđuje izabrani termin i vidimo se u studiju." },
 ];
@@ -24,18 +24,14 @@ export function BookingChoice({
   labels,
   locale,
   initialMode = null,
-  preselectArtist = null,
 }: {
   labels: BookingFormLabels;
   locale: Locale;
   /** "consult" pre-opens the calendar (used on the landing, so the hero CTA
    * still lands on something actionable while the inquiry tab stays visible). */
   initialMode?: Mode | null;
-  /** Pre-chosen artist (arriving from an artist's profile) — forces the consult
-   * tab open and shows that artist's availability. */
-  preselectArtist?: number | null;
 }) {
-  const [mode, setMode] = useState<Mode | null>(preselectArtist !== null ? "consult" : initialMode);
+  const [mode, setMode] = useState<Mode | null>(initialMode);
 
   return (
     <div className="bkc">
@@ -64,7 +60,7 @@ export function BookingChoice({
 
       {mode === "consult" && (
         <div className="bkc__panel">
-          <BookingForm labels={labels} locale={locale} preselectArtist={preselectArtist} />
+          <BookingForm labels={labels} locale={locale} />
         </div>
       )}
 

@@ -339,21 +339,68 @@ await sql`
   WHERE status <> 'canceled'
 `;
 
-// --- Client profile (Faza: optional profile completion) ---
-// All optional; a client never has to fill these to use the app. birthday drives
-// a 10% birthday discount the studio honors manually. birthday_locked_at pins the
-// date once set so the discount can't be gamed by editing it every month.
+// --- Client profile ---
+// Phone, birthday and gender are required before a customer can use the account.
+// birthday_locked_at still pins the date after its first save.
 await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`;
 await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday DATE`;
 await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS birthday_locked_at TIMESTAMPTZ`;
 await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS city TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS gender TEXT`;
 await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed_at TIMESTAMPTZ`;
 await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_prompt_dismissed_at TIMESTAMPTZ`;
+
+// Older versions marked a profile complete after any save. Force every
+// incomplete account through the new mandatory completion screen.
+await sql`
+  UPDATE users
+  SET profile_completed_at = NULL
+  WHERE phone IS NULL OR birthday IS NULL OR gender NOT IN ('male', 'female')
+`;
+
+// --- Quote acceptance/revision and owner-approved tattoo slot requests ---
+await sql`ALTER TABLE tattoo_requests ADD COLUMN IF NOT EXISTS quote_revision_note TEXT`;
+await sql`ALTER TABLE tattoo_requests ADD COLUMN IF NOT EXISTS quote_revision_requested_at TIMESTAMPTZ`;
+await sql`ALTER TABLE tattoo_requests ADD COLUMN IF NOT EXISTS quote_accepted_at TIMESTAMPTZ`;
+
+await sql`
+  CREATE TABLE IF NOT EXISTS tattoo_slot_requests (
+    id SERIAL PRIMARY KEY,
+    request_id INT NOT NULL REFERENCES tattoo_requests(id) ON DELETE CASCADE,
+    session_number INT NOT NULL,
+    requested_date DATE NOT NULL,
+    requested_start TEXT NOT NULL,
+    requested_end TEXT NOT NULL,
+    proposed_date DATE,
+    proposed_start TEXT,
+    proposed_end TEXT,
+    assigned_staff_id INT REFERENCES staff(id) ON DELETE SET NULL,
+    appointment_id INT REFERENCES appointments(id) ON DELETE SET NULL,
+    status TEXT NOT NULL DEFAULT 'pending_owner',
+    owner_note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    decided_at TIMESTAMPTZ
+  )
+`;
+await sql`
+  CREATE INDEX IF NOT EXISTS tattoo_slot_requests_request
+  ON tattoo_slot_requests (request_id, created_at DESC)
+`;
+await sql`
+  CREATE UNIQUE INDEX IF NOT EXISTS tattoo_slot_requests_one_open
+  ON tattoo_slot_requests (request_id)
+  WHERE status IN ('pending_owner', 'alternative_proposed')
+`;
+
+// Keep every work but retire public per-artist attribution.
+await sql`UPDATE portfolio_works SET artist_id = NULL WHERE artist_id IS NOT NULL`;
 
 console.log("staff / staff_working_hours / staff_day_overrides ready (owner seeded).");
 console.log("bookings table ready.");
 console.log("users table ready.");
 console.log("tattoo_requests table ready.");
+console.log("tattoo_slot_requests table ready.");
 console.log("notifications table ready.");
 console.log("appointments table ready.");
 console.log("working_hours table ready (Mon-Sat 10-20 seeded).");

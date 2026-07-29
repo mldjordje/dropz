@@ -10,7 +10,7 @@ import {
   updateTattooAppointmentWithinCapacity,
   type Appointment,
 } from "@/lib/schedule";
-import { getOwner, resolveArtistId } from "@/lib/staff";
+import { resolveArtistId } from "@/lib/staff";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,19 +80,14 @@ export async function POST(request: Request) {
       SELECT id, user_id, status, artist_id FROM tattoo_requests WHERE id = ${requestId}
     `) as { id: number; user_id: number; status: string; artist_id: number | null }[];
     if (reqRows.length === 0) return badRequest("Zahtev nije nađen.");
-    if (!["quoted", "scheduled"].includes(reqRows[0].status)) {
-      return badRequest("Zahtev još nema procenu ili je zatvoren.");
+    if (!["accepted", "scheduled"].includes(reqRows[0].status)) {
+      return badRequest("Procena još nije prihvaćena ili je zahtev zatvoren.");
     }
-
-    // The session belongs to the request's artist; explicit artistId wins so
-    // the owner can reassign on the fly, otherwise fall back to the request.
-    const sessionArtist =
-      body.artistId !== undefined ? artistId : reqRows[0].artist_id ?? (await getOwner(sql))?.id ?? artistId;
 
     const appointment = await createTattooAppointmentWithinCapacity(sql, {
       requestId,
       userId: reqRows[0].user_id,
-      artistId: sessionArtist,
+      artistId,
       date,
       start,
       end,
@@ -105,7 +100,7 @@ export async function POST(request: Request) {
       );
     }
     await sql`
-      UPDATE tattoo_requests SET status = 'scheduled' WHERE id = ${requestId} AND status = 'quoted'
+      UPDATE tattoo_requests SET status = 'scheduled' WHERE id = ${requestId} AND status = 'accepted'
     `;
     return NextResponse.json({ ok: true, appointment }, { status: 201 });
   }
@@ -118,9 +113,18 @@ export async function POST(request: Request) {
   }
   if (!title) return badRequest("Naziv je obavezan za ručni unos.");
 
+  let price: number | null = null;
+  if (body.price !== undefined && body.price !== null && body.price !== "") {
+    if (session.role !== "owner") return forbidden();
+    price = Number(body.price);
+    if (!Number.isFinite(price) || price < 0) {
+      return badRequest("Cena mora biti nenegativan broj.");
+    }
+  }
+
   const rows = (await sql`
-    INSERT INTO appointments (kind, title, artist_id, date, start_time, end_time, note)
-    VALUES ('manual', ${title}, ${artistId}, ${date}, ${start}, ${end}, ${note})
+    INSERT INTO appointments (kind, title, artist_id, date, start_time, end_time, note, price)
+    VALUES ('manual', ${title}, ${artistId}, ${date}, ${start}, ${end}, ${note}, ${price})
     RETURNING id, kind, title, request_id, user_id, artist_id, date::text AS date,
               start_time, end_time, note, status, created_at
   `) as Appointment[];
@@ -223,12 +227,12 @@ export async function PATCH(request: Request) {
       if (req && req.session_count !== null && req.sessions_done >= req.session_count) {
         await sql`UPDATE tattoo_requests SET status = 'done' WHERE id = ${current.request_id}`;
       } else if (req) {
-        // More sessions to go — nudge the client to book the next one (Faza 4).
+        // More sessions to go — invite the client to request the next slot.
         await sql`
           INSERT INTO notifications (user_id, type, title, body, href)
           VALUES (${req.user_id}, 'next-session',
                   'Sesija je završena',
-                  ${`Odrađeno ${req.sessions_done}/${req.session_count ?? "?"} sesija. Možeš da zakažeš sledeći termin.`},
+                  ${`Odrađeno ${req.sessions_done}/${req.session_count ?? "?"} sesija. Izaberi željeni termin za sledeću sesiju.`},
                   '/nalog')
         `;
       }

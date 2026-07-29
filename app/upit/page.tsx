@@ -13,13 +13,14 @@ export const metadata: Metadata = {
 
 const STEPS = [
   { title: "Pošalješ upit", body: "Opis tetovaže, veličina, deo tela, budžet i reference — sve iz svog naloga." },
-  { title: "Stigne procena", body: "Artist odgovara kroz aplikaciju: cena i koliko sesija/sati je potrebno." },
+  { title: "Stigne procena", body: "Studio odgovara kroz aplikaciju: cena i koliko sesija/sati je potrebno." },
   { title: "Biraš termin", body: "Kad procena stigne, otvara ti se kalendar sa slobodnim blokovima baš za to trajanje." },
   { title: "Potvrda", body: "Admin potvrđuje izabrani termin i vidimo se u studiju." },
 ];
 
 // This is the path for people who already know what they want tattooed — no
-// calendar here (that only appears once the artist quotes the request); the
+// calendar here (that only appears once the studio sends and the client accepts
+// the estimate); the
 // free-slot consultation calendar lives at /booking for people who don't.
 export default function InquiryPage() {
   return (
@@ -29,7 +30,7 @@ export default function InquiryPage() {
       <div className="route-index">02 / Upit</div>
       <h1>Ideja je<br />dovoljan početak.</h1>
       <p>
-        Opiši tetovažu koju želiš — motiv, veličinu, deo tela i reference. Artist se javlja
+        Opiši tetovažu koju želiš — motiv, veličinu, deo tela i reference. Studio se javlja
         sa procenom cene i trajanja, a termin biraš tek kad procena stigne.
       </p>
 

@@ -10,7 +10,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const sql = getSql();
   const users = (await sql`
     SELECT id, name, email, avatar_url, admin_note, created_at, last_login_at,
-           phone, birthday::text AS birthday, city,
+           phone, birthday::text AS birthday, gender, city,
+           (phone IS NOT NULL AND birthday IS NOT NULL AND gender IN ('male', 'female')) AS profile_complete,
            (birthday IS NOT NULL AND EXTRACT(MONTH FROM birthday) = EXTRACT(MONTH FROM CURRENT_DATE)) AS birthday_this_month
     FROM users WHERE id = ${id}
   `) as Record<string, unknown>[];

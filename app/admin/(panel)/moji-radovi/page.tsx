@@ -1,5 +1,5 @@
-import { MyWorksTab } from "../../MyWorksTab";
+import { permanentRedirect } from "next/navigation";
 
-export default function MyWorksPage() {
-  return <MyWorksTab />;
+export default function RetiredMyWorksPage() {
+  permanentRedirect("/admin/portfolio");
 }

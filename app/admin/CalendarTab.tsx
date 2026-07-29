@@ -227,6 +227,7 @@ export function CalendarTab() {
   const [cKind, setCKind] = useState<"manual" | "tattoo" | "block">("manual");
   const [cTitle, setCTitle] = useState("");
   const [cNote, setCNote] = useState("");
+  const [cPrice, setCPrice] = useState("");
   const [cRequestId, setCRequestId] = useState<number | null>(null);
   const [cStart, setCStart] = useState("10:00");
   const [cEnd, setCEnd] = useState("11:00");
@@ -247,6 +248,7 @@ export function CalendarTab() {
     setCKind("manual");
     setCTitle("");
     setCNote("");
+    setCPrice("");
     setCRequestId(null);
     // Pre-pick whose calendar the entry lands on: the currently viewed artist,
     // or the owner (first in the roster) in the "Svi" view.
@@ -260,7 +262,7 @@ export function CalendarTab() {
       if (data.ok) {
         const open = (data.requests as QuotedRequest[]).filter(
           (r) =>
-            (r.status === "quoted" || r.status === "scheduled") &&
+            (r.status === "accepted" || r.status === "scheduled") &&
             (r.session_count === null || r.sessions_done < r.session_count),
         );
         setOpenRequests(open);
@@ -311,6 +313,9 @@ export function CalendarTab() {
           start: cStart,
           end: cEnd,
           note: cNote.trim() || undefined,
+          ...(role === "owner" && cKind === "manual"
+            ? { price: cPrice.trim() === "" ? null : Number(cPrice) }
+            : {}),
           ...(role === "owner" && cArtist ? { artistId: cArtist } : {}),
           ...(cKind === "tattoo"
             ? { requestId: cRequestId }
@@ -700,6 +705,20 @@ export function CalendarTab() {
           )}
           {cKind === "block" && (
             <p className="adm__hint">Blokira izabrani period — klijenti ne mogu da zakažu sesiju u njemu.</p>
+          )}
+          {role === "owner" && cKind === "manual" && (
+            <label className="adm__cal-field">
+              Cena u RSD (opciono)
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={cPrice}
+                onChange={(event) => setCPrice(event.target.value)}
+                placeholder="npr. 12000"
+                disabled={busy}
+              />
+            </label>
           )}
 
           <div className="adm__cal-panel-row">

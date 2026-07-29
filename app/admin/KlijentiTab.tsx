@@ -16,6 +16,9 @@ type Client = {
   sessions_done: number;
   last_visit: string | null;
   next_visit: string | null;
+  phone: string | null;
+  gender: "male" | "female" | null;
+  profile_complete: boolean;
 };
 
 type ClientRequest = {
@@ -67,7 +70,9 @@ export function KlijentiTab() {
     client: {
       phone: string | null;
       birthday: string | null;
+      gender: "male" | "female" | null;
       city: string | null;
+      profile_complete: boolean;
       birthday_this_month: boolean;
     };
     requests: ClientRequest[];
@@ -195,6 +200,17 @@ export function KlijentiTab() {
                           <span><em>Tel</em> <a href={`tel:${detail.client.phone}`}>{detail.client.phone}</a></span>
                         )}
                         {detail.client.city && <span><em>Grad</em> {detail.client.city}</span>}
+                        <span>
+                          <em>Pol</em>{" "}
+                          {detail.client.gender === "male"
+                            ? "Muški"
+                            : detail.client.gender === "female"
+                              ? "Ženski"
+                              : "—"}
+                        </span>
+                        {!detail.client.profile_complete && (
+                          <span><em>Profil</em> Nepotpun</span>
+                        )}
                         {detail.client.birthday && (
                           <span>
                             <em>Rođendan</em> {fmtBirthday(detail.client.birthday)}

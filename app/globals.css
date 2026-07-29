@@ -696,3 +696,17 @@ a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}img,video
 .notfound__links a:hover{color:var(--neon);padding-inline:8px}
 .notfound__links strong{display:block;font:400 15px/1.2 var(--ui);letter-spacing:.06em;text-transform:uppercase}
 .notfound__links small{display:block;margin-top:6px;color:var(--muted);font-size:12px}
+
+/* ---------- Approved estimate + owner-confirmed slot flow ---------- */
+.treq__status--revision_requested{background:rgba(255,132,80,.16);color:#f0a06f}
+.treq__status--accepted{background:rgba(80,170,255,.16);color:#8dc8ff}
+.treq__decision{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.treq__decision .bkf__submit{width:auto;margin:0;padding:11px 16px}
+.treq__revision{display:grid;gap:8px;width:100%;padding:14px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.treq__revision label{color:var(--muted);font-size:11px}
+.treq__revision textarea{width:100%;padding:11px;border:1px solid var(--line);background:rgba(5,2,10,.75);color:var(--white);font:inherit;resize:vertical}
+.treq__slot-state{display:flex;flex-direction:column;gap:6px;margin-top:14px;padding:13px 14px;border-left:2px solid var(--neon);background:rgba(113,48,255,.09);font-size:12px}
+.treq__slot-state strong{color:var(--white)}
+.treq__slot-state span,.treq__slot-state em{color:var(--muted);font-style:normal;line-height:1.5}
+.treq__slot-state--action{border:1px solid rgba(166,114,255,.45);border-left-width:2px}
+@media(max-width:560px){.treq__decision{align-items:stretch}.treq__decision .bkf__submit,.treq__decision .treq__new{width:100%}}

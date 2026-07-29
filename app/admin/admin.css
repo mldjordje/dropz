@@ -515,3 +515,16 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__scal-swatch--override{border-color:var(--neon);background:rgba(113,48,255,.3)}
 .adm__scal-editor{margin-top:20px}
 @media(max-width:560px){.adm__scal-day{min-height:50px;border-radius:6px}.adm__scal-hours{font-size:9px}}
+
+/* ===== Owner-approved tattoo slot requests ===== */
+.adm__slot-requests{display:flex;flex-direction:column;gap:12px;margin-bottom:28px;padding-bottom:26px;border-bottom:1px solid var(--line)}
+.adm__section-head{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.adm__section-head h2{margin:0 0 4px;font-size:16px;letter-spacing:.04em;text-transform:uppercase}
+.adm__section-head .adm__hint{margin:0}
+.adm__req-revision{margin-top:10px;padding:11px 12px;border-left:2px solid #f0a06f;background:rgba(255,132,80,.08);color:#d9ccdf;font-size:12px;line-height:1.5}
+.adm__status--req-revision_requested{background:rgba(255,132,80,.16);color:#f0a06f}
+.adm__status--req-accepted{background:rgba(80,170,255,.16);color:#8dc8ff}
+.adm__status--req-pending_owner{background:rgba(166,114,255,.2);color:var(--neon)}
+.adm__status--req-alternative_proposed{background:rgba(255,196,80,.16);color:#f0c069}
+.adm__status--req-confirmed{background:rgba(80,200,120,.16);color:#7ee2a0}
+.adm__status--req-rejected,.adm__status--req-declined{background:rgba(220,60,60,.14);color:#e0837f}
