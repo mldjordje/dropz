@@ -8,6 +8,7 @@ import {
   isTattooStatus,
   type TattooRequest,
 } from "@/lib/tattoo";
+import { queueQuietly } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -124,6 +125,23 @@ export async function PATCH(request: Request) {
         '/nalog'
       )
     `;
+
+    const recipients = (await sql`
+      SELECT email, name FROM users WHERE id = ${rows[0].user_id}
+    `) as { email: string; name: string | null }[];
+    const recipient = recipients[0];
+    if (recipient?.email) await queueQuietly({
+      userId: rows[0].user_id,
+      recipient: recipient.email,
+      templateKey: "tattoo-estimate-ready",
+      subject: "Stigla je procena za tvoju tetovažu",
+      body:
+        `${recipient.name ? `Ćao ${recipient.name}` : "Zdravo"},\n\n` +
+        `Procena za tattoo upit #${id}: ${sessionCount} ` +
+        `${sessionCount === 1 ? "termin" : "termina"} po ${sessionMinutes} min, cena ${price}.\n\n` +
+        `Otvori svoj nalog na https://dropz.rs/nalog da prihvatiš procenu ili zatražiš izmenu.\n\nDropz Tattoo`,
+      replyTo: process.env.EMAIL_REPLY_TO,
+    });
 
     return NextResponse.json({ ok: true });
   }

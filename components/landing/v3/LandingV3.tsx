@@ -17,7 +17,7 @@ import { CursorV3 } from "./CursorV3";
 import { FluidStage } from "./FluidStage";
 import { VoltmeterV3 } from "./VoltmeterV3";
 import { buildLogoMask } from "./logoMask";
-import { AftercareV3, BookingV3, CraftV3, EduV3, FinaleV3, HeroV3, PathsV3, ProcessV3, VoicesV3, WorkV3 } from "./Sections";
+import { AftercareV3, BookingV3, CraftV3, EduV3, FinaleV3, HeroV3, LocationV3, PathsV3, ProcessV3, VoicesV3, WorkV3 } from "./Sections";
 
 export function LandingV3({ copyData }: { copyData?: typeof copy }) {
   const [locale, setLocale] = useState<Locale>("sr");
@@ -322,6 +322,17 @@ export function LandingV3({ copyData }: { copyData?: typeof copy }) {
         });
       });
 
+      // The fluid stays dark through the hero (which has its own video
+      // backdrop). It only "ignites" once the first post-hero section reaches
+      // the viewport, and fades back out if the visitor scrolls up to the hero.
+      const fluidNodes = gsap.utils.toArray<HTMLElement>(".v3-fluid");
+      ScrollTrigger.create({
+        trigger: ".v3-work",
+        start: "top 82%",
+        onEnter: () => fluidNodes.forEach((n) => n.classList.add("is-active")),
+        onLeaveBack: () => fluidNodes.forEach((n) => n.classList.remove("is-active")),
+      });
+
       // chapter changes pump colored ink into the field — but each section gets
       // a different choreography (rising row / ring burst / diagonal sweep /
       // curtain fall / twin vortices), offset randomly per visit so the same
@@ -403,7 +414,7 @@ export function LandingV3({ copyData }: { copyData?: typeof copy }) {
         },
       ];
       const patternSeed = Math.floor(Math.random() * inkPatterns.length);
-      [".v3-work", ".v3-craft", ".v3-process", ".v3-voices", ".v3-edu", ".v3-aftercare", ".v3-paths", ".v3-booking", ".v3-finale"].forEach((selector, idx) => {
+      [".v3-work", ".v3-craft", ".v3-process", ".v3-voices", ".v3-edu", ".v3-aftercare", ".v3-paths", ".v3-booking", ".v3-location", ".v3-finale"].forEach((selector, idx) => {
         ScrollTrigger.create({
           trigger: selector,
           start: "top 75%",
@@ -462,6 +473,13 @@ export function LandingV3({ copyData }: { copyData?: typeof copy }) {
         <BookingV3 index={text.bookingIndex} title={text.bookingTitle} body={text.bookingBody}>
           <BookingChoice labels={text.bookingForm} locale={locale} initialMode="consult" />
         </BookingV3>
+        <LocationV3
+          index={text.locationIndex}
+          title={text.locationTitle}
+          body={text.locationBody}
+          openLabel={text.locationOpen}
+          reviewLabel={text.locationReview}
+        />
         <FinaleV3 title={text.finale} action={text.finalAction} />
       </div>
     </main>

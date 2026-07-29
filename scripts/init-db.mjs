@@ -393,6 +393,27 @@ await sql`
   WHERE status IN ('pending_owner', 'alternative_proposed')
 `;
 
+// --- Durable transactional email outbox ---
+await sql`
+  CREATE TABLE IF NOT EXISTS email_outbox (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id) ON DELETE SET NULL,
+    recipient TEXT NOT NULL,
+    template_key TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    body TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    provider_ref TEXT,
+    error TEXT,
+    sent_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`;
+await sql`
+  CREATE INDEX IF NOT EXISTS email_outbox_status_created
+  ON email_outbox (status, created_at)
+`;
+
 // Keep every work but retire public per-artist attribution.
 await sql`UPDATE portfolio_works SET artist_id = NULL WHERE artist_id IS NOT NULL`;
 
@@ -401,6 +422,7 @@ console.log("bookings table ready.");
 console.log("users table ready.");
 console.log("tattoo_requests table ready.");
 console.log("tattoo_slot_requests table ready.");
+console.log("email_outbox table ready.");
 console.log("notifications table ready.");
 console.log("appointments table ready.");
 console.log("working_hours table ready (Mon-Sat 10-20 seeded).");

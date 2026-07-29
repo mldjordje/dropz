@@ -14,6 +14,11 @@ export const metadata: Metadata = {
   // nested segment — /admin — can override it with its own manifest. The file
   // convention injects globally and cannot be overridden per-route.
   manifest: "/site.webmanifest",
+  icons: {
+    icon: [{ url: "/media/logo.webp", type: "image/webp", sizes: "933x933" }],
+    shortcut: [{ url: "/media/logo.webp", type: "image/webp" }],
+    apple: [{ url: "/media/logo.webp", type: "image/webp", sizes: "933x933" }],
+  },
   title: {
     default: `${SITE.name} | ${SITE.city} — tetovaže i konsultacije`,
     template: `%s | ${SITE.shortName}`,

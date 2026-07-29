@@ -8,6 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "email:init": "node scripts/init-email-outbox.mjs",
+    "email:check": "node scripts/check-email-outbox.mjs",
     "images:optimize": "node scripts/optimize-images.mjs",
     "images:migrate-db": "node scripts/migrate-media-webp.mjs"
   },

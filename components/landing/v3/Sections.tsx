@@ -23,6 +23,24 @@ type HeroProps = {
 export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) {
   return (
     <section className="v3-hero" id="top">
+      {/* Full-bleed video backdrop — opaque, so the fluid canvas underneath
+          stays hidden through the hero and only "ignites" from the next
+          section on. Same treatment as the craft stage. */}
+      <div className="v3-hero__bg" aria-hidden="true">
+        <video
+          className="v3-hero__video"
+          poster="/media/dragan-poster.webp"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        >
+          <source src="/media/dragan-loop.webm" type="video/webm" />
+          <source src="/media/dragan-loop.mp4" type="video/mp4" />
+        </video>
+        <div className="v3-hero__shade" />
+      </div>
       {/* The wordmark stays the visual hero, but the H1 — the strongest on-page
           signal there is — has to carry the service and the city, not a slogan. */}
       <h1 className="sr-only">
@@ -437,6 +455,65 @@ export function BookingV3({ index, title, body, children }: BookingProps) {
         <p className="v3-booking__body">{body}</p>
       </header>
       <div className="v3-booking__panel">{children}</div>
+    </section>
+  );
+}
+
+// ---------- Location ----------
+
+const MAP_EMBED_URL =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2902.8388208123833!2d21.9051088!3d43.31763339999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4755b1975546d89b%3A0x26c50da0852f15ca!2sDropz%20Tattoo%20Studio%20Ni%C5%A1!5e0!3m2!1sen!2srs!4v1785367173376!5m2!1sen!2srs";
+const GOOGLE_REVIEW_URL = "https://share.google/p58kXGiEKmkD642V8";
+
+export function LocationV3({
+  index,
+  title,
+  body,
+  openLabel,
+  reviewLabel,
+}: {
+  index: string;
+  title: string;
+  body: string;
+  openLabel: string;
+  reviewLabel: string;
+}) {
+  return (
+    <section className="v3-location" id="location">
+      <header className="v3-location__head">
+        <span className="v3-index">{index}</span>
+        <h2 className="v3-location__title v3-blur-title">{title}</h2>
+        <div className="v3-location__copy">
+          <p>{body}</p>
+          <address>
+            {SITE.street}
+            <br />
+            {SITE.postalCode} {SITE.city}
+          </address>
+          <div className="v3-location__actions">
+            <a href={SITE.googleMaps} target="_blank" rel="noreferrer">
+              {openLabel} <ArrowUpRight size={14} />
+            </a>
+            <a className="v3-location__review" href={GOOGLE_REVIEW_URL} target="_blank" rel="noreferrer">
+              <span aria-hidden="true">★★★★★</span>
+              {reviewLabel}
+            </a>
+          </div>
+        </div>
+      </header>
+      <div className="v3-location__map">
+        <iframe
+          src={MAP_EMBED_URL}
+          title="Dropz Tattoo Studio Niš — mapa"
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
+        />
+        <div className="v3-location__map-frame" aria-hidden="true">
+          <span>43.3176334° N</span>
+          <span>21.9051088° E</span>
+        </div>
+      </div>
     </section>
   );
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { DATE_RE, getSlotsForDate } from "@/lib/availability";
+import { emailAddressFromContact } from "@/lib/email-payload";
+import { queueQuietly, queueStudioNotice } from "@/lib/email";
 
 function isFutureDate(date: string) {
   if (!DATE_RE.test(date)) return false;
@@ -80,5 +82,34 @@ export async function POST(request: Request) {
     throw err;
   }
 
-  return NextResponse.json({ ok: true, id: inserted[0].id }, { status: 201 });
+  const bookingId = inserted[0].id;
+  const customerEmail = emailAddressFromContact(contact);
+  const customerBody =
+    `Zdravo ${name},\n\nPrimili smo tvoj zahtev za besplatnu konsultaciju ` +
+    `${date} u ${slot}. Javićemo ti se uskoro da potvrdimo detalje.\n\nDropz Tattoo`;
+  const studioBody =
+    `Novi zahtev za konsultaciju #${bookingId}\n\n` +
+    `Ime: ${name}\nKontakt: ${contact}\nDatum: ${date}\nVreme: ${slot}\n` +
+    `Napomena: ${note || "—"}`;
+
+  await Promise.all([
+    customerEmail
+      ? queueQuietly({
+          userId: null,
+          recipient: customerEmail,
+          templateKey: "booking-received",
+          subject: "Primili smo tvoj zahtev za konsultaciju",
+          body: customerBody,
+          replyTo: process.env.EMAIL_REPLY_TO,
+        })
+      : Promise.resolve({ queued: false, sent: false }),
+    queueStudioNotice({
+      templateKey: "booking-studio-notice",
+      subject: `Nova konsultacija: ${name} — ${date} u ${slot}`,
+      body: studioBody,
+      replyTo: customerEmail ?? undefined,
+    }),
+  ]);
+
+  return NextResponse.json({ ok: true, id: bookingId }, { status: 201 });
 }

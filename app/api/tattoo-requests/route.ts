@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/user-session";
 import { hasCompleteProfile } from "@/lib/auth/profile";
 import { cleanImageUrls, cleanText, type TattooRequest } from "@/lib/tattoo";
+import { queueQuietly, queueStudioNotice } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -139,5 +140,28 @@ export async function POST(request: Request) {
               quote_accepted_at, created_at
   `) as TattooRequest[];
 
-  return NextResponse.json({ ok: true, request: rows[0] }, { status: 201 });
+  const created = rows[0];
+  const greeting = user.name?.trim() ? `Ćao ${user.name.trim()}` : "Zdravo";
+  await Promise.all([
+    queueQuietly({
+      userId: user.uid,
+      recipient: user.email,
+      templateKey: "tattoo-request-received",
+      subject: "Primili smo tvoj tattoo upit",
+      body:
+        `${greeting},\n\nPrimili smo tvoj tattoo upit #${created.id}. ` +
+        "Pregledaćemo detalje i poslati procenu na tvoj nalog.\n\nDropz Tattoo",
+      replyTo: process.env.EMAIL_REPLY_TO,
+    }),
+    queueStudioNotice({
+      templateKey: "tattoo-request-studio-notice",
+      subject: `Novi tattoo upit #${created.id}`,
+      body:
+        `Klijent: ${user.name || "—"}\nEmail: ${user.email}\n` +
+        `Veličina: ${size}\nDeo tela: ${bodyPart || "—"}\nBudžet: ${budget || "—"}\n\n${description}`,
+      replyTo: user.email,
+    }),
+  ]);
+
+  return NextResponse.json({ ok: true, request: created }, { status: 201 });
 }

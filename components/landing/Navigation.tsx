@@ -16,6 +16,7 @@ type NavigationProps = {
     education: string;
     aftercare: string;
     booking: string;
+    directions: string;
     contact: string;
     reserve: string;
     account: string;
@@ -33,6 +34,7 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
         <Link href="/edukacija">{labels.education}</Link>
         <Link href="/aftercare">{labels.aftercare}</Link>
         <a href="#booking">{labels.booking}</a>
+        <a href="#location">{labels.directions}</a>
         <Link href="/kontakt">{labels.contact}</Link>
         <Link href="/nalog">{labels.account}</Link>
       </nav>

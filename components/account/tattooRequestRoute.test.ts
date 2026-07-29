@@ -14,6 +14,10 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/db", () => ({ getSql }));
 vi.mock("@/lib/auth/user-session", () => ({ getSessionUser }));
 vi.mock("@/lib/auth/profile", () => ({ hasCompleteProfile }));
+vi.mock("@/lib/email", () => ({
+  queueQuietly: vi.fn().mockResolvedValue({ queued: true, sent: true }),
+  queueStudioNotice: vi.fn().mockResolvedValue({ queued: true, sent: true }),
+}));
 
 import { POST } from "@/app/api/tattoo-requests/route";
 
