@@ -38,7 +38,7 @@ export default async function NalogPage({
   const nextPath = `/nalog${openForm ? "?novi=1" : ""}`;
 
   return (
-    <main className="route-shell">
+    <main className="route-shell nalog-shell">
       <RouteChrome />
       <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
       <div className="route-index">Nalog</div>
