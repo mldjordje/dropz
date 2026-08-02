@@ -539,6 +539,7 @@ export function FinaleV3({ title, action }: { title: string; action: string }) {
           <a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a>
           <a href={SITE.instagram} target="_blank" rel="noreferrer">Instagram</a>
           <span>© {SITE.shortName}</span>
+          <a className="v3-finale__credit" href="https://adspire.rs" target="_blank" rel="noreferrer">Developed by Adspire</a>
         </footer>
       </div>
     </section>

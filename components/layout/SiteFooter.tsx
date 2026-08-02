@@ -77,6 +77,13 @@ export function SiteFooter() {
         © {new Date().getFullYear()} {SITE.name} — tattoo studio u Nišu. Autorske tetovaže,
         besplatne konsultacije i online rezervacija termina.
       </p>
+
+      <p className="site-footer__credit">
+        Developed by{" "}
+        <a href="https://adspire.rs" target="_blank" rel="noreferrer">
+          Adspire
+        </a>
+      </p>
     </footer>
   );
 }
