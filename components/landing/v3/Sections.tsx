@@ -17,11 +17,12 @@ import { shortHours } from "@/lib/hours";
 type HeroProps = {
   subline: string;
   scrollCue: string;
+  consultLabel: string;
   bookLabel: string;
   callLabel: string;
 };
 
-export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) {
+export function HeroV3({ subline, scrollCue, consultLabel, bookLabel, callLabel }: HeroProps) {
   return (
     <section className="v3-hero" id="top">
       {/* Full-bleed video backdrop — opaque, so the fluid canvas underneath
@@ -57,23 +58,39 @@ export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) 
         <span className="v3-line"><i>ENERGY.</i></span>
       </p>
       <p className="v3-hero__sub">{subline}</p>
+      {/* Both entry points sit in the hero: the free consultation (calendar)
+          and the idea/inquiry form. Previously only the inquiry CTA was here,
+          so consultations were only reachable by scrolling to #booking. */}
       <div className="v3-hero__actions">
         {/* primary: rotating conic border + ink fill rising on hover */}
         <Link
-          href="/upit"
+          href="/booking"
           className="v3-cta v3-cta--book"
           data-magnetic
-          onClick={() => track("inquiry_cta_click", { placement: "hero" })}
+          onClick={() => track("consult_cta_click", { placement: "hero" })}
         >
           <span className="v3-cta__frame" aria-hidden="true" />
           <span className="v3-cta__ink" aria-hidden="true" />
           <span className="v3-cta__label">
-            <i>{bookLabel}</i>
-            <i aria-hidden="true">{bookLabel}</i>
+            <i>{consultLabel}</i>
+            <i aria-hidden="true">{consultLabel}</i>
           </span>
           <ArrowUpRight className="v3-cta__icon" size={15} strokeWidth={1.6} />
         </Link>
-        {/* secondary: ghost with live pulsing dot */}
+        {/* secondary: outlined ghost — the inquiry path */}
+        <Link
+          href="/upit"
+          className="v3-cta v3-cta--idea"
+          data-magnetic
+          onClick={() => track("inquiry_cta_click", { placement: "hero" })}
+        >
+          <span className="v3-cta__label">
+            <i>{bookLabel}</i>
+            <i aria-hidden="true">{bookLabel}</i>
+          </span>
+          <ArrowUpRight className="v3-cta__icon" size={14} strokeWidth={1.6} />
+        </Link>
+        {/* tertiary: ghost with live pulsing dot */}
         <a href={`tel:${SITE.phone}`} className="v3-cta v3-cta--call" data-magnetic>
           <span className="v3-cta__pulse" aria-hidden="true" />
           <span className="v3-cta__label">

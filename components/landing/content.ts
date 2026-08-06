@@ -4,9 +4,10 @@ export const locales: Locale[] = ["sr", "en", "de"];
 
 export const copy = {
   sr: {
-    nav: { work: "Rad", process: "Proces", portfolio: "Portfolio", education: "Edukacija", aftercare: "Nega", booking: "Termini", directions: "Kako do nas", contact: "Kontakt", reserve: "Pošalji ideju", account: "Nalog" },
+    nav: { work: "Rad", process: "Proces", portfolio: "Portfolio", education: "Edukacija", aftercare: "Nega", booking: "Termini", inquiry: "Upit", directions: "Kako do nas", contact: "Kontakt", reserve: "Zakaži termin", account: "Nalog" },
     heroLine: "Ink is energy.",
-    heroSubline: "Pošalji ideju — odgovor i sledeći korak obično u roku od 24h.",
+    heroSubline: "Besplatna konsultacija ili upit sa idejom — odgovor i sledeći korak obično u roku od 24h.",
+    heroConsult: "Besplatna konsultacija",
     heroBook: "Pošalji ideju",
     heroCall: "Pozovi studio",
     scroll: "Skroluj da započneš",
@@ -88,9 +89,10 @@ export const copy = {
     finalAction: "Rezerviši termin",
   },
   en: {
-    nav: { work: "Work", process: "Process", portfolio: "Portfolio", education: "Education", aftercare: "Aftercare", booking: "Booking", directions: "Find us", contact: "Contact", reserve: "Send your idea", account: "Account" },
+    nav: { work: "Work", process: "Process", portfolio: "Portfolio", education: "Education", aftercare: "Aftercare", booking: "Booking", inquiry: "Inquiry", directions: "Find us", contact: "Contact", reserve: "Book a slot", account: "Account" },
     heroLine: "Ink is energy.",
-    heroSubline: "Send your idea — expect a reply and next step within 24h.",
+    heroSubline: "Free consultation or send your idea — reply and next step usually within 24h.",
+    heroConsult: "Free consultation",
     heroBook: "Send your idea",
     heroCall: "Call the studio",
     scroll: "Scroll to begin",
@@ -172,9 +174,10 @@ export const copy = {
     finalAction: "Book a session",
   },
   de: {
-    nav: { work: "Arbeiten", process: "Prozess", portfolio: "Portfolio", education: "Ausbildung", aftercare: "Pflege", booking: "Termine", directions: "Anfahrt", contact: "Kontakt", reserve: "Idee senden", account: "Konto" },
+    nav: { work: "Arbeiten", process: "Prozess", portfolio: "Portfolio", education: "Ausbildung", aftercare: "Pflege", booking: "Termine", inquiry: "Anfrage", directions: "Anfahrt", contact: "Kontakt", reserve: "Termin buchen", account: "Konto" },
     heroLine: "Ink is energy.",
-    heroSubline: "Sende deine Idee — Antwort und naechster Schritt meist innerhalb von 24h.",
+    heroSubline: "Kostenlose Beratung oder Idee senden — Antwort und naechster Schritt meist innerhalb von 24h.",
+    heroConsult: "Kostenlose Beratung",
     heroBook: "Idee senden",
     heroCall: "Studio anrufen",
     scroll: "Scrollen zum Start",

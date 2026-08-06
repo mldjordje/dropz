@@ -439,7 +439,13 @@ export function LandingV3({ copyData }: { copyData?: typeof copy }) {
       <Navigation locale={locale} setLocale={setLocale} labels={text.nav} />
       <VoltmeterV3 />
       <div className="v3-content">
-        <HeroV3 subline={text.heroSubline} scrollCue={text.scroll} bookLabel={text.heroBook} callLabel={text.heroCall} />
+        <HeroV3
+          subline={text.heroSubline}
+          scrollCue={text.scroll}
+          consultLabel={text.heroConsult}
+          bookLabel={text.heroBook}
+          callLabel={text.heroCall}
+        />
         <WorkV3 index={text.workIndex} title={text.workTitle} body={text.workBody} allLabel={text.workAll} />
         <CraftV3 index={text.craftIndex} title={text.craftTitle} body={text.craftBody} />
         <ProcessV3 index={text.processIndex} title={text.processTitle} steps={text.processSteps} />

@@ -16,6 +16,7 @@ type NavigationProps = {
     education: string;
     aftercare: string;
     booking: string;
+    inquiry: string;
     directions: string;
     contact: string;
     reserve: string;
@@ -33,7 +34,8 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
         <Link href="/portfolio">{labels.portfolio}</Link>
         <Link href="/edukacija">{labels.education}</Link>
         <Link href="/aftercare">{labels.aftercare}</Link>
-        <a href="#booking">{labels.booking}</a>
+        <Link href="/booking">{labels.booking}</Link>
+        <Link href="/upit">{labels.inquiry}</Link>
         <a href="#location">{labels.directions}</a>
         <Link href="/kontakt">{labels.contact}</Link>
         <Link href="/nalog">{labels.account}</Link>
@@ -46,7 +48,9 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
             </button>
           ))}
         </div>
-        <Link className="nav-cta" href="/upit" aria-label={labels.reserve}>
+        {/* Lands on /booking, where consultation and inquiry are both offered —
+            the old /upit target hid the consultation path entirely. */}
+        <Link className="nav-cta" href="/booking" aria-label={labels.reserve}>
           <span>{labels.reserve}</span><ArrowUpRight size={16} strokeWidth={1.5} />
         </Link>
         <MobileMenu labels={labels} variant="nav" locale={locale} onLocaleChange={setLocale} isHome />

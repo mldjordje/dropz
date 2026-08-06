@@ -16,6 +16,7 @@ type MobileMenuProps = {
     education: string;
     aftercare: string;
     booking: string;
+    inquiry: string;
     directions: string;
     contact: string;
     reserve: string;
@@ -66,7 +67,8 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
     { key: "portfolio", label: labels.portfolio, href: "/portfolio" },
     { key: "education", label: labels.education, href: "/edukacija" },
     { key: "aftercare", label: labels.aftercare, href: "/aftercare" },
-    { key: "booking", label: labels.booking, href: `${prefix}#booking` },
+    { key: "booking", label: labels.booking, href: "/booking" },
+    { key: "inquiry", label: labels.inquiry, href: "/upit" },
     { key: "directions", label: labels.directions, href: `${prefix}#location` },
     { key: "contact", label: labels.contact, href: "/kontakt" },
     { key: "account", label: labels.account, href: "/nalog" },
@@ -143,7 +145,7 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
               ))}
             </div>
           )}
-          <Link className="mnav__cta" href="/upit" onClick={() => setOpen(false)}>
+          <Link className="mnav__cta" href="/booking" onClick={() => setOpen(false)}>
             <span>{labels.reserve}</span>
             <ArrowUpRight size={16} strokeWidth={1.5} />
           </Link>
