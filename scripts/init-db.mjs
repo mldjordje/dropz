@@ -82,6 +82,26 @@ await sql`
 `;
 
 await sql`
+  CREATE TABLE IF NOT EXISTS public_inquiries (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    contact TEXT NOT NULL,
+    description TEXT NOT NULL,
+    body_part TEXT,
+    size TEXT,
+    budget TEXT,
+    reference_url TEXT,
+    status TEXT NOT NULL DEFAULT 'new',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`;
+
+await sql`
+  CREATE INDEX IF NOT EXISTS public_inquiries_status_created
+  ON public_inquiries (status, created_at DESC)
+`;
+
+await sql`
   CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -413,6 +433,12 @@ await sql`
   CREATE INDEX IF NOT EXISTS email_outbox_status_created
   ON email_outbox (status, created_at)
 `;
+
+// --- Consultations: dedicated phone number. The old free-text `contact` field
+// let clients leave only an email or Instagram handle, so the studio often had
+// no number to call. Phone is now required on new bookings; existing rows stay
+// NULL and fall back to `contact` in the admin UI. ---
+await sql`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS phone TEXT`;
 
 // Keep every work but retire public per-artist attribution.
 await sql`UPDATE portfolio_works SET artist_id = NULL WHERE artist_id IS NOT NULL`;

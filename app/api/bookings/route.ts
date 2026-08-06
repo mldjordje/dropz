@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { DATE_RE, getSlotsForDate } from "@/lib/availability";
 import { emailAddressFromContact } from "@/lib/email-payload";
+import { normalizePhone } from "@/lib/phone";
 import { queueQuietly, queueStudioNotice } from "@/lib/email";
 
 function isFutureDate(date: string) {
@@ -43,9 +44,18 @@ export async function POST(request: Request) {
   const date = typeof body.date === "string" ? body.date : "";
   const slot = typeof body.slot === "string" ? body.slot : "";
   const locale = typeof body.locale === "string" ? body.locale.slice(0, 8) : null;
+  const phone = normalizePhone(body.phone);
 
   if (!name || !contact || !isFutureDate(date)) {
     return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
+  }
+  // The studio needs a number it can actually call — an email-only contact was
+  // the reason consultations arrived with no reachable phone.
+  if (!phone) {
+    return NextResponse.json(
+      { ok: false, message: "Broj telefona nije ispravan.", code: "bad_phone" },
+      { status: 400 },
+    );
   }
 
   const sql = getSql();
@@ -70,8 +80,8 @@ export async function POST(request: Request) {
   let inserted: { id: number }[];
   try {
     inserted = (await sql`
-      INSERT INTO bookings (name, contact, kind, note, date, slot, locale, artist_id)
-      VALUES (${name}, ${contact}, 'consult', ${note || null}, ${date}, ${slot}, ${locale}, NULL)
+      INSERT INTO bookings (name, contact, phone, kind, note, date, slot, locale, artist_id)
+      VALUES (${name}, ${contact}, ${phone}, 'consult', ${note || null}, ${date}, ${slot}, ${locale}, NULL)
       RETURNING id
     `) as { id: number }[];
   } catch (err) {
@@ -89,7 +99,7 @@ export async function POST(request: Request) {
     `${date} u ${slot}. Javićemo ti se uskoro da potvrdimo detalje.\n\nDropz Tattoo`;
   const studioBody =
     `Novi zahtev za konsultaciju #${bookingId}\n\n` +
-    `Ime: ${name}\nKontakt: ${contact}\nDatum: ${date}\nVreme: ${slot}\n` +
+    `Ime: ${name}\nTelefon: ${phone}\nKontakt: ${contact}\nDatum: ${date}\nVreme: ${slot}\n` +
     `Napomena: ${note || "—"}`;
 
   await Promise.all([

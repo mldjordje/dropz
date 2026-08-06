@@ -33,6 +33,19 @@ type TattooRequest = {
   created_at: string;
 };
 
+type PublicInquiry = {
+  id: number;
+  name: string;
+  contact: string;
+  description: string;
+  body_part: string | null;
+  size: string | null;
+  budget: string | null;
+  reference_url: string | null;
+  status: "new" | "contacted" | "closed";
+  created_at: string;
+};
+
 type SlotRequest = {
   id: number;
   request_id: number;
@@ -109,6 +122,7 @@ function fmtCreated(iso: string) {
 
 export function RequestsTab() {
   const [requests, setRequests] = useState<TattooRequest[]>([]);
+  const [publicInquiries, setPublicInquiries] = useState<PublicInquiry[]>([]);
   const [slotRequests, setSlotRequests] = useState<SlotRequest[]>([]);
   const [filter, setFilter] = useState<FilterKey>("attention");
   const [loading, setLoading] = useState(true);
@@ -117,25 +131,45 @@ export function RequestsTab() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [requestRes, slotRes] = await Promise.all([
+      const [requestRes, slotRes, inquiryRes] = await Promise.all([
         fetch("/api/admin/tattoo-requests", { cache: "no-store" }),
         fetch("/api/admin/tattoo-slot-requests", { cache: "no-store" }),
+        fetch("/api/admin/inquiries", { cache: "no-store" }),
       ]);
-      const [requestData, slotData] = await Promise.all([
+      const [requestData, slotData, inquiryData] = await Promise.all([
         requestRes.json(),
         slotRes.json(),
+        inquiryRes.json(),
       ]);
-      if (!requestData.ok || !slotData.ok) {
+      if (!requestData.ok || !slotData.ok || !inquiryData.ok) {
         throw new Error("load");
       }
       setRequests(requestData.requests);
       setSlotRequests(slotData.slotRequests);
+      setPublicInquiries(inquiryData.inquiries);
     } catch {
       setError("Ne mogu da učitam tattoo zahteve.");
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const setPublicInquiryStatus = async (
+    id: number,
+    status: PublicInquiry["status"],
+  ) => {
+    const response = await fetch("/api/admin/inquiries", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) {
+      setError(data.message ?? "Status upita nije sačuvan.");
+      return;
+    }
+    await load();
+  };
 
   useEffect(() => {
     load();
@@ -344,6 +378,63 @@ export function RequestsTab() {
   return (
     <>
       {error && <p className="adm__err" role="alert">{error}</p>}
+
+      <section className="adm__slot-requests">
+        <div className="adm__section-head">
+          <div>
+            <h2>Javni upiti</h2>
+            <p className="adm__hint">Poslati sa sajta bez obavezne prijave.</p>
+          </div>
+          {publicInquiries.filter((item) => item.status === "new").length > 0 && (
+            <em className="adm__nav-badge">
+              {publicInquiries.filter((item) => item.status === "new").length}
+            </em>
+          )}
+        </div>
+        {publicInquiries.length === 0 && !loading && (
+          <p className="adm__empty">Nema javnih upita.</p>
+        )}
+        <div className="adm__list">
+          {publicInquiries.map((item) => (
+            <article key={item.id} className="adm__row adm__row--request">
+              <div className="adm__who">
+                <strong>
+                  {item.name}
+                  <span className="adm__kind">{fmtCreated(item.created_at)}</span>
+                </strong>
+                <a href={item.contact.includes("@") ? `mailto:${item.contact}` : `tel:${item.contact}`}>
+                  {item.contact}
+                </a>
+                <p>{item.description}</p>
+                <div className="adm__req-meta">
+                  {item.size && <span>Veličina: {item.size}</span>}
+                  {item.body_part && <span>Deo tela: {item.body_part}</span>}
+                  {item.budget && <span>Budžet: {item.budget}</span>}
+                  {item.reference_url && (
+                    <a href={item.reference_url} target="_blank" rel="noreferrer">Otvori referencu</a>
+                  )}
+                </div>
+              </div>
+              <div className="adm__actions">
+                <span className={`adm__status adm__status--${item.status}`}>
+                  {item.status === "new" ? "Novo" : item.status === "contacted" ? "Kontaktiran" : "Zatvoren"}
+                </span>
+                <div className="adm__btns">
+                  {item.status === "new" && (
+                    <button onClick={() => setPublicInquiryStatus(item.id, "contacted")}>Kontaktiran</button>
+                  )}
+                  {item.status !== "closed" && (
+                    <button onClick={() => setPublicInquiryStatus(item.id, "closed")}>Zatvori</button>
+                  )}
+                  {item.status === "closed" && (
+                    <button onClick={() => setPublicInquiryStatus(item.id, "new")}>Vrati</button>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="adm__slot-requests">
         <div className="adm__section-head">

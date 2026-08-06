@@ -212,6 +212,7 @@ export function TerminiTab() {
                 {b.name}
                 <span className="adm__kind">{b.kind === "consult" ? "Konsultacija" : "Sesija"}</span>
               </strong>
+              {b.phone && <a href={`tel:${b.phone}`}>{b.phone}</a>}
               <a href={b.contact.includes("@") ? `mailto:${b.contact}` : `tel:${b.contact}`}>{b.contact}</a>
               {b.note && <p>{b.note}</p>}
             </div>

@@ -7,7 +7,7 @@ test("landing exposes the full story and conversion routes", async ({ page }) =>
   await expect(page.locator("#work")).toBeAttached();
   await expect(page.locator("#booking")).toBeAttached();
   await page.getByRole("button", { name: /Pošalji upit/ }).click();
-  await expect(page.getByRole("link", { name: "Nastavi — pošalji upit" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Pošalji ideju bez naloga" })).toBeVisible();
   expect(await page.locator("video source").count()).toBeGreaterThanOrEqual(2);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBe(0);

@@ -35,6 +35,8 @@
 .adm__status--confirmed{background:rgba(80,200,120,.16);color:#7ee2a0}
 .adm__status--done{background:rgba(255,255,255,.1);color:var(--muted)}
 .adm__status--canceled{background:rgba(220,60,60,.14);color:#e0837f}
+.adm__status--contacted{background:rgba(80,170,255,.16);color:#8dc8ff}
+.adm__status--closed{background:rgba(255,255,255,.1);color:var(--muted)}
 .adm__btns{display:flex;gap:6px}
 .adm__btns button{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
 .adm__btns button:hover{border-color:var(--neon);color:#fff}

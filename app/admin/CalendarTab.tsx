@@ -47,6 +47,7 @@ type ConsultRow = {
   id: number;
   name: string;
   contact: string;
+  phone: string | null;
   note: string | null;
   date: string;
   slot: string;
@@ -763,7 +764,11 @@ export function CalendarTab() {
           <button type="button" className="adm__modal-x" aria-label="Zatvori" onClick={() => setSelected(null)}>×</button>
           <h3>Konsultacija — {selected.row.date} u {selected.row.slot}</h3>
           <p className="adm__hint">
-            {selected.row.name} · {selected.row.contact}
+            {selected.row.name}
+            {selected.row.phone && (
+              <> · <a href={`tel:${selected.row.phone}`}>{selected.row.phone}</a></>
+            )}
+            {" · "}{selected.row.contact}
             {selected.row.artist_name ? ` · kod: ${selected.row.artist_name}` : ""}
             {selected.row.note ? ` · ${selected.row.note}` : ""}
           </p>

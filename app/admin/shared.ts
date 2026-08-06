@@ -4,6 +4,7 @@ export type Booking = {
   id: number;
   name: string;
   contact: string;
+  phone: string | null;
   kind: "consult" | "session";
   note: string | null;
   date: string;

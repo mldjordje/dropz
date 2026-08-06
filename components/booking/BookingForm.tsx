@@ -8,10 +8,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Locale } from "../landing/content";
+import { PHONE_RE } from "@/lib/phone";
 
 export type BookingFormLabels = {
   name: string;
   contact: string;
+  phone: string;
+  phonePlaceholder: string;
+  badPhone: string;
   consultNotice: string;
   note: string;
   notePlaceholder: string;
@@ -58,8 +62,9 @@ export function BookingForm({
   const [slot, setSlot] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
+  const [phone, setPhone] = useState("");
   const [note, setNote] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<"missing" | "phone" | null>(null);
   const [sent, setSent] = useState(false);
   const [sentVia, setSentVia] = useState<"api" | "mailto">("api");
   const [busy, setBusy] = useState(false);
@@ -137,7 +142,7 @@ export function BookingForm({
   const pickDay = (d: Date) => {
     setSelected(d);
     setSlot(null);
-    setError(false);
+    setError(null);
   };
 
   const mailtoFallback = () => {
@@ -146,6 +151,7 @@ export function BookingForm({
     const subject = `Booking — ${name.trim()} — ${isoKey(selected)} ${slot}`;
     const body = [
       `${labels.name}: ${name.trim()}`,
+      `${labels.phone}: ${phone.trim()}`,
       `${labels.contact}: ${contact.trim()}`,
       `${labels.date}: ${dateLabel}`,
       `${labels.time}: ${slot}`,
@@ -156,8 +162,12 @@ export function BookingForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !contact.trim() || !selected || !slot) {
-      setError(true);
+    if (!name.trim() || !contact.trim() || !phone.trim() || !selected || !slot) {
+      setError("missing");
+      return;
+    }
+    if (!PHONE_RE.test(phone.trim())) {
+      setError("phone");
       return;
     }
     setBusy(true);
@@ -168,6 +178,7 @@ export function BookingForm({
         body: JSON.stringify({
           name: name.trim(),
           contact: contact.trim(),
+          phone: phone.trim(),
           note: note.trim(),
           date: isoKey(selected),
           slot,
@@ -178,7 +189,12 @@ export function BookingForm({
         // slot got taken meanwhile — refresh taken list, ask for another slot
         setTaken((t) => (slot && !t.includes(slot) ? [...t, slot] : t));
         setSlot(null);
-        setError(true);
+        setError("missing");
+        return;
+      }
+      // The server rejected the number — surface it instead of the mailto fallback.
+      if (res.status === 400) {
+        setError("phone");
         return;
       }
       if (!res.ok) throw new Error("api");
@@ -190,7 +206,7 @@ export function BookingForm({
     } finally {
       setBusy(false);
     }
-    setError(false);
+    setError(null);
     setSent(true);
   };
 
@@ -200,6 +216,18 @@ export function BookingForm({
         <div className="bkf__field">
           <label htmlFor="bkf-name">{labels.name}</label>
           <input id="bkf-name" type="text" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="bkf__field">
+          <label htmlFor="bkf-phone">{labels.phone}</label>
+          <input
+            id="bkf-phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder={labels.phonePlaceholder}
+            value={phone}
+            onChange={(e) => { setPhone(e.target.value); setError(null); }}
+          />
         </div>
         <div className="bkf__field">
           <label htmlFor="bkf-contact">{labels.contact}</label>
@@ -265,7 +293,7 @@ export function BookingForm({
             slots.length > 0 ? (
               <div className="bkf__slots">
                 {slots.map((s) => (
-                  <button key={s} type="button" className="bkf__pill bkf__slot" disabled={taken.includes(s)} aria-pressed={slot === s} onClick={() => { setSlot(s); setError(false); }}>
+                  <button key={s} type="button" className="bkf__pill bkf__slot" disabled={taken.includes(s)} aria-pressed={slot === s} onClick={() => { setSlot(s); setError(null); }}>
                     {s}
                   </button>
                 ))}
@@ -280,7 +308,11 @@ export function BookingForm({
       </div>
 
       <div className="bkf__foot">
-        {error && <p className="bkf__error" role="alert">{labels.missing}</p>}
+        {error && (
+          <p className="bkf__error" role="alert">
+            {error === "phone" ? labels.badPhone : labels.missing}
+          </p>
+        )}
         {sent ? (
           <p className="bkf__success" role="status">
             {labels.success}

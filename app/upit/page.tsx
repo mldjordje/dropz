@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { RouteChrome } from "@/components/layout/RouteChrome";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { PublicInquiryForm } from "@/components/inquiry/PublicInquiryForm";
 
 export const metadata: Metadata = {
   title: "Upit za tattoo",
@@ -12,10 +13,9 @@ export const metadata: Metadata = {
 };
 
 const STEPS = [
-  { title: "Pošalješ upit", body: "Opis tetovaže, veličina, deo tela, budžet i reference — sve iz svog naloga." },
-  { title: "Stigne procena", body: "Studio odgovara kroz aplikaciju: cena i koliko sesija/sati je potrebno." },
-  { title: "Biraš termin", body: "Kad procena stigne, otvara ti se kalendar sa slobodnim blokovima baš za to trajanje." },
-  { title: "Potvrda", body: "Admin potvrđuje izabrani termin i vidimo se u studiju." },
+  { title: "Pošalješ ideju", body: "Bez naloga — opiši motiv, mesto, veličinu i ostavi kontakt." },
+  { title: "Stigne odgovor", body: "Studio pregleda ideju i javlja sledeći korak, obično u roku od 24h." },
+  { title: "Dogovorimo termin", body: "Kad usaglasimo obim i cenu, zajedno biramo odgovarajući termin." },
 ];
 
 // This is the path for people who already know what they want tattooed — no
@@ -24,15 +24,17 @@ const STEPS = [
 // free-slot consultation calendar lives at /booking for people who don't.
 export default function InquiryPage() {
   return (
-    <main className="route-shell">
+    <main className="route-shell upit-shell">
       <RouteChrome />
       <Link className="route-back" href="/"><ArrowLeft /> Nazad</Link>
       <div className="route-index">02 / Upit</div>
       <h1>Ideja je<br />dovoljan početak.</h1>
       <p>
-        Opiši tetovažu koju želiš — motiv, veličinu, deo tela i reference. Studio se javlja
-        sa procenom cene i trajanja, a termin biraš tek kad procena stigne.
+        Opiši tetovažu koju želiš — motiv, veličinu, deo tela i reference. Ne treba ti
+        nalog i nema obaveze. Studio se javlja sa sledećim korakom, obično u roku od 24h.
       </p>
+
+      <PublicInquiryForm />
 
       <ol className="bkc__steps upit__steps">
         {STEPS.map((s, i) => (
@@ -46,14 +48,8 @@ export default function InquiryPage() {
         ))}
       </ol>
 
-      <Link className="route-contact" href="/nalog?novi=1">
-        Nastavi — pošalji upit <ArrowUpRight />
-      </Link>
-      <p className="bkf__hint">
-        Za upit je potrebna prijava (Google nalog) — tako pratiš procenu i termine na jednom mestu.
-      </p>
       <p className="upit__alt">
-        Radije da ne praviš nalog? Besplatna konsultacija uživo u studiju ne traži prijavu —{" "}
+        Želiš prvo kratak razgovor uživo? Besplatna konsultacija ne traži prijavu —{" "}
         <Link href="/booking">zakaži termin ovde</Link>.
       </p>
       <SiteFooter />

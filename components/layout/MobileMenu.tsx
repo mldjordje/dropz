@@ -143,10 +143,10 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
               ))}
             </div>
           )}
-          <a className="mnav__cta" href={`${prefix}#booking`} onClick={() => setOpen(false)}>
+          <Link className="mnav__cta" href="/upit" onClick={() => setOpen(false)}>
             <span>{labels.reserve}</span>
             <ArrowUpRight size={16} strokeWidth={1.5} />
-          </a>
+          </Link>
           <a className="mnav__phone" href={`tel:${SITE.phone}`}>{SITE.phone}</a>
         </div>
       </nav>

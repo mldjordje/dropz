@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Phone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { track } from "@vercel/analytics/react";
 import { SITE } from "@/lib/site";
 import { shortHours } from "@/lib/hours";
 
@@ -58,7 +59,12 @@ export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) 
       <p className="v3-hero__sub">{subline}</p>
       <div className="v3-hero__actions">
         {/* primary: rotating conic border + ink fill rising on hover */}
-        <a href="#booking" className="v3-cta v3-cta--book" data-magnetic>
+        <Link
+          href="/upit"
+          className="v3-cta v3-cta--book"
+          data-magnetic
+          onClick={() => track("inquiry_cta_click", { placement: "hero" })}
+        >
           <span className="v3-cta__frame" aria-hidden="true" />
           <span className="v3-cta__ink" aria-hidden="true" />
           <span className="v3-cta__label">
@@ -66,7 +72,7 @@ export function HeroV3({ subline, scrollCue, bookLabel, callLabel }: HeroProps) 
             <i aria-hidden="true">{bookLabel}</i>
           </span>
           <ArrowUpRight className="v3-cta__icon" size={15} strokeWidth={1.6} />
-        </a>
+        </Link>
         {/* secondary: ghost with live pulsing dot */}
         <a href={`tel:${SITE.phone}`} className="v3-cta v3-cta--call" data-magnetic>
           <span className="v3-cta__pulse" aria-hidden="true" />
@@ -427,7 +433,14 @@ export function PathsV3(props: PathsProps) {
           <span>{props.consultAction} <ArrowUpRight size={15} strokeWidth={1.6} /></span>
         </a>
         <i className="v3-paths__divider" aria-hidden="true" />
-        <Link href="/nalog?novi=1" className="v3-path" data-magnetic onPointerEnter={push} onPointerDown={push}>
+        <Link
+          href="/upit"
+          className="v3-path"
+          data-magnetic
+          onPointerEnter={push}
+          onPointerDown={push}
+          onClick={() => track("inquiry_cta_click", { placement: "paths" })}
+        >
           <small>{props.inquiryMeta}</small>
           <strong>{props.inquiry}</strong>
           <span>{props.inquiryAction} <ArrowUpRight size={15} strokeWidth={1.6} /></span>

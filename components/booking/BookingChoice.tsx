@@ -8,16 +8,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, CalendarCheck, MessageSquareText } from "lucide-react";
+import { track } from "@vercel/analytics/react";
 import { BookingForm, type BookingFormLabels } from "@/components/booking/BookingForm";
 import type { Locale } from "@/components/landing/content";
 
 type Mode = "consult" | "inquiry";
 
 const INQUIRY_STEPS = [
-  { title: "Pošalješ upit", body: "Opis tetovaže, veličina, deo tela, budžet i reference — sve iz svog naloga." },
-  { title: "Stigne procena", body: "Studio odgovara kroz aplikaciju: cena i koliko sesija/sati je potrebno." },
-  { title: "Biraš termin", body: "Kad procena stigne, otvara ti se kalendar sa slobodnim blokovima baš za to trajanje." },
-  { title: "Potvrda", body: "Admin potvrđuje izabrani termin i vidimo se u studiju." },
+  { title: "Pošalješ ideju", body: "Kratka forma, bez naloga i bez obaveze." },
+  { title: "Stigne odgovor", body: "Studio pregleda detalje i javlja sledeći korak, obično u roku od 24h." },
+  { title: "Dogovorimo termin", body: "Termin biraš tek nakon dogovora o obimu i ceni." },
 ];
 
 export function BookingChoice({
@@ -40,7 +40,10 @@ export function BookingChoice({
           type="button"
           className="bkc__mode"
           aria-pressed={mode === "consult"}
-          onClick={() => setMode("consult")}
+          onClick={() => {
+            setMode("consult");
+            track("booking_mode_select", { mode: "consult" });
+          }}
         >
           <CalendarCheck size={20} strokeWidth={1.5} />
           <strong>Besplatna konsultacija</strong>
@@ -50,7 +53,10 @@ export function BookingChoice({
           type="button"
           className="bkc__mode"
           aria-pressed={mode === "inquiry"}
-          onClick={() => setMode("inquiry")}
+          onClick={() => {
+            setMode("inquiry");
+            track("booking_mode_select", { mode: "inquiry" });
+          }}
         >
           <MessageSquareText size={20} strokeWidth={1.5} />
           <strong>Pošalji upit</strong>
@@ -77,11 +83,15 @@ export function BookingChoice({
               </li>
             ))}
           </ol>
-          <Link className="bkf__submit bkc__cta" href="/nalog?novi=1">
-            <span>Nastavi — pošalji upit</span>
+          <Link
+            className="bkf__submit bkc__cta"
+            href="/upit"
+            onClick={() => track("inquiry_cta_click", { placement: "booking_choice" })}
+          >
+            <span>Pošalji ideju bez naloga</span>
             <ArrowUpRight size={16} strokeWidth={1.5} />
           </Link>
-          <p className="bkf__hint">Za upit je potrebna prijava (Google nalog) — tako pratiš procenu i termine na jednom mestu.</p>
+          <p className="bkf__hint">Forma traje oko 2 minuta. Slanje upita ne rezerviše termin i nemaš obavezu.</p>
         </div>
       )}
     </div>
