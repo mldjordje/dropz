@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Check } from "lucide-react";
 import { track } from "@vercel/analytics/react";
+import { PHONE_RE } from "@/lib/phone";
 
 type FormState = {
   name: string;
@@ -50,8 +51,13 @@ export function PublicInquiryForm({ compact = false }: { compact?: boolean }) {
       form.contact.trim().length < 5 ||
       form.description.trim().length < 10
     ) {
-      setError("Unesi ime, kontakt i malo detaljniji opis ideje.");
+      setError("Unesi ime, broj telefona i malo detaljniji opis ideje.");
       track("inquiry_form_error", { reason: "missing_fields" });
+      return;
+    }
+    if (!PHONE_RE.test(form.contact.trim())) {
+      setError("Broj telefona nije ispravan.");
+      track("inquiry_form_error", { reason: "bad_phone" });
       return;
     }
 
@@ -112,11 +118,12 @@ export function PublicInquiryForm({ compact = false }: { compact?: boolean }) {
           />
         </label>
         <label>
-          Telefon, email ili Instagram *
+          Broj telefona *
           <input
-            type="text"
-            autoComplete="email"
-            placeholder="Kako da ti odgovorimo?"
+            type="tel"
+            autoComplete="tel"
+            inputMode="tel"
+            placeholder="npr. 06X XXX XXXX"
             value={form.contact}
             onChange={(event) => update("contact", event.target.value)}
           />

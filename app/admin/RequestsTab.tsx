@@ -402,9 +402,7 @@ export function RequestsTab() {
                   {item.name}
                   <span className="adm__kind">{fmtCreated(item.created_at)}</span>
                 </strong>
-                <a href={item.contact.includes("@") ? `mailto:${item.contact}` : `tel:${item.contact}`}>
-                  {item.contact}
-                </a>
+                <a href={`tel:${item.contact}`}>{item.contact}</a>
                 <p>{item.description}</p>
                 <div className="adm__req-meta">
                   {item.size && <span>Veličina: {item.size}</span>}

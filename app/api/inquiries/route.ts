@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
 import { cleanText } from "@/lib/tattoo";
-import { emailAddressFromContact } from "@/lib/email-payload";
-import { queueQuietly, queueStudioNotice } from "@/lib/email";
+import { normalizePhone } from "@/lib/phone";
+import { queueStudioNotice } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,16 +36,22 @@ export async function POST(request: Request) {
   }
 
   const name = cleanText(body.name, 120, 2);
-  const contact = cleanText(body.contact, 160, 5);
+  const contact = normalizePhone(body.contact);
   const description = cleanText(body.description, 2000, 10);
   const bodyPart = optionalText(body.bodyPart, 120);
   const size = optionalText(body.size, 120);
   const budget = optionalText(body.budget, 60);
   const referenceUrl = optionalUrl(body.referenceUrl);
 
-  if (!name || !contact || !description) {
+  if (!name || !description) {
     return NextResponse.json(
-      { ok: false, message: "Unesi ime, kontakt i malo detaljniji opis ideje." },
+      { ok: false, message: "Unesi ime, broj telefona i malo detaljniji opis ideje." },
+      { status: 400 },
+    );
+  }
+  if (!contact) {
+    return NextResponse.json(
+      { ok: false, message: "Broj telefona nije ispravan.", code: "bad_phone" },
       { status: 400 },
     );
   }
@@ -62,33 +68,17 @@ export async function POST(request: Request) {
     RETURNING id
   `) as { id: number }[];
   const inquiryId = rows[0].id;
-  const customerEmail = emailAddressFromContact(contact);
   const details =
     `Novi javni tattoo upit #${inquiryId}\n\n` +
-    `Ime: ${name}\nKontakt: ${contact}\nDeo tela: ${bodyPart || "—"}\n` +
+    `Ime: ${name}\nTelefon: ${contact}\nDeo tela: ${bodyPart || "—"}\n` +
     `Veličina: ${size || "—"}\nBudžet: ${budget || "—"}\n` +
     `Referenca: ${referenceUrl || "—"}\n\n${description}`;
 
-  await Promise.all([
-    queueStudioNotice({
-      templateKey: "public-inquiry-studio-notice",
-      subject: `Novi tattoo upit: ${name}`,
-      body: details,
-      replyTo: customerEmail ?? undefined,
-    }),
-    customerEmail
-      ? queueQuietly({
-          userId: null,
-          recipient: customerEmail,
-          templateKey: "public-inquiry-received",
-          subject: "Primili smo tvoju tattoo ideju",
-          body:
-            `Zdravo ${name},\n\nPrimili smo tvoju tattoo ideju #${inquiryId}. ` +
-            "Pregledaćemo detalje i javiti ti se sa narednim korakom, obično u roku od 24h.\n\nDropz Tattoo",
-          replyTo: process.env.EMAIL_REPLY_TO,
-        })
-      : Promise.resolve({ queued: false, sent: false }),
-  ]);
+  await queueStudioNotice({
+    templateKey: "public-inquiry-studio-notice",
+    subject: `Novi tattoo upit: ${name}`,
+    body: details,
+  });
 
   return NextResponse.json({ ok: true, id: inquiryId }, { status: 201 });
 }

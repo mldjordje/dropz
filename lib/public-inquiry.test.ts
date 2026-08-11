@@ -29,7 +29,7 @@ describe("POST /api/inquiries", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: "Ana Anić",
-          contact: "ana@example.com",
+          contact: "060 123 4567",
           description: "Želim fine-line motiv ruže na podlaktici.",
           size: "12 cm",
         }),
@@ -40,7 +40,23 @@ describe("POST /api/inquiries", () => {
     await expect(response.json()).resolves.toMatchObject({ ok: true, id: 17 });
     expect(sql).toHaveBeenCalledTimes(1);
     expect(queueStudioNotice).toHaveBeenCalledTimes(1);
-    expect(queueQuietly).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a contact that isn't a phone number", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Ana Anić",
+          contact: "ana@example.com",
+          description: "Želim fine-line motiv ruže na podlaktici.",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(sql).not.toHaveBeenCalled();
   });
 
   it("rejects a short description before touching the database", async () => {
