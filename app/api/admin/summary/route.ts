@@ -12,7 +12,7 @@ export type TodayItem = {
   time: string;
   endTime: string | null;
   label: string;
-  type: "consult" | "tattoo" | "manual";
+  type: "consult" | "tattoo" | "manual" | "piercing";
   status: string;
 };
 
@@ -49,11 +49,11 @@ export async function GET() {
   `) as { id: number; start_time: string; end_time: string; kind: string; status: string; label: string }[];
 
   const consults = (await sql`
-    SELECT id, name, slot, status
+    SELECT id, name, slot, status, kind
     FROM bookings
     WHERE date = ${today} AND status IN ('new', 'confirmed')
     ORDER BY slot ASC
-  `) as { id: number; name: string; slot: string; status: string }[];
+  `) as { id: number; name: string; slot: string; status: string; kind: string }[];
 
   const todayItems: TodayItem[] = [
     ...appts.map((a) => ({
@@ -69,7 +69,7 @@ export async function GET() {
       time: b.slot,
       endTime: null,
       label: b.name,
-      type: "consult" as const,
+      type: (b.kind === "piercing" ? "piercing" : "consult") as TodayItem["type"],
       status: b.status,
     })),
   ].sort((a, b) => a.time.localeCompare(b.time));

@@ -84,6 +84,10 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 
 .adm__editor{margin-top:24px;padding:20px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.02)}
 .adm__editor h3{margin:0 0 12px;font-family:var(--font-display,var(--display));font-size:18px;text-transform:uppercase;letter-spacing:.04em}
+
+.adm__events{display:flex;flex-direction:column;gap:14px}
+.adm__events > h3{margin:24px 0 4px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.adm__events-preview{margin-top:10px;max-width:220px;border-radius:4px;display:block}
 .adm__hint{color:var(--muted);font-size:12px}
 .adm__chips{display:flex;flex-wrap:wrap;gap:8px;min-height:20px}
 .adm__hour-row{display:flex;gap:10px;align-items:center;margin:16px 0}
@@ -172,6 +176,7 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__cal-key{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 .adm__cal-key::before{content:"";width:10px;height:10px;border-radius:3px}
 .adm__cal-key--consult::before{background:#8b5cf6}
+.adm__cal-key--piercing::before{background:#f472b6}
 .adm__cal-key--tattoo::before{background:#34d399}
 .adm__cal-key--manual::before{background:#9ca3af}
 .adm__cal-hours-btn{margin-left:auto;padding:8px 16px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
@@ -232,6 +237,7 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 .adm__fc-wrap .fc .fc-highlight{background:rgba(113,48,255,.2)}
 .dz-ev{border:0;border-radius:4px;padding:1px 4px;font-size:11px;cursor:pointer}
 .dz-ev--consult{background:rgba(139,92,246,.75)}
+.dz-ev--piercing{background:rgba(244,114,182,.75)}
 .dz-ev--tattoo{background:rgba(16,150,105,.8)}
 .dz-ev--manual{background:rgba(107,114,128,.75)}
 .dz-ev--done{opacity:.55}

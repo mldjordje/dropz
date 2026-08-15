@@ -17,6 +17,7 @@ type NavigationProps = {
     aftercare: string;
     booking: string;
     inquiry: string;
+    events: string;
     directions: string;
     contact: string;
     reserve: string;
@@ -36,6 +37,7 @@ export function Navigation({ locale, setLocale, labels }: NavigationProps) {
         <Link href="/aftercare">{labels.aftercare}</Link>
         <Link href="/booking">{labels.booking}</Link>
         <Link href="/upit">{labels.inquiry}</Link>
+        <Link href="/dogadjaji">{labels.events}</Link>
         <a href="#location">{labels.directions}</a>
         <Link href="/kontakt">{labels.contact}</Link>
         <Link href="/nalog">{labels.account}</Link>

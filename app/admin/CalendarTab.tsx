@@ -52,6 +52,7 @@ type ConsultRow = {
   date: string;
   slot: string;
   status: string;
+  kind: string;
   artist_id: number | null;
   artist_name: string | null;
 };
@@ -175,16 +176,17 @@ export function CalendarTab() {
   const events = useMemo<EventInput[]>(() => {
     const items: EventInput[] = [];
     for (const c of consults) {
+      const serviceLabel = c.kind === "piercing" ? "Pirsing" : "Konsultacija";
       const consultLabel =
         artistView === 0 && role === "owner" && c.artist_name
-          ? `[${c.artist_name}] Konsultacija — ${c.name}`
-          : `Konsultacija — ${c.name}`;
+          ? `[${c.artist_name}] ${serviceLabel} — ${c.name}`
+          : `${serviceLabel} — ${c.name}`;
       items.push({
         id: `consult-${c.id}`,
         title: consultLabel,
         start: `${c.date}T${c.slot}`,
         end: `${c.date}T${addMinutes(c.slot, 60)}`,
-        classNames: ["dz-ev", "dz-ev--consult"],
+        classNames: ["dz-ev", c.kind === "piercing" ? "dz-ev--piercing" : "dz-ev--consult"],
         extendedProps: { type: "consult", row: c },
       });
     }
@@ -295,6 +297,10 @@ export function CalendarTab() {
       setPanelError("Naziv je obavezan.");
       return;
     }
+    if (cKind === "manual" && cPrice.trim() === "") {
+      setPanelError("Cena je obavezna za ručni unos.");
+      return;
+    }
     if (cKind === "tattoo" && !cRequestId) {
       setPanelError("Izaberi tattoo zahtev.");
       return;
@@ -314,7 +320,7 @@ export function CalendarTab() {
           start: cStart,
           end: cEnd,
           note: cNote.trim() || undefined,
-          ...(role === "owner" && cKind === "manual"
+          ...(cKind === "manual"
             ? { price: cPrice.trim() === "" ? null : Number(cPrice) }
             : {}),
           ...(role === "owner" && cArtist ? { artistId: cArtist } : {}),
@@ -573,6 +579,7 @@ export function CalendarTab() {
 
       <div className="adm__cal-legend">
         <span className="adm__cal-key adm__cal-key--consult">Konsultacija</span>
+        <span className="adm__cal-key adm__cal-key--piercing">Pirsing</span>
         <span className="adm__cal-key adm__cal-key--tattoo">Tattoo sesija</span>
         <span className="adm__cal-key adm__cal-key--manual">Ostalo</span>
         {(role === "staff" || artistView !== 0) && (
@@ -707,9 +714,9 @@ export function CalendarTab() {
           {cKind === "block" && (
             <p className="adm__hint">Blokira izabrani period — klijenti ne mogu da zakažu sesiju u njemu.</p>
           )}
-          {role === "owner" && cKind === "manual" && (
+          {cKind === "manual" && (
             <label className="adm__cal-field">
-              Cena u RSD (opciono)
+              Cena u RSD
               <input
                 type="number"
                 min={0}
@@ -718,6 +725,7 @@ export function CalendarTab() {
                 onChange={(event) => setCPrice(event.target.value)}
                 placeholder="npr. 12000"
                 disabled={busy}
+                required
               />
             </label>
           )}
@@ -762,7 +770,7 @@ export function CalendarTab() {
         <div className="adm__modal" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
         <div className="adm__cal-panel adm__modal-box" role="dialog" aria-modal="true" aria-label="Konsultacija">
           <button type="button" className="adm__modal-x" aria-label="Zatvori" onClick={() => setSelected(null)}>×</button>
-          <h3>Konsultacija — {selected.row.date} u {selected.row.slot}</h3>
+          <h3>{selected.row.kind === "piercing" ? "Pirsing" : "Konsultacija"} — {selected.row.date} u {selected.row.slot}</h3>
           <p className="adm__hint">
             {selected.row.name}
             {selected.row.phone && (
@@ -772,7 +780,7 @@ export function CalendarTab() {
             {selected.row.artist_name ? ` · kod: ${selected.row.artist_name}` : ""}
             {selected.row.note ? ` · ${selected.row.note}` : ""}
           </p>
-          <p className="adm__hint">Konsultacije se menjaju u tabu „Termini".</p>
+          <p className="adm__hint">Ovaj termin se menja u tabu „Termini".</p>
           <div className="adm__cal-panel-actions">
             <button type="button" onClick={() => setSelected(null)}>Zatvori</button>
           </div>

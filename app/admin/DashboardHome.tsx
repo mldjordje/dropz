@@ -9,7 +9,7 @@ type TodayItem = {
   time: string;
   endTime: string | null;
   label: string;
-  type: "consult" | "tattoo" | "manual";
+  type: "consult" | "tattoo" | "manual" | "piercing";
   status: string;
 };
 
@@ -22,6 +22,7 @@ const TYPE_LABEL: Record<TodayItem["type"], string> = {
   consult: "Konsultacija",
   tattoo: "Tetoviranje",
   manual: "Ručno",
+  piercing: "Pirsing",
 };
 
 export function DashboardHome() {

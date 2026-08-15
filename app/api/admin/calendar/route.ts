@@ -21,6 +21,7 @@ type ConsultRow = {
   date: string;
   slot: string;
   status: string;
+  kind: string;
   artist_id: number | null;
   artist_name: string | null;
 };
@@ -109,7 +110,7 @@ export async function GET(request: Request) {
   // owner's. Owner in the "all" view sees every consult; a specific-artist
   // view (owner or staff) shows only that artist's.
   const consults = (await sql`
-    SELECT b.id, b.name, b.contact, b.phone, b.note, b.date::text AS date, b.slot, b.status,
+    SELECT b.id, b.name, b.contact, b.phone, b.note, b.date::text AS date, b.slot, b.status, b.kind,
            b.artist_id, s.name AS artist_name
     FROM bookings b
     LEFT JOIN staff s ON s.id = b.artist_id

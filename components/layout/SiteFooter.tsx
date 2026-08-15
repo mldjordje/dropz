@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/portfolio", label: "Portfolio" },
   { href: "/booking", label: "Termini" },
   { href: "/upit", label: "Upit" },
+  { href: "/dogadjaji", label: "Događaji" },
   { href: "/edukacija", label: "Edukacija" },
   { href: "/aftercare", label: "Nega tetovaže" },
   { href: "/kontakt", label: "Kontakt" },

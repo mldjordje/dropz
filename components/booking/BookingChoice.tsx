@@ -7,12 +7,12 @@
 //    a request only appears after the admin quotes it (price + duration).
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, CalendarCheck, MessageSquareText } from "lucide-react";
+import { ArrowUpRight, CalendarCheck, MessageSquareText, Sparkle } from "lucide-react";
 import { track } from "@vercel/analytics/react";
 import { BookingForm, type BookingFormLabels } from "@/components/booking/BookingForm";
 import type { Locale } from "@/components/landing/content";
 
-type Mode = "consult" | "inquiry";
+type Mode = "consult" | "piercing" | "inquiry";
 
 const INQUIRY_STEPS = [
   { title: "Pošalješ ideju", body: "Kratka forma, bez naloga i bez obaveze." },
@@ -52,6 +52,19 @@ export function BookingChoice({
         <button
           type="button"
           className="bkc__mode"
+          aria-pressed={mode === "piercing"}
+          onClick={() => {
+            setMode("piercing");
+            track("booking_mode_select", { mode: "piercing" });
+          }}
+        >
+          <Sparkle size={20} strokeWidth={1.5} />
+          <strong>Pirsing</strong>
+          <span>Izaberi slobodan termin za pirsing u kalendaru.</span>
+        </button>
+        <button
+          type="button"
+          className="bkc__mode"
           aria-pressed={mode === "inquiry"}
           onClick={() => {
             setMode("inquiry");
@@ -67,6 +80,17 @@ export function BookingChoice({
       {mode === "consult" && (
         <div className="bkc__panel">
           <BookingForm labels={labels} locale={locale} />
+        </div>
+      )}
+
+      {mode === "piercing" && (
+        <div className="bkc__panel">
+          <BookingForm
+            labels={labels}
+            locale={locale}
+            kind="piercing"
+            noticeOverride="Cena pirsinga se dogovara uživo u studiju, u zavisnosti od izbora nakita i mesta."
+          />
         </div>
       )}
 

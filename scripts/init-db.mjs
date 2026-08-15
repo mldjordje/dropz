@@ -443,6 +443,23 @@ await sql`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS phone TEXT`;
 // Keep every work but retire public per-artist attribution.
 await sql`UPDATE portfolio_works SET artist_id = NULL WHERE artist_id IS NOT NULL`;
 
+// --- Studio events (pop-ups, guest spots, conventions) shown on /dogadjaji.
+// "Upcoming" vs "held" is derived from event_date vs today — no separate
+// status column to keep drift-free. ---
+await sql`
+  CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    body TEXT,
+    image_url TEXT,
+    event_date DATE NOT NULL,
+    location TEXT,
+    sort INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS events_date ON events (event_date)`;
+
 console.log("staff / staff_working_hours / staff_day_overrides ready (owner seeded).");
 console.log("bookings table ready.");
 console.log("users table ready.");
@@ -454,4 +471,5 @@ console.log("appointments table ready.");
 console.log("working_hours table ready (Mon-Sat 10-20 seeded).");
 console.log("consult_days table ready.");
 console.log("portfolio_categories table ready.");
+console.log("events table ready.");
 console.log("portfolio_works table ready.");

@@ -50,9 +50,15 @@ function isoKey(d: Date) {
 export function BookingForm({
   labels,
   locale,
+  kind = "consult",
+  noticeOverride,
 }: {
   labels: BookingFormLabels;
   locale: Locale;
+  /** Which service this slot books — shares the same studio calendar. */
+  kind?: "consult" | "piercing";
+  /** Overrides labels.consultNotice (e.g. piercing isn't free). */
+  noticeOverride?: string;
 }) {
   const tag = INTL_TAG[locale];
   const today = startOfDay(new Date());
@@ -183,6 +189,7 @@ export function BookingForm({
           date: isoKey(selected),
           slot,
           locale,
+          kind,
         }),
       });
       if (res.status === 409) {
@@ -233,7 +240,7 @@ export function BookingForm({
           <label htmlFor="bkf-contact">{labels.contact}</label>
           <input id="bkf-contact" type="text" autoComplete="email" value={contact} onChange={(e) => setContact(e.target.value)} />
         </div>
-        <p className="bkf__notice">{labels.consultNotice}</p>
+        <p className="bkf__notice">{noticeOverride ?? labels.consultNotice}</p>
         <div className="bkf__field">
           <label htmlFor="bkf-note">{labels.note}</label>
           <textarea id="bkf-note" rows={4} placeholder={labels.notePlaceholder} value={note} onChange={(e) => setNote(e.target.value)} />

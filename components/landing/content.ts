@@ -4,7 +4,7 @@ export const locales: Locale[] = ["sr", "en", "de"];
 
 export const copy = {
   sr: {
-    nav: { work: "Rad", process: "Proces", portfolio: "Portfolio", education: "Edukacija", aftercare: "Nega", booking: "Termini", inquiry: "Upit", directions: "Kako do nas", contact: "Kontakt", reserve: "Zakaži termin", account: "Nalog" },
+    nav: { work: "Rad", process: "Proces", portfolio: "Portfolio", education: "Edukacija", aftercare: "Nega", booking: "Termini", inquiry: "Upit", events: "Događaji", directions: "Kako do nas", contact: "Kontakt", reserve: "Zakaži termin", account: "Nalog" },
     heroLine: "Ink is energy.",
     heroSubline: "Besplatna konsultacija ili upit sa idejom — odgovor i sledeći korak obično u roku od 24h.",
     heroConsult: "Besplatna konsultacija",
@@ -89,7 +89,7 @@ export const copy = {
     finalAction: "Rezerviši termin",
   },
   en: {
-    nav: { work: "Work", process: "Process", portfolio: "Portfolio", education: "Education", aftercare: "Aftercare", booking: "Booking", inquiry: "Inquiry", directions: "Find us", contact: "Contact", reserve: "Book a slot", account: "Account" },
+    nav: { work: "Work", process: "Process", portfolio: "Portfolio", education: "Education", aftercare: "Aftercare", booking: "Booking", inquiry: "Inquiry", events: "Events", directions: "Find us", contact: "Contact", reserve: "Book a slot", account: "Account" },
     heroLine: "Ink is energy.",
     heroSubline: "Free consultation or send your idea — reply and next step usually within 24h.",
     heroConsult: "Free consultation",
@@ -174,7 +174,7 @@ export const copy = {
     finalAction: "Book a session",
   },
   de: {
-    nav: { work: "Arbeiten", process: "Prozess", portfolio: "Portfolio", education: "Ausbildung", aftercare: "Pflege", booking: "Termine", inquiry: "Anfrage", directions: "Anfahrt", contact: "Kontakt", reserve: "Termin buchen", account: "Konto" },
+    nav: { work: "Arbeiten", process: "Prozess", portfolio: "Portfolio", education: "Ausbildung", aftercare: "Pflege", booking: "Termine", inquiry: "Anfrage", events: "Veranstaltungen", directions: "Anfahrt", contact: "Kontakt", reserve: "Termin buchen", account: "Konto" },
     heroLine: "Ink is energy.",
     heroSubline: "Kostenlose Beratung oder Idee senden — Antwort und naechster Schritt meist innerhalb von 24h.",
     heroConsult: "Kostenlose Beratung",

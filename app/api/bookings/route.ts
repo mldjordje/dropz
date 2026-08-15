@@ -28,8 +28,11 @@ export async function GET(request: Request) {
   return NextResponse.json({ ok: true, slots, taken: rows.map((r) => r.slot) });
 }
 
-// Public: create a free-consultation booking request from the site form.
-// Bookings are consultations only — any deposit is agreed and paid in person.
+const BOOKING_KINDS = ["consult", "piercing"] as const;
+
+// Public: create a booking request (free consultation or piercing) from the
+// site form. Both share the same studio slot calendar; any deposit/price is
+// agreed and paid in person.
 export async function POST(request: Request) {
   let body: Record<string, unknown>;
   try {
@@ -45,6 +48,9 @@ export async function POST(request: Request) {
   const slot = typeof body.slot === "string" ? body.slot : "";
   const locale = typeof body.locale === "string" ? body.locale.slice(0, 8) : null;
   const phone = normalizePhone(body.phone);
+  const kind = (BOOKING_KINDS as readonly string[]).includes(body.kind as string)
+    ? (body.kind as (typeof BOOKING_KINDS)[number])
+    : "consult";
 
   if (!name || !contact || !isFutureDate(date)) {
     return NextResponse.json({ ok: false, message: "Missing or invalid fields" }, { status: 400 });
@@ -81,7 +87,7 @@ export async function POST(request: Request) {
   try {
     inserted = (await sql`
       INSERT INTO bookings (name, contact, phone, kind, note, date, slot, locale, artist_id)
-      VALUES (${name}, ${contact}, ${phone}, 'consult', ${note || null}, ${date}, ${slot}, ${locale}, NULL)
+      VALUES (${name}, ${contact}, ${phone}, ${kind}, ${note || null}, ${date}, ${slot}, ${locale}, NULL)
       RETURNING id
     `) as { id: number }[];
   } catch (err) {
@@ -93,12 +99,13 @@ export async function POST(request: Request) {
   }
 
   const bookingId = inserted[0].id;
+  const serviceLabel = kind === "piercing" ? "pirsing" : "besplatnu konsultaciju";
   const customerEmail = emailAddressFromContact(contact);
   const customerBody =
-    `Zdravo ${name},\n\nPrimili smo tvoj zahtev za besplatnu konsultaciju ` +
+    `Zdravo ${name},\n\nPrimili smo tvoj zahtev za ${serviceLabel} ` +
     `${date} u ${slot}. Javićemo ti se uskoro da potvrdimo detalje.\n\nDropz Tattoo`;
   const studioBody =
-    `Novi zahtev za konsultaciju #${bookingId}\n\n` +
+    `Novi zahtev (${kind === "piercing" ? "pirsing" : "konsultacija"}) #${bookingId}\n\n` +
     `Ime: ${name}\nTelefon: ${phone}\nKontakt: ${contact}\nDatum: ${date}\nVreme: ${slot}\n` +
     `Napomena: ${note || "—"}`;
 
@@ -108,14 +115,14 @@ export async function POST(request: Request) {
           userId: null,
           recipient: customerEmail,
           templateKey: "booking-received",
-          subject: "Primili smo tvoj zahtev za konsultaciju",
+          subject: `Primili smo tvoj zahtev za ${serviceLabel}`,
           body: customerBody,
           replyTo: process.env.EMAIL_REPLY_TO,
         })
       : Promise.resolve({ queued: false, sent: false }),
     queueStudioNotice({
       templateKey: "booking-studio-notice",
-      subject: `Nova konsultacija: ${name} — ${date} u ${slot}`,
+      subject: `Novi zahtev (${kind === "piercing" ? "pirsing" : "konsultacija"}): ${name} — ${date} u ${slot}`,
       body: studioBody,
       replyTo: customerEmail ?? undefined,
     }),

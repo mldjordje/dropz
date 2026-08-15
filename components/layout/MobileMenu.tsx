@@ -17,6 +17,7 @@ type MobileMenuProps = {
     aftercare: string;
     booking: string;
     inquiry: string;
+    events: string;
     directions: string;
     contact: string;
     reserve: string;
@@ -69,6 +70,7 @@ export function MobileMenu({ labels, variant = "route", locale, onLocaleChange, 
     { key: "aftercare", label: labels.aftercare, href: "/aftercare" },
     { key: "booking", label: labels.booking, href: "/booking" },
     { key: "inquiry", label: labels.inquiry, href: "/upit" },
+    { key: "events", label: labels.events, href: "/dogadjaji" },
     { key: "directions", label: labels.directions, href: `${prefix}#location` },
     { key: "contact", label: labels.contact, href: "/kontakt" },
     { key: "account", label: labels.account, href: "/nalog" },

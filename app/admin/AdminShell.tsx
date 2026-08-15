@@ -10,6 +10,7 @@ import {
   Inbox,
   SlidersHorizontal,
   Images,
+  PartyPopper,
   Users,
   UsersRound,
   FileText,
@@ -38,6 +39,7 @@ const NAV: NavItem[] = [
   { href: "/admin/analitika", label: "Analitika", icon: BarChart3 },
   { href: "/admin/dostupnost", label: "Dostupnost", icon: SlidersHorizontal },
   { href: "/admin/portfolio", label: "Portfolio", icon: Images },
+  { href: "/admin/dogadjaji", label: "Događaji", icon: PartyPopper },
   { href: "/admin/sadrzaj", label: "Sadržaj", icon: FileText },
   { href: "/admin/podesavanja", label: "Podešavanja", icon: Settings },
 ];

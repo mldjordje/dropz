@@ -210,36 +210,50 @@ export function TerminiTab() {
             <div className="adm__who">
               <strong>
                 {b.name}
-                <span className="adm__kind">{b.kind === "consult" ? "Konsultacija" : "Sesija"}</span>
+                <span className="adm__kind">
+                  {b.kind === "consult"
+                    ? "Konsultacija"
+                    : b.kind === "piercing"
+                      ? "Pirsing"
+                      : b.kind === "manual"
+                        ? "Ručni unos"
+                        : "Sesija"}
+                </span>
               </strong>
               {b.phone && <a href={`tel:${b.phone}`}>{b.phone}</a>}
-              <a href={b.contact.includes("@") ? `mailto:${b.contact}` : `tel:${b.contact}`}>{b.contact}</a>
+              {b.contact && (
+                <a href={b.contact.includes("@") ? `mailto:${b.contact}` : `tel:${b.contact}`}>{b.contact}</a>
+              )}
               {b.note && <p>{b.note}</p>}
             </div>
             <div className="adm__actions">
               <span className={`adm__status adm__status--${b.status}`}>{STATUS_LABEL[b.status]}</span>
-              <div className="adm__btns">
-                {b.status !== "confirmed" && b.status !== "done" && (
-                  <button onClick={() => setStatus(b.id, "confirmed")}>Potvrdi</button>
-                )}
-                {b.status === "confirmed" && (
-                  <button onClick={() => setStatus(b.id, "done")}>Završeno</button>
-                )}
-                {b.status !== "canceled" && (
-                  <button onClick={() => setStatus(b.id, "canceled")}>Otkaži</button>
-                )}
-                {b.status === "canceled" && (
-                  <button onClick={() => setStatus(b.id, "new")}>Vrati</button>
-                )}
-                {b.status !== "canceled" && (
-                  <button onClick={() => (reschedId === b.id ? closeResched() : openResched(b.id))}>
-                    {reschedId === b.id ? "Zatvori" : "Pomeri"}
-                  </button>
-                )}
-              </div>
+              {b.source === "appointment" ? (
+                <p className="adm__hint">Uredi u Kalendaru</p>
+              ) : (
+                <div className="adm__btns">
+                  {b.status !== "confirmed" && b.status !== "done" && (
+                    <button onClick={() => setStatus(b.id, "confirmed")}>Potvrdi</button>
+                  )}
+                  {b.status === "confirmed" && (
+                    <button onClick={() => setStatus(b.id, "done")}>Završeno</button>
+                  )}
+                  {b.status !== "canceled" && (
+                    <button onClick={() => setStatus(b.id, "canceled")}>Otkaži</button>
+                  )}
+                  {b.status === "canceled" && (
+                    <button onClick={() => setStatus(b.id, "new")}>Vrati</button>
+                  )}
+                  {b.status !== "canceled" && (
+                    <button onClick={() => (reschedId === b.id ? closeResched() : openResched(b.id))}>
+                      {reschedId === b.id ? "Zatvori" : "Pomeri"}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            {reschedId === b.id && (
+            {reschedId === b.id && b.source !== "appointment" && (
               <div className="adm__resched">
                 <div className="adm__resched-cal">
                   <div className="adm__cal-head">

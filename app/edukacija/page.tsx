@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { RouteChrome } from "@/components/layout/RouteChrome";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { EduCountdown } from "@/components/edukacija/EduCountdown";
 
 export const metadata: Metadata = {
   title: "Edukacija — tattoo obuke",
@@ -66,7 +67,11 @@ export default function EducationPage() {
           <header className="edu-program__head">
             <span className="edu-program__tag">Obuka</span>
             <h2>START</h2>
-            <p className="edu-program__meta"><span>6 dana</span><span>800€</span></p>
+            <p className="edu-program__meta">
+              <span>6 dana</span>
+              <span className="edu-price"><s>800€</s> 600€</span>
+            </p>
+            <EduCountdown />
           </header>
           <p className="edu-program__lede">
             Šestodnevna obuka za sve koji žele da naprave prve korake u svetu tetoviranja i upoznaju se sa
@@ -88,7 +93,11 @@ export default function EducationPage() {
           <header className="edu-program__head">
             <span className="edu-program__tag">Mentorski program</span>
             <h2>PRO</h2>
-            <p className="edu-program__meta"><span>2 meseca</span><span>2.500€</span></p>
+            <p className="edu-program__meta">
+              <span>2 meseca</span>
+              <span className="edu-price"><s>2.500€</s> 2.000€</span>
+            </p>
+            <EduCountdown />
           </header>
           <p className="edu-program__lede">
             Ovo nije klasičan kurs, već dvomesečni mentorski program za one koji žele da tetoviranje postane

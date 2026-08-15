@@ -5,12 +5,15 @@ export type Booking = {
   name: string;
   contact: string;
   phone: string | null;
-  kind: "consult" | "session";
+  kind: "consult" | "session" | "manual" | "piercing";
   note: string | null;
   date: string;
   slot: string;
   status: "new" | "confirmed" | "done" | "canceled";
   created_at: string;
+  // Manual entries and tattoo sessions created from the Kalendar tab live in
+  // the `appointments` table and are merged in read-only — edit them there.
+  source?: "booking" | "appointment";
 };
 
 export type AvailabilityDay = {

@@ -115,7 +115,6 @@ export async function POST(request: Request) {
 
   let price: number | null = null;
   if (body.price !== undefined && body.price !== null && body.price !== "") {
-    if (session.role !== "owner") return forbidden();
     price = Number(body.price);
     if (!Number.isFinite(price) || price < 0) {
       return badRequest("Cena mora biti nenegativan broj.");
