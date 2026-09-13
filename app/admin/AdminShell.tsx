@@ -17,6 +17,7 @@ import {
   Banknote,
   BarChart3,
   Settings,
+  Wallet,
   Menu,
   X,
 } from "lucide-react";
@@ -48,6 +49,7 @@ const NAV: NavItem[] = [
 const STAFF_NAV: NavItem[] = [
   { href: "/admin/kalendar", label: "Kalendar", icon: CalendarDays },
   { href: "/admin/dostupnost", label: "Dostupnost", icon: SlidersHorizontal },
+  { href: "/admin/zarada", label: "Zarada", icon: Wallet },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

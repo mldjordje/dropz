@@ -11,11 +11,11 @@ function unauthorized(request: NextRequest) {
   return NextResponse.redirect(url);
 }
 
-// Staff (artists) get exactly two pages — their calendar and their
-// availability — plus the APIs those pages need (each of which additionally
-// scopes data to the caller's own staffId server-side). Everything else in
-// the panel is owner-only.
-const STAFF_PAGES = ["/admin/kalendar", "/admin/dostupnost"];
+// Staff (artists) get exactly three pages — their calendar, their
+// availability and their earnings — plus the APIs those pages need (each of
+// which additionally scopes data to the caller's own staffId server-side).
+// Everything else in the panel is owner-only.
+const STAFF_PAGES = ["/admin/kalendar", "/admin/dostupnost", "/admin/zarada"];
 const STAFF_APIS = [
   "/api/admin/me",
   "/api/admin/logout",
@@ -23,6 +23,7 @@ const STAFF_APIS = [
   "/api/admin/appointments",
   "/api/admin/working-hours",
   "/api/admin/day-overrides",
+  "/api/admin/finance",
 ];
 
 export async function middleware(request: NextRequest) {

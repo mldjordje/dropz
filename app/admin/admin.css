@@ -339,7 +339,55 @@ button.adm__chip:disabled{opacity:.3;cursor:default;text-decoration:line-through
 
 /* ---- Finansije ---- */
 .adm__fin{display:flex;flex-direction:column;gap:20px}
-.adm__fin-row{grid-template-columns:110px 1fr;row-gap:12px}
+.adm__fin-row{grid-template-columns:110px 1fr auto;row-gap:12px}
+.adm__fin-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.adm__fin-rate{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.adm__fin-rate input{width:84px;padding:7px 9px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:13px;letter-spacing:normal}
+.adm__fin-rate input:focus{outline:none;border-color:var(--neon)}
+.adm__fin .adm__stats{margin-bottom:0}
+.adm__stat em{display:block;margin-top:8px;color:var(--muted);font-style:normal;font-size:11px;line-height:1.4}
+.adm__stat--hl{border-color:rgba(166,114,255,.6);background:rgba(113,48,255,.12)}
+.adm__fin-section h3{margin:0 0 12px;font-family:var(--font-display,var(--display));font-size:16px;text-transform:uppercase;letter-spacing:.06em}
+.adm__fin-grid{display:grid;grid-template-columns:3fr 2fr;gap:20px}
+.adm__fin-table{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.02)}
+.adm__fin-tr{display:grid;grid-template-columns:minmax(120px,1.4fr) repeat(6,minmax(84px,1fr)) 90px;gap:10px;align-items:center;min-width:860px;padding:12px 16px;border-top:1px solid var(--line);font-size:13px}
+.adm__fin-tr:first-child{border-top:0}
+.adm__fin-tr--head{color:var(--muted);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
+.adm__fin-tr .num{text-align:right;font-variant-numeric:tabular-nums}
+.adm__fin-link{padding:0;border:0;background:none;color:#fff;font:inherit;cursor:pointer;text-align:left}
+.adm__fin-link:hover{color:var(--neon)}
+.adm__fin-debt{color:#ff8f8f}
+.adm__fin-ok{color:#7ee2a8}
+.adm__fin-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--muted);font-size:9px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.adm__fin-btn:hover:not(:disabled){border-color:var(--neon);color:#fff}
+.adm__fin-btn:disabled{opacity:.4;cursor:default}
+.adm__fin-btn--primary{border-color:var(--neon);color:#fff;background:rgba(113,48,255,.2)}
+.adm__fin-payform{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;min-width:860px;padding:14px 16px;border-top:1px dashed var(--line);background:rgba(113,48,255,.06)}
+.adm__fin-payform label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
+.adm__fin-payform input{width:140px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:13px;letter-spacing:normal;color-scheme:dark}
+.adm__fin-payform .adm__fin-payform-note input{width:220px}
+.adm__fin-payform input:focus{outline:none;border-color:var(--neon)}
+.adm__fin-trend{display:flex;align-items:flex-end;gap:10px;height:170px;padding:16px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.02)}
+.adm__fin-bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;min-width:0}
+.adm__fin-bar i{display:block;width:100%;max-width:44px;min-height:2px;border-radius:3px 3px 0 0;background:linear-gradient(to top,rgba(113,48,255,.35),rgba(166,114,255,.8))}
+.adm__fin-bar[aria-current=true] i{background:linear-gradient(to top,rgba(113,48,255,.6),var(--neon));box-shadow:0 0 18px rgba(166,114,255,.5)}
+.adm__fin-bar b{color:#fff;font-size:10px;font-weight:400;white-space:nowrap}
+.adm__fin-bar span{color:var(--muted);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+.adm__fin-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.adm__fin-methods div{padding:14px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.02)}
+.adm__fin-methods span{display:block;color:var(--muted);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
+.adm__fin-methods strong{display:block;margin-top:6px;font-size:18px;font-variant-numeric:tabular-nums}
+.adm__fin-split{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.adm__fin-chip{padding:4px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:11px;white-space:nowrap}
+.adm__fin-chip b{color:#fff;font-weight:500}
+.adm__fin-chip--paid{border-color:rgba(126,226,168,.45);color:#7ee2a8}
+.adm__fin-chip--open{border-color:rgba(255,143,143,.4);color:#ff8f8f}
+.adm__fin-rules{margin:0;padding:14px 18px;border:1px dashed rgba(166,114,255,.4);border-radius:4px;color:var(--muted);font-size:12.5px;line-height:1.6}
+.adm__fin-rules strong{color:#fff;font-weight:500}
+.adm__fin-payout{grid-template-columns:110px 1fr auto auto}
+.adm__fin-payout--ro{grid-template-columns:110px 1fr auto}
+.adm__fin-amount{font-variant-numeric:tabular-nums;white-space:nowrap}
+@media(max-width:800px){.adm__fin-grid{grid-template-columns:1fr}.adm__fin-row{grid-template-columns:1fr}.adm__fin-split{justify-content:flex-start}}
 .adm__fin-fields{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;padding-top:10px;border-top:1px dashed var(--line)}
 .adm__fin-fields label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
 .adm__fin-fields input[type=number],.adm__fin-fields select{width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:4px;background:rgba(255,255,255,.03);color:#fff;font:inherit;font-size:13px;letter-spacing:normal}

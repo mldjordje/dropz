@@ -460,6 +460,23 @@ await sql`
 `;
 await sql`CREATE INDEX IF NOT EXISTS events_date ON events (event_date)`;
 
+// --- Staff earnings: prices are RSD but the owner/artist split rules are in
+// EUR (lib/earnings.ts), so the studio keeps an EUR rate. staff_payouts is the
+// ledger of money artists hand over to the owner; debt = owner share of their
+// paid sessions minus these payouts. ---
+await sql`ALTER TABLE studio_settings ADD COLUMN IF NOT EXISTS eur_rate NUMERIC NOT NULL DEFAULT 117.2`;
+await sql`
+  CREATE TABLE IF NOT EXISTS staff_payouts (
+    id SERIAL PRIMARY KEY,
+    staff_id INT NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
+    amount NUMERIC NOT NULL,
+    paid_on DATE NOT NULL DEFAULT CURRENT_DATE,
+    note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS staff_payouts_staff ON staff_payouts (staff_id, paid_on)`;
+
 console.log("staff / staff_working_hours / staff_day_overrides ready (owner seeded).");
 console.log("bookings table ready.");
 console.log("users table ready.");
