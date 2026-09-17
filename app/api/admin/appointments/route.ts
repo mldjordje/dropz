@@ -130,7 +130,7 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true, appointment: rows[0] }, { status: 201 });
 }
 
-// PATCH { id, date?, start?, end?, title?, note?, status? } — edit an entry.
+// PATCH { id, date?, start?, end?, title?, note?, status?, price? (manual) } — edit an entry.
 // Marking a tattoo session 'done' advances the linked request's sessions_done
 // (and closes the request when all sessions are finished).
 export async function PATCH(request: Request) {
@@ -182,6 +182,19 @@ export async function PATCH(request: Request) {
     }
   }
 
+  // Price on manual entries is editable by whoever may touch the entry (staff
+  // enter it on create). Tattoo finance stays in /api/admin/finance.
+  let price: number | null | undefined;
+  if (body.price !== undefined && current.kind === "manual") {
+    if (body.price === null || body.price === "") {
+      return badRequest("Cena je obavezna za ručni unos.");
+    }
+    price = Number(body.price);
+    if (!Number.isFinite(price) || price < 0) {
+      return badRequest("Cena mora biti nenegativan broj.");
+    }
+  }
+
   let status = current.status;
   if (body.status !== undefined) {
     if (!isAppointmentStatus(body.status)) return badRequest("Invalid status");
@@ -208,7 +221,8 @@ export async function PATCH(request: Request) {
     await sql`
       UPDATE appointments
       SET date = ${date}, start_time = ${start}, end_time = ${end},
-          title = ${title}, note = ${note}, status = ${status}
+          title = ${title}, note = ${note}, status = ${status},
+          price = COALESCE(${price ?? null}::numeric, price)
       WHERE id = ${id}
     `;
   }

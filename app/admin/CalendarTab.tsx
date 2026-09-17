@@ -430,6 +430,10 @@ export function CalendarTab() {
       setPanelError("Sva tri tattoo mesta su zauzeta. Izaberi drugi period.");
       return;
     }
+    if (selected.row.kind === "manual" && role !== "owner" && ePrice.trim() === "") {
+      setPanelError("Cena je obavezna za ručni unos.");
+      return;
+    }
     setBusy(true);
     setPanelError(null);
     try {
@@ -443,6 +447,9 @@ export function CalendarTab() {
           end: eEnd,
           note: eNote.trim() === "" ? "" : eNote.trim(),
           ...(selected.row.kind === "manual" ? { title: eTitle.trim() } : {}),
+          ...(selected.row.kind === "manual" && role !== "owner"
+            ? { price: ePrice.trim() === "" ? null : Number(ePrice) }
+            : {}),
         }),
       });
       const data = await res.json();
@@ -829,6 +836,13 @@ export function CalendarTab() {
             Napomena
             <input type="text" value={eNote} onChange={(e) => setENote(e.target.value)} disabled={busy} />
           </label>
+
+          {role !== "owner" && selected.row.kind === "manual" && (
+            <label className="adm__cal-field">
+              Cena u RSD
+              <input type="number" min={0} step={1} value={ePrice} onChange={(e) => setEPrice(e.target.value)} disabled={busy} placeholder="RSD" />
+            </label>
+          )}
 
           {role === "owner" && (
           <div className="adm__cal-fin">

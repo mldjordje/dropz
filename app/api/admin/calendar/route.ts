@@ -84,6 +84,7 @@ export async function GET(request: Request) {
     : await sql`
         SELECT a.id, a.kind, a.title, a.request_id, a.user_id, a.artist_id, a.date::text AS date,
                a.start_time, a.end_time, a.note, a.status, a.created_at,
+               CASE WHEN a.kind = 'manual' THEN a.price::float8 END AS price,
                u.name AS user_name, u.email AS user_email,
                s.name AS artist_name,
                r.description AS request_description
